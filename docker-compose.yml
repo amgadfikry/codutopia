@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  client:
+    container_name: client
+    build: ./front-end
+    networks:
+      - client-server
+    ports:
+      - 5173:5173
+    volumes:
+      - ./front-end:/app
+    env_file:
+      - ./front-end/.env
+    depends_on:
+      - server
+    command: npm run dev
+
+  server:
+    container_name: server
+    build: ./back-end/server
+    networks:
+      client-server:
+        ipv4_address: 172.28.0.5
+    volumes:
+      - ./back-end:/app
+    env_file:
+      - ./back-end/server/.env
+    command: npm run start-watch
+
+networks:
+  client-server:
+    driver: bridge
+    name: client-server
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

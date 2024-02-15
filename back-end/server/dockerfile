@@ -1,5 +1,9 @@
+# docker file to build the server image
+# start from the node alpine image
 FROM node:current-alpine
 
+# set the working directory in the container
 WORKDIR /app
 
+# expose the port 3000
 EXPOSE 3000

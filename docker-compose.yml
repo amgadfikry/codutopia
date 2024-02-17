@@ -1,9 +1,11 @@
 version: '3'
 
 services:
+  # Front-end service (client) container configuration
   client:
     container_name: client
     build: ./front-end
+    restart: always
     networks:
       - client-server
     ports:
@@ -16,19 +18,54 @@ services:
       - server
     command: npm run dev
 
+  # Back-end service (server) container configuration
   server:
     container_name: server
     build: ./back-end/server
+    restart: always
     networks:
       client-server:
-        ipv4_address: 172.28.0.5
+          ipv4_address: 172.28.0.5
+      server-mongo:
+      server-redis:
     volumes:
       - ./back-end:/app
     env_file:
       - ./back-end/server/.env
+    depends_on:
+      - mongoDB
+      - redis
     command: npm run start-watch
 
+  # MongoDB service container configuration
+  mongoDB:
+    container_name: mongoDB
+    image: mongo:4.4.28
+    restart: always
+    networks:
+      server-mongo:
+        ipv4_address: 172.29.0.5
+    expose:
+      - 27017
+    volumes:
+      - mongodb:/data/db
+
+  # Redis service container configuration
+  redis:
+    container_name: redis
+    image: redis:alpine
+    restart: always
+    networks:
+      server-redis:
+        ipv4_address: 172.30.0.5
+    expose:
+      - 6379
+    volumes:
+      - redisdb:/data
+
+# Network configuration
 networks:
+  # Client-server network configuration
   client-server:
     driver: bridge
     name: client-server
@@ -36,3 +73,28 @@ networks:
       driver: default
       config:
         - subnet: 172.28.0.0/16
+  # Server-mongo network configuration
+  server-mongo:
+    driver: bridge
+    name: server-mongo
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.29.0.0/16
+  # Server-redis network configuration
+  server-redis:
+    driver: bridge
+    name: server-redis
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/16
+
+# Volume configuration
+volumes:
+  # MongoDB volume configuration
+  mongodb:
+    name: mongodb
+  # Redis volume configuration
+  redisdb:
+    name: redisdb

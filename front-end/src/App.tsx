@@ -1,8 +1,10 @@
 function App() {
 
+const url = import.meta.env.VITE_MAIN_SERVER;
+
 const handleData = () => {
     console.log('fetching data');
-    fetch('http://172.28.0.5:3000') 
+    fetch(url) 
     .then(response => response.json())
     .then(data => console.log(data))
     .catch(error => console.log(error));

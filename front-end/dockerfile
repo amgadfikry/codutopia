@@ -1,5 +1,9 @@
+# docker file to build the front-end image
+# start from the node alpine image
 FROM node:current-alpine
 
+# set the working directory in the container
 WORKDIR /app
 
+# expose the port 5173
 EXPOSE 5173

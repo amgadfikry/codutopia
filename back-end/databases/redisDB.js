@@ -2,25 +2,23 @@ import ioredis from 'ioredis';
 
 // RedisBD class represents the Redis database connection and the methods to interact with it
 class RedisBD {
-  redis: any;
-
   /* constructor to connect to the database
     get the url from the environment variables provided by the .env file pass to server container
     connect to the database and set the redis property to the database name
   */
   constructor() {
-    const url: string = process.env.REDIS_URL as string;
+    const url = process.env.REDIS_URL;
     this.redis = new ioredis(url);
   }
 
   /* methods to add one key-value pair to the database
     Parameters:
-    - key: string - the key
-    - value: string - the value
+    - key - the key
+    - value - the value
     Returns:
     - the result of the operation
   */
-  async set(key: string, value: string) {
+  async set(key, value) {
     try {
       const result = await this.redis.set(key, value);
       console.log('Successfully added');
@@ -32,11 +30,11 @@ class RedisBD {
 
   /* methods to get one value from the database
     Parameters:
-    - key: string - the key
+    - key - the key
     Returns:
     - the value found
   */
-  async get(key: string) {
+  async get(key) {
     try {
       const result = await this.redis.get(key);
       console.log('Successfully getting data');
@@ -48,11 +46,11 @@ class RedisBD {
 
   /* methods to delete one key-value pair from the database
     Parameters:
-    - key: string - the key
+    - key - the key
     Returns:
     - the result of the operation
   */
-  async del(key: string) {
+  async del(key) {
     try {
       const result = await this.redis.del(key);
       console.log('Successfully deleting data');

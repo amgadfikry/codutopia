@@ -194,6 +194,62 @@ describe('MiddlewareControl', () => {
     });
   });
 
+  // Test suite for the userORInstructorMiddleware method
+  describe('userORInstructorMiddleware', () => {
+    let req;
+    let next;
+    // Create a request object before each test
+    beforeEach(() => {
+      req = {
+        headers: {
+          authorization: 'token'
+        }
+      };
+      next = sinon.stub();
+    });
+    // Test case for the userORInstructorMiddleware method when no User or Instructor role
+    it('UserORInstructorMiddleware no User or Instructor role', async () => {
+      sinon.stub(redisDB, 'getHashAll').returns({ role: "[\"admin\"]" });
+      await MiddlewareControl.userORInstructorMiddleware(req, res, next);
+      expect(res.statusCode).to.equal(401);
+      expect(res.data).to.have.property('msg', 'Unauthorized');
+      expect(next.calledOnce).to.be.false;
+    });
+    // Test case for the userORInstructorMiddleware method when User role
+    it('UserORInstructorMiddleware User role', async () => {
+      sinon.stub(redisDB, 'getHashAll').returns({ role: "[\"User\"]" });
+      await MiddlewareControl.userORInstructorMiddleware(req, res, next);
+      expect(res.statusCode).to.be.undefined;
+      expect(next.calledOnce).to.be.true;
+    });
+    // Test case for the userORInstructorMiddleware method when Instructor role
+    it('UserORInstructorMiddleware Instructor role', async () => {
+      sinon.stub(redisDB, 'getHashAll').returns({ role: "[\"Instructor\"]" });
+      await MiddlewareControl.userORInstructorMiddleware(req, res, next);
+      expect(res.statusCode).to.be.undefined;
+      expect(next.calledOnce).to.be.true;
+    });
+    // Test case for the userORInstructorMiddleware method when User and Instructor role
+    it('UserORInstructorMiddleware User and Instructor role', async () => {
+      sinon.stub(redisDB, 'getHashAll').returns({ role: "[\"User\", \"Instructor\"]" });
+      await MiddlewareControl.userORInstructorMiddleware(req, res, next);
+      expect(res.statusCode).to.be.undefined;
+      expect(next.calledOnce).to.be.true;
+    });
+    // Test case for the userORInstructorMiddleware method when error
+    it('UserORInstructorMiddleware error', async () => {
+      sinon.stub(redisDB, 'getHashAll').throws();
+      await MiddlewareControl.userORInstructorMiddleware(req, res, next);
+      expect(res.statusCode).to.equal(500);
+      expect(res.data).to.have.property('msg', 'Internal server error');
+      expect(next.calledOnce).to.be.false;
+    });
+    // Restore the stubs after each test
+    afterEach(() => {
+      sinon.restore();
+    });
+  });
+
   // Test suite for the adminRoleMiddleware method
   describe('adminRoleMiddleware', () => {
     let req;

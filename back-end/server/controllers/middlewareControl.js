@@ -49,6 +49,66 @@ class MiddlewareControl {
       return res.status(500).json({ msg: 'Internal server error' });
     }
   }
+
+  /* Middleware to check if the user role is user
+    if the user role is not user, return 401 status code
+    finally, call the next middleware
+  */
+  static async userRoleMiddleware(req, res, next) {
+    try {
+      // Get the user from redis
+      const token = req.headers.authorization;
+      const user = await redisDB.getHashAll(token);
+      // Check if the user role is user
+      const roles = JSON.parse(user.role);
+      if (!roles.includes('User')) {
+        return res.status(401).json({ msg: 'Unauthorized' });
+      }
+      next();
+    } catch (error) {
+      return res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
+
+  /* Middleware to check if the user role is Instructor
+    if the user role is not Instructor, return 401 status code
+    finally, call the next middleware
+  */
+  static async instructorRoleMiddleware(req, res, next) {
+    try {
+      // Get the user from redis
+      const token = req.headers.authorization;
+      const user = await redisDB.getHashAll(token);
+      // Check if the user role is Instructor
+      const roles = JSON.parse(user.role);
+      if (!roles.includes('Instructor')) {
+        return res.status(401).json({ msg: 'Unauthorized' });
+      }
+      next();
+    } catch (error) {
+      return res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
+
+  /* Middleware to check if the user role is Admin
+    if the user role is not Admin, return 401 status code
+    finally, call the next middleware
+  */
+  static async adminRoleMiddleware(req, res, next) {
+    try {
+      // Get the user from redis
+      const token = req.headers.authorization;
+      const user = await redisDB.getHashAll(token);
+      // Check if the user role is Admin
+      const roles = JSON.parse(user.role);
+      if (!roles.includes('Admin')) {
+        return res.status(401).json({ msg: 'Unauthorized' });
+      }
+      next();
+    } catch (error) {
+      return res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
 }
 
 // Export the MiddlewareControl class

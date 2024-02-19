@@ -360,47 +360,6 @@ describe('UsersControl', () => {
     });
   });
 
-  // Test suite for the middleware method
-  describe('middleware', () => {
-    let req;
-    let next;
-    // Create a request object before each test
-    beforeEach(() => {
-      req = {
-        headers: {
-          authorization: 'token'
-        }
-      };
-      next = sinon.stub();
-    });
-    // Test case for the middleware method when successful
-    it('Middleware successful', async () => {
-      sinon.stub(redisDB, 'getHashAll').returns('user');
-      await UsersControl.middleware(req, res, next);
-      expect(next.calledOnce).to.be.true;
-    });
-    // Test case for the middleware method when no token
-    it('Middleware no token', async () => {
-      req.headers.authorization = '';
-      await UsersControl.middleware(req, res, next);
-      expect(res.statusCode).to.equal(401);
-      expect(res.data).to.have.property('msg', 'Unauthorized');
-      expect(next.calledOnce).to.be.false;
-    });
-    // Test case for the middleware method when no user
-    it('Middleware no user', async () => {
-      sinon.stub(redisDB, 'getHashAll').returns(null);
-      await UsersControl.middleware(req, res, next);
-      expect(res.statusCode).to.equal(401);
-      expect(res.data).to.have.property('msg', 'Unauthorized');
-      expect(next.calledOnce).to.be.false;
-    });
-    // Restore the stubs after each test
-    afterEach(() => {
-      sinon.restore();
-    });
-  });
-
   // restore the sandbox after each test suite
   afterEach(() => {
     sandbox.restore();

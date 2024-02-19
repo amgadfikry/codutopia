@@ -65,7 +65,7 @@ class UsersControl {
         return res.status(401).json({ msg: 'Invalid credentials' });
       }
       // Create a token
-      const token = jwt.sign({ id: existingUser._id.toString(), role }, process.env.SECRET_KEY, { expiresIn: '3d' });
+      const token = jwt.sign({ id: existingUser._id.toString(), email }, process.env.SECRET_KEY, { expiresIn: '3d' });
       const redisData = {
         email,
         fullName: existingUser.fullName,
@@ -155,27 +155,6 @@ class UsersControl {
       const newPassword = await bcrypt.hash(password, 10);
       await mongoDB.updateOne('users', { email }, newPassword);
       return res.status(200).json({ msg: 'Password updated successfully' });
-    } catch (error) {
-      return res.status(500).json({ msg: 'Internal server error' });
-    }
-  }
-
-  /* Middleware to check if the user is authenticated
-    if the token does not exist, return 401 status code
-    if the user does not exist, return 401 status code
-    if the user exists, call the next middleware
-  */
-  static async middleware(req, res, next) {
-    try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-      const user = await redisDB.getHashAll(token);
-      if (!user) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-      next();
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
     }

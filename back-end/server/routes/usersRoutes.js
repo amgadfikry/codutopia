@@ -1,5 +1,6 @@
 import { Router } from "express";
 import UserControl from '../controllers/usersControl.js';
+import MiddlewareControl from "../controllers/middlewareControl.js";
 
 // User routes with the respective controller methods
 const userRouter = Router();
@@ -11,19 +12,19 @@ userRouter.post('/register', UserControl.register);
 userRouter.post('/login', UserControl.login);
 
 // Logout route
-userRouter.get('/logout', UserControl.middleware, UserControl.logout);
+userRouter.get('/logout', MiddlewareControl.authMiddleware, UserControl.logout);
 
 // Get user route
-userRouter.get('/brief', UserControl.middleware, UserControl.getUser);
+userRouter.get('/brief', MiddlewareControl.authMiddleware, UserControl.getUser);
 
 // Get user details route
-userRouter.get('/details', UserControl.middleware, UserControl.getUserDetails);
+userRouter.get('/details', MiddlewareControl.authMiddleware, UserControl.getUserDetails);
 
 // Update user route
-userRouter.put('/update', UserControl.middleware, UserControl.updateUser);
+userRouter.put('/update', MiddlewareControl.authMiddleware, UserControl.updateUser);
 
 // update user password route
-userRouter.put('/updatePassword', UserControl.middleware, UserControl.updatePassword);
+userRouter.put('/updatePassword', MiddlewareControl.authMiddleware, UserControl.updatePassword);
 
 // Export the userRouter
 export default userRouter;

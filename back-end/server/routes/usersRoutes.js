@@ -1,16 +1,29 @@
 import { Router } from "express";
-import UsersController from "../controller/usersControl.js";
+import UserControl from '../controllers/usersControl.js';
 
-const usersRouter = Router();
+// User routes with the respective controller methods
+const userRouter = Router();
 
-// Routte to register a user
-usersRouter.post('/register', UsersController.register);
-// Route to login a user
-usersRouter.post('/login', UsersController.login);
-// Route to logout a user
-usersRouter.get('/logout', UsersController.logout);
-// Route to update a user details
-usersRouter.post('/update', UsersController.update);
+// Register a new user route
+userRouter.post('/register', UserControl.register);
 
-// Export the usersRouter
-export default usersRouter;
+// Login route
+userRouter.post('/login', UserControl.login);
+
+// Logout route
+userRouter.get('/logout', UserControl.middleware, UserControl.logout);
+
+// Get user route
+userRouter.get('/brief', UserControl.middleware, UserControl.getUser);
+
+// Get user details route
+userRouter.get('/details', UserControl.middleware, UserControl.getUserDetails);
+
+// Update user route
+userRouter.put('/update', UserControl.middleware, UserControl.updateUser);
+
+// update user password route
+userRouter.put('/updatePassword', UserControl.middleware, UserControl.updatePassword);
+
+// Export the userRouter
+export default userRouter;

@@ -18,12 +18,31 @@ class RedisBD {
     Returns:
     - the result of the operation
   */
-  async set(key, value) {
+  async set(key, value, time) {
     try {
-      const result = await this.redis.set(key, value);
-      console.log('Successfully added');
-      return result;
+      return await this.redis.set(key, value, 'EX', time);
     } catch (e) {
+      console.log('Error adding');
+    }
+  }
+
+  /* methods to add hash key-value pairs to the database
+    Parameters:
+    - key - the key
+    - filedValues - the object with the key-value pairs
+    - time - the time to live
+    Returns:
+    - the result of the operation
+  */
+  async setHashMulti(key, filedValues, time = 0) {
+    try {
+      const result = await this.redis.hmset(key, filedValues);
+      if (time) {
+        await this.redis.expire(key, time);
+      }
+      return result;
+    }
+    catch (e) {
       console.log('Error adding');
     }
   }
@@ -36,9 +55,21 @@ class RedisBD {
   */
   async get(key) {
     try {
-      const result = await this.redis.get(key);
-      console.log('Successfully getting data');
-      return result;
+      return await this.redis.get(key);
+    } catch (e) {
+      console.log('Error getting data');
+    }
+  }
+
+  /* methods to get all the hash key-value pairs from the database
+    Parameters:
+    - key - the key
+    Returns:
+    - the object with the key-value pairs
+  */
+  async getHashAll(key) {
+    try {
+      return await this.redis.hgetall(key);
     } catch (e) {
       console.log('Error getting data');
     }
@@ -52,9 +83,7 @@ class RedisBD {
   */
   async del(key) {
     try {
-      const result = await this.redis.del(key);
-      console.log('Successfully deleting data');
-      return result;
+      return await this.redis.del(key);
     } catch (e) {
       console.log('Error deleting data');
     }

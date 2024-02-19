@@ -31,11 +31,11 @@ services:
     volumes:
       - ./back-end:/app
     env_file:
-      - ./back-end/server/.env
+      - ./back-end/.env
     depends_on:
       - mongoDB
       - redis
-    command: npm run start-watch
+    command: sh -c "npm run generate-key && npm run start-watch"
 
   # MongoDB service container configuration
   mongoDB:

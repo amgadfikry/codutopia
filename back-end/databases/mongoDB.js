@@ -23,7 +23,6 @@ class MongoDB {
   async addOne(coll, data) {
     try {
       const restult = await this.db.collection(coll).insertOne(data);
-      console.log('Successfully added');
       return restult.insertedId;
     } catch (e) {
       console.log('Error adding');
@@ -39,9 +38,7 @@ class MongoDB {
   */
   async getOne(coll, query) {
     try {
-      const result = await this.db.collection(coll).findOne(query);
-      console.log('Successfully getting data');
-      return result;
+      return await this.db.collection(coll).findOne(query);
     } catch (e) {
       console.log('Error getting data');
     }
@@ -56,11 +53,9 @@ class MongoDB {
   */
   async getAll(coll, query) {
     try {
-      const result = await this.db.collection(coll).find(query).toArray();
-      console.log('Successfully getting data');
-      return result;
+      return await this.db.collection(coll).find(query).toArray();
     } catch (e) {
-      console.log('Error getting data');
+      console.log('Error getting data: ', e);
     }
   }
 
@@ -74,11 +69,9 @@ class MongoDB {
   */
   async updateOne(coll, query, data) {
     try {
-      const result = await this.db.collection(coll).updateOne(query, { $set: data });
-      console.log('Successfully updating data');
-      return result;
+      return await this.db.collection(coll).updateOne(query, { $set: data });
     } catch (e) {
-      console.log('Error updating data');
+      console.log('Error updating data: ', e);
     }
   }
 
@@ -91,11 +84,9 @@ class MongoDB {
   */
   async deleteOne(coll, query) {
     try {
-      const result = await this.db.collection(coll).deleteOne(query);
-      console.log('Successfully deleting data');
-      return result;
+      return await this.db.collection(coll).deleteOne(query);
     } catch (e) {
-      console.log('Error deleting data');
+      console.log('Error deleting data: ', e);
     }
   }
 
@@ -108,11 +99,9 @@ class MongoDB {
   */
   async deleteMany(coll, query) {
     try {
-      const result = await this.db.collection(coll).deleteMany(query);
-      console.log('Successfully deleting data');
-      return result;
+      return await this.db.collection(coll).deleteMany(query);
     } catch (e) {
-      console.log('Error deleting data');
+      console.log('Error deleting data: ', e);
     }
   }
 
@@ -124,11 +113,9 @@ class MongoDB {
   */
   async countColl(coll) {
     try {
-      const result = await this.db.collection(coll).countDocuments();
-      console.log('Successfully counting data');
-      return result;
+      return await this.db.collection(coll).countDocuments();
     } catch (e) {
-      console.log('Error counting data');
+      console.log('Error counting data: ', e);
     }
   }
 }

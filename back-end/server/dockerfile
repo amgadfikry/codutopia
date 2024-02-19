@@ -1,6 +1,6 @@
 # docker file to build the server image
 # start from the node alpine image
-FROM node:current-alpine
+FROM node:current-slim
 
 # set the working directory in the container
 WORKDIR /app

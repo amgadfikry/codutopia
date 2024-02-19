@@ -71,6 +71,7 @@ class UsersControl {
         fullName: existingUser.fullName,
         userName: existingUser.userName,
         id: existingUser._id.toString(),
+        role: JSON.stringify(existingUser.role),
       }
       // Set the token in redis with the user data
       await redisDB.setHashMulti(token, redisData, 259200);

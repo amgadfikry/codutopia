@@ -7,7 +7,7 @@ class RedisBD {
     connect to the database and set the redis property to the database name
   */
   constructor() {
-    const url = process.env.REDIS_URL;
+    const url = process.env.REDIS_URL || 'redis://localhost:6379';
     this.redis = new ioredis(url);
   }
 

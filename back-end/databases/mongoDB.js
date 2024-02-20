@@ -7,7 +7,7 @@ class MongoDB {
     connect to the database and set the db property to the database name
   */
   constructor() {
-    const url = process.env.MONGO_URL;
+    const url = process.env.MONGO_URL || 'mongodb://localhost:27017';
     MongoClient.connect(url).then((client) => {
       this.db = client.db('e-learning');
     });

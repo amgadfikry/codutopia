@@ -8,8 +8,8 @@ function App() {
     userName: 'test',
     password: '1234',
     fullName: 'test1',
-    email: 'test6l46@yahoo',
-    role: 'User',
+    email: 'test707h7@yahoo',
+    role: 'Instructor',
     phoneNumber: '123456789'
   }
   const updatedUser = {
@@ -50,7 +50,8 @@ function App() {
   }
 
   const handleData = () => {
-    axios.put(url + '/users/update', updatedUser, {
+    const id = '60f3e3e3e3e3e3e3e3e3e3e3';
+    axios.get(url + '/courses/' + id, updatedUser, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Cookies.get('authToken'),

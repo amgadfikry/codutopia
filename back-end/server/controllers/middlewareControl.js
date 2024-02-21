@@ -1,6 +1,7 @@
 import redisDB from "../../databases/redisDB.js";
 import mongoDB from "../../databases/mongoDB.js";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
 
 // MiddlewareControl class with a static method containing the logic all middleware methods
 class MiddlewareControl {
@@ -16,120 +17,58 @@ class MiddlewareControl {
     try {
       // Check if the token exists in the header
       const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-      // Check if the user exists in redis
-      const user = await redisDB.getHashAll(token);
-      if (!user) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-      // Check if the token is valid and get the user from the token
-      const verifyToken = jwt.verify(token, process.env.SECRET_KEY);
-      if (!verifyToken) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      } else {
-        // Check if the user exists in mongoDB
-        const gettingUser = await mongoDB.getOne('users', { email: verifyToken.email });
-        if (!gettingUser) {
-          return res.status(401).json({ msg: 'Unauthorized' });
+      if (token) {
+        // Get the user from redis
+        const user = await redisDB.getHashAll(token);
+        if (user) {
+          // Set the user in res.locals and call the next middleware
+          res.locals.user = user;
+          res.locals.token = token;
+          return next();
         }
-        // Set the user in redis
-        const data = {
-          email: verifyToken.email,
-          fullName: gettingUser.fullName,
-          userName: gettingUser.userName,
-          id: verifyToken.id,
+        // Verify the token
+        const verifyToken = jwt.verify(token, process.env.SECRET_KEY);
+        if (verifyToken) {
+          // Get the user from mongoDB and set the user in redis
+          const gettingUser = await mongoDB.getOne(verifyToken.role, { _id: new ObjectId(verifyToken.id) });
+          if (gettingUser) {
+            const data = {
+              email: gettingUser.email,
+              fullName: gettingUser.fullName,
+              userName: gettingUser.userName,
+              id: verifyToken.id,
+              role: gettingUser.role,
+            }
+            await redisDB.setHashMulti(token, data, 259200);
+            // Set the user in res.locals and call the next middleware
+            res.locals.user = data;
+            res.locals.token = token;
+            return next();
+          }
         }
-        await redisDB.setHashMulti(token, data, 259200);
       }
-      // Call the next middleware
-      next();
+      // 
+      return res.status(401).json({ msg: 'Unauthorized' });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
     }
   }
 
-  /* Middleware to check if the user role is user
-    if the user role is not user, return 401 status code
-    finally, call the next middleware
+  /* Middleware to check if user role is the same as the role passed
+    if the user role is not the same as the role passed, return 401 status code
+    if the user role is the same as the role passed, call the next middleware
   */
-  static async userRoleMiddleware(req, res, next) {
-    try {
-      // Get the user from redis
-      const token = req.headers.authorization;
-      const user = await redisDB.getHashAll(token);
+  static roleMiddleware(role) {
+    return (req, res, next) => {
+      // Get the user from res.locals
+      const user = res.locals.user;
       // Check if the user role is user
-      const roles = JSON.parse(user.role);
-      if (!roles.includes('User')) {
+      if (!role.some(r => r === user.role)) {
         return res.status(401).json({ msg: 'Unauthorized' });
       }
-      next();
-    } catch (error) {
-      return res.status(500).json({ msg: 'Internal server error' });
-    }
-  }
-
-  /* Middleware to check if the user role is Instructor
-    if the user role is not Instructor, return 401 status code
-    finally, call the next middleware
-  */
-  static async instructorRoleMiddleware(req, res, next) {
-    try {
-      // Get the user from redis
-      const token = req.headers.authorization;
-      const user = await redisDB.getHashAll(token);
-      // Check if the user role is Instructor
-      const roles = JSON.parse(user.role);
-      if (!roles.includes('Instructor')) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-      next();
-    } catch (error) {
-      return res.status(500).json({ msg: 'Internal server error' });
-    }
-  }
-
-  /* Middleware to check if the user role is User or Instructor
-    if the user role is not User or Instructor, return 401 status code
-    finally, call the next middleware
-  */
-  static async userORInstructorMiddleware(req, res, next) {
-    try {
-      // Get the user from redis
-      const token = req.headers.authorization;
-      const user = await redisDB.getHashAll(token);
-      // Check if the user role is User or Instructor
-      const roles = JSON.parse(user.role);
-      if (!roles.includes('User') && !roles.includes('Instructor')) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-      next();
-    } catch (error) {
-      return res.status(500).json({ msg: 'Internal server error' });
-    }
-  }
-
-  /* Middleware to check if the user role is Admin
-    if the user role is not Admin, return 401 status code
-    finally, call the next middleware
-  */
-  static async adminRoleMiddleware(req, res, next) {
-    try {
-      // Get the user from redis
-      const token = req.headers.authorization;
-      const user = await redisDB.getHashAll(token);
-      // Check if the user role is Admin
-      const roles = JSON.parse(user.role);
-      if (!roles.includes('Admin')) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-      next();
-    } catch (error) {
-      return res.status(500).json({ msg: 'Internal server error' });
+      return next();
     }
   }
 }
-
 // Export the MiddlewareControl class
 export default MiddlewareControl;

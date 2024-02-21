@@ -20,9 +20,13 @@ class RedisBD {
   */
   async set(key, value, time) {
     try {
-      return await this.redis.set(key, value, 'EX', time);
+      const result = await this.redis.set(key, value);
+      if (time) {
+        await this.redis.expire(key, time);
+      }
+      return result;
     } catch (e) {
-      console.log('Error adding');
+      return e;
     }
   }
 

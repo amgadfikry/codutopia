@@ -25,7 +25,16 @@ class MongoDB {
       const restult = await this.db.collection(coll).insertOne(data);
       return restult.insertedId;
     } catch (e) {
-      console.log('Error adding');
+      return e;
+    }
+  }
+
+  // method to add many documents to the collection
+  async addMany(coll, data) {
+    try {
+      return await this.db.collection(coll).insertMany(data);
+    } catch (e) {
+      return e;
     }
   }
 
@@ -40,7 +49,7 @@ class MongoDB {
     try {
       return await this.db.collection(coll).findOne(query);
     } catch (e) {
-      console.log('Error getting data');
+      return e;
     }
   }
 
@@ -55,7 +64,7 @@ class MongoDB {
     try {
       return await this.db.collection(coll).find(query).toArray();
     } catch (e) {
-      console.log('Error getting data: ', e);
+      return e;
     }
   }
 
@@ -72,22 +81,25 @@ class MongoDB {
     try {
       return await this.db.collection(coll).find(query).skip((page - 1) * limit).limit(limit).toArray();
     } catch (e) {
-      console.log('Error getting data: ', e);
+      return e;
     }
   }
 
   /* methods to get many documents from the collection
     Parameters:
     - coll - the collection name
+    - field - the field to find the documents
     - ids - the ids list of the documents
     Returns:
     - the documents found
   */
-  async getFromList(coll, ids) {
+  async getFromList(coll, field, ids) {
     try {
-      return await this.db.collection(coll).find({ _id: { $in: ids } }).toArray();
+      const query = {};
+      query[field] = { $in: ids };
+      return await this.db.collection(coll).find(query).toArray();
     } catch (e) {
-      console.log('Error getting data: ', e);
+      return e;
     }
   }
 

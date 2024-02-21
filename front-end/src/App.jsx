@@ -8,9 +8,10 @@ function App() {
     userName: 'test',
     password: '1234',
     fullName: 'test1',
-    email: 'test707h7@yahoo',
-    role: 'Instructor',
-    phoneNumber: '123456789'
+    email: 'sas@yahoo',
+    role: 'user',
+    phoneNumber: '123456789',
+    list: ['one', 'two', 'three']
   }
   const updatedUser = {
     password: 'sasda',
@@ -51,7 +52,7 @@ function App() {
 
   const handleData = () => {
     const id = '60f3e3e3e3e3e3e3e3e3e3e3';
-    axios.get(url + '/courses/' + id, updatedUser, {
+    axios.get(url + '/courses/' + id, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Cookies.get('authToken'),

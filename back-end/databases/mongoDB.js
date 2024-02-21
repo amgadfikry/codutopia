@@ -59,6 +59,38 @@ class MongoDB {
     }
   }
 
+  /* methods to get a specific number of documents per page from the collection
+    Parameters:
+    - coll - the collection name
+    - query - the query to find the documents
+    - page - the page number
+    - limit - the number of documents per page
+    Returns:
+    - the documents found
+  */
+  async pagination(coll, query, page, limit) {
+    try {
+      return await this.db.collection(coll).find(query).skip((page - 1) * limit).limit(limit).toArray();
+    } catch (e) {
+      console.log('Error getting data: ', e);
+    }
+  }
+
+  /* methods to get many documents from the collection
+    Parameters:
+    - coll - the collection name
+    - ids - the ids list of the documents
+    Returns:
+    - the documents found
+  */
+  async getFromList(coll, ids) {
+    try {
+      return await this.db.collection(coll).find({ _id: { $in: ids } }).toArray();
+    } catch (e) {
+      console.log('Error getting data: ', e);
+    }
+  }
+
   /* methods to update one document in the collection
     Parameters:
     - coll - the collection name
@@ -67,13 +99,14 @@ class MongoDB {
     Returns:
     - the result of the operation
   */
-  async updateOne(coll, query, data) {
+  async updateOne(coll, query, optionTOUpdate) {
     try {
-      return await this.db.collection(coll).updateOne(query, { $set: data });
+      return await this.db.collection(coll).updateOne(query, optionTOUpdate);
     } catch (e) {
       console.log('Error updating data: ', e);
     }
   }
+
 
   /* methods to delete one documents in the collection
     Parameters:

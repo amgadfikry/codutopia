@@ -88,6 +88,21 @@ class RedisBD {
       console.log('Error deleting data');
     }
   }
+
+  /* Method delete one field from the hash key-value pairs from the database
+    Parameters:
+    - key - the key
+    - field - the field
+    Returns:
+    - the result of the operation
+  */
+  async delHashField(key, field) {
+    try {
+      return await this.redis.hdel(key, field);
+    } catch (e) {
+      console.log('Error deleting data');
+    }
+  }
 }
 
 // create an instance of the RedisBD class and export it

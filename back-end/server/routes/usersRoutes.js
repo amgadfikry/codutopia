@@ -26,5 +26,8 @@ userRouter.put('/update', MiddlewareControl.authMiddleware, UserControl.updateUs
 // update user password route
 userRouter.put('/updatePassword', MiddlewareControl.authMiddleware, UserControl.updatePassword);
 
+// Delete user route
+userRouter.delete('/delete', MiddlewareControl.authMiddleware, UserControl.deleteUser);
+
 // Export the userRouter
 export default userRouter;

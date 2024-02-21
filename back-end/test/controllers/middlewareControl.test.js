@@ -110,7 +110,7 @@ describe('Unittest of MiddlewareControl methods', () => {
     // Test case for the roleMiddleware method when user role is not the same as the role passed
     it('when user role is not the same as the role passed', () => {
       res.locals.user = { role: 'user' };
-      MiddlewareControl.roleMiddleware('admin')(req, res, next);
+      MiddlewareControl.roleMiddleware(['admin'])(req, res, next);
       expect(res.statusCode).to.equal(401);
       expect(res.data).to.have.property('msg', 'Unauthorized');
       expect(next.calledOnce).to.be.false;
@@ -118,7 +118,7 @@ describe('Unittest of MiddlewareControl methods', () => {
     // Test case for the roleMiddleware method when user role is the same as the role passed
     it('when user role is the same as the role passed', () => {
       res.locals.user = { role: 'user' };
-      MiddlewareControl.roleMiddleware('user')(req, res, next);
+      MiddlewareControl.roleMiddleware(['user'])(req, res, next);
       expect(next.calledOnce).to.be.true;
     });
   });

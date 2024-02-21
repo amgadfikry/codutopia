@@ -21,7 +21,7 @@ services:
   # Back-end service (server) container configuration
   server:
     container_name: server
-    build: ./back-end/server
+    build: ./back-end
     restart: always
     networks:
       client-server:
@@ -30,12 +30,14 @@ services:
       server-redis:
     volumes:
       - ./back-end:/app
+    environment:
+      - NODE_ENV=test
     env_file:
       - ./back-end/.env
     depends_on:
       - mongoDB
       - redis
-    command: sh -c "npm run generate-key && npm run start-watch"
+    command: sh -c "./entryPoint.sh"
 
   # MongoDB service container configuration
   mongoDB:

@@ -109,7 +109,7 @@ class CoursesControl {
       const user = res.locals.user;
       // retrive the ids list from the user object and parse it to an array and map it to an array of ObjectIds
       const idsList = JSON.parse(user.enrolledCourses).map((id) => new ObjectId(id));
-      const courses = await mongoDB.getFromList('courses', idsList);
+      const courses = await mongoDB.getFromList('courses', '_id', idsList);
       return res.status(200).json({ msg: 'Courses found', data: courses });
     }
     catch (e) {

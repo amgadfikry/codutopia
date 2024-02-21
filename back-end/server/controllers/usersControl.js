@@ -1,44 +1,32 @@
 import bcrypt from 'bcrypt';
 import mongoDB from '../../databases/mongoDB.js';
 import redisDB from '../../databases/redisDB.js';
+import Global from '../utils/global.js';
 import jwt from 'jsonwebtoken';
+import { ObjectId } from 'mongodb';
 
 // UsersControl class with a static method containing the logic to user routes
 class UsersControl {
   /* register method to create a new user
-    if the user already exists, and role is same, return 409 status code
-    if the user already exists, and role is different, update the role and return 201 status code
-    if the user does not exist, create a new user and return 201 status code
+    if the user already exists, return 409 status code
+    if the user does not exist, hash the password and add the user to the database collection of respective role
   */
   static async register(req, res) {
     try {
-      const { userName, email, password, fullName, role, phoneNumber } = req.body;
+      const data = req.body;
       // Check if the user already exists
-      const existingUser = await mongoDB.getOne('users', { email });
+      const existingUser = await mongoDB.getOne(data.role, { email: data.email });
       if (existingUser) {
-        // Check if the user already has the role
-        if (existingUser.role.includes(role)) {
-          return res.status(409).json({ msg: 'User already exists' });
-        }
-        // Add the role to the user
-        existingUser.role.push(role);
-        const id = existingUser._id;
-        // Update the user in the database
-        await mongoDB.updateOne('users', { id }, { role: existingUser.role });
-        return res.status(201).json({ msg: 'User created successfully', userID: id.toString() });
+        return res.status(409).json({ msg: 'User already exists' });
       }
       // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(data.password, 10);
       const user = {
-        userName,
-        email,
+        ...data,
         password: hashedPassword,
-        fullName,
-        role: [role],
-        phoneNumber,
       };
       // Add the user to the database
-      const newUser = await mongoDB.addOne('users', user);
+      const newUser = await mongoDB.addOne(data.role, user);
       return res.status(201).json({ msg: `User created successfully`, userID: newUser.toString() });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
@@ -55,8 +43,8 @@ class UsersControl {
     try {
       const { email, password, role } = req.body;
       // Check if the user exists or has same role
-      const existingUser = await mongoDB.getOne('users', { email });
-      if (!existingUser || !existingUser.role.includes(role)) {
+      const existingUser = await mongoDB.getOne(role, { email });
+      if (!existingUser) {
         return res.status(401).json({ msg: 'Invalid credentials' });
       }
       // Check if the password is valid
@@ -65,14 +53,9 @@ class UsersControl {
         return res.status(401).json({ msg: 'Invalid credentials' });
       }
       // Create a token
-      const token = jwt.sign({ id: existingUser._id.toString(), email }, process.env.SECRET_KEY, { expiresIn: '3d' });
-      const redisData = {
-        email,
-        fullName: existingUser.fullName,
-        userName: existingUser.userName,
-        id: existingUser._id.toString(),
-        role: JSON.stringify(existingUser.role),
-      }
+      const token = jwt.sign({ id: existingUser._id.toString(), email, role }, process.env.SECRET_KEY, { expiresIn: '3d' });
+      // Set the user data in redis without the password field and with the id as a string if array convert to string
+      const redisData = Global.prepareDataToRedis(existingUser);
       // Set the token in redis with the user data
       await redisDB.setHashMulti(token, redisData, 259200);
       // Set the token in a cookie
@@ -86,7 +69,7 @@ class UsersControl {
   /* logout method to remove a token from redis */
   static async logout(req, res) {
     try {
-      const token = req.headers.authorization;
+      const token = res.locals.token;
       await redisDB.del(token);
       res.status(200).json({ msg: 'Logout successful' });
     } catch (error) {
@@ -95,23 +78,17 @@ class UsersControl {
   }
 
   /* getUser method to get a user from redis */
-  static async getUser(req, res) {
-    try {
-      const token = req.headers.authorization;
-      const user = await redisDB.getHashAll(token);
-      return res.status(200).json({ msg: 'User found', data: user });
-    } catch (error) {
-      return res.status(500).json({ msg: 'Internal server error' });
-    }
+  static getUser(req, res) {
+    const user = res.locals.user;
+    return res.status(200).json({ msg: 'User found', data: user });
   }
 
   /* getUserDetails method to get a user from mongoDB with full details */
   static async getUserDetails(req, res) {
     try {
-      const token = req.headers.authorization;
-      const { email } = await redisDB.getHashAll(token);
-      const user = await mongoDB.getOne('users', { email });
-      return res.status(200).json({ msg: 'User found', data: user });
+      const user = res.locals.user;
+      const userDB = await mongoDB.getOne(user.role, { _id: new ObjectId(user.id) });
+      return res.status(200).json({ msg: 'User found', data: userDB });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
     }
@@ -121,15 +98,17 @@ class UsersControl {
   static async updateUser(req, res) {
     try {
       // Get the user email from redis by the token
-      const token = req.headers.authorization;
-      const { email } = await redisDB.getHashAll(token);
+      const token = res.locals.token;
+      const user = res.locals.user;
       // Update the user in mongoDB
       const newData = req.body;
-      await mongoDB.updateOne('users', { email }, newData);
-      // Update fullName in redis if it exists in the request body
-      if (newData.fullName) {
-        await redisDB.setHashMulti(token, { fullName: newData.fullName });
-      }
+      await mongoDB.updateOne(
+        user.role,
+        { _id: new ObjectId(user.id) },
+        { $set: { newData } });
+      // Update the user in redis
+      const redisData = Global.prepareDataToRedis(newData);
+      await redisDB.setHashMulti(token, redisData);
       return res.status(200).json({ msg: 'User updated successfully' });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
@@ -143,10 +122,10 @@ class UsersControl {
   static async updatePassword(req, res) {
     // Get the user email from redis by the token
     try {
-      const token = req.headers.authorization;
-      const { email } = await redisDB.getHashAll(token);
+      const token = res.locals.token;
+      const user = res.locals.user;
       const { password } = req.body;
-      const currentData = await mongoDB.getOne('users', { email });
+      const currentData = await mongoDB.getOne(user.role, { _id: new ObjectId(user.id) });
       // Check if the new password is the same as the old password
       const samePassword = await bcrypt.compare(password, currentData.password);
       if (samePassword) {
@@ -154,8 +133,26 @@ class UsersControl {
       }
       // Hash the new password and update it in mongoDB
       const newPassword = await bcrypt.hash(password, 10);
-      await mongoDB.updateOne('users', { email }, newPassword);
+      await mongoDB.updateOne(
+        user.role,
+        { _id: new ObjectId(user.id) },
+        { $set: { newPassword } });
       return res.status(200).json({ msg: 'Password updated successfully' });
+    } catch (error) {
+      return res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
+
+  /* deleteUser method to delete a user from mongoDB and redis */
+  static async deleteUser(req, res) {
+    try {
+      const token = res.locals.token;
+      const user = res.locals.user;
+      // Delete the user from mongoDB
+      await mongoDB.deleteOne(user.role, { _id: new ObjectId(user.id) });
+      // Delete the user from redis
+      await redisDB.del(token);
+      return res.status(200).json({ msg: 'User deleted successfully' });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
     }

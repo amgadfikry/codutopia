@@ -4,13 +4,13 @@ import { expect } from 'chai';
 // Test suite for the redisDB module and its methods by connecting to the database
 describe('Unittest of RedisDB', () => {
   //before testing, change the database to the test database
-  before(() => {
-    redisDB.redis.select(1);
+  before(async () => {
+    await redisDB.redis.select(1);
   });
 
   // after testing, flush the database
-  after(() => {
-    redisDB.redis.flushdb();
+  after(async () => {
+    await redisDB.redis.flushdb();
   });
 
   // Test case for the set method to add new key value pair with a time to live

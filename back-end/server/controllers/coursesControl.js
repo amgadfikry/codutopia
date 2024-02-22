@@ -139,10 +139,13 @@ class CoursesControl {
         { $push: { createdCourses: newCourse._id } }
       );
       // add the course id to the user enrolledCourses list in redis
-      await redisDB.setHashMulti(token, 'createdCourses', newCourse._id.toString());
+      const newCreatedCourses = JSON.parse(user.createdCourses);
+      newCreatedCourses.push(newCourse._id);
+      await redisDB.setHashMulti(token, 'createdCourses', JSON.stringify(newCreatedCourses));
       return res.status(201).json({ msg: 'Course created' });
     }
     catch (e) {
+      console.log(e);
       return res.status(500).json({ msg: 'Internal server error' });
     }
   }
@@ -206,7 +209,7 @@ class CoursesControl {
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $push: { enrolledCourses: courseId }, $inc: { numberOfStudent: 1 } }
+        { $push: { enrolledCourses: courseId } }
       );
       // add the course id to the user enrolledCourses list in redis
       const enrolledCourses = JSON.parse(user.enrolledCourses)
@@ -235,7 +238,7 @@ class CoursesControl {
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $pull: { enrolledCourses: courseId }, $inc: { numberOfStudent: -1 } }
+        { $pull: { enrolledCourses: courseId } }
       );
       // delete the course id from the user enrolledCourses list in redis
       const enrolledCourses = JSON.parse(user.enrolledCourses).filter((courseId) => courseId !== id);

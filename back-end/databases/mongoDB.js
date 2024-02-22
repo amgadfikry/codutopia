@@ -9,7 +9,12 @@ class MongoDB {
   constructor() {
     const url = process.env.MONGO_URL || 'mongodb://localhost:27017';
     MongoClient.connect(url).then((client) => {
-      this.db = client.db('e-learning');
+      const envVar = process.env.NODE_ENV;
+      if (envVar === 'test') {
+        this.db = client.db('test');
+      } else {
+        this.db = client.db('e.learning');
+      }
     });
   }
 
@@ -115,7 +120,7 @@ class MongoDB {
     try {
       return await this.db.collection(coll).updateOne(query, optionTOUpdate);
     } catch (e) {
-      console.log('Error updating data: ', e);
+      return e;
     }
   }
 
@@ -131,7 +136,7 @@ class MongoDB {
     try {
       return await this.db.collection(coll).deleteOne(query);
     } catch (e) {
-      console.log('Error deleting data: ', e);
+      return e;
     }
   }
 
@@ -146,7 +151,7 @@ class MongoDB {
     try {
       return await this.db.collection(coll).deleteMany(query);
     } catch (e) {
-      console.log('Error deleting data: ', e);
+      return e;
     }
   }
 
@@ -160,7 +165,7 @@ class MongoDB {
     try {
       return await this.db.collection(coll).countDocuments();
     } catch (e) {
-      console.log('Error counting data: ', e);
+      return e;
     }
   }
 }

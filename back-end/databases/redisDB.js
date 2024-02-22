@@ -47,7 +47,7 @@ class RedisBD {
       return result;
     }
     catch (e) {
-      console.log('Error adding');
+      return e;
     }
   }
 
@@ -61,7 +61,7 @@ class RedisBD {
     try {
       return await this.redis.get(key);
     } catch (e) {
-      console.log('Error getting data');
+      return e;
     }
   }
 
@@ -75,7 +75,7 @@ class RedisBD {
     try {
       return await this.redis.hgetall(key);
     } catch (e) {
-      console.log('Error getting data');
+      return e;
     }
   }
 
@@ -89,7 +89,7 @@ class RedisBD {
     try {
       return await this.redis.del(key);
     } catch (e) {
-      console.log('Error deleting data');
+      return e;
     }
   }
 
@@ -104,7 +104,7 @@ class RedisBD {
     try {
       return await this.redis.hdel(key, field);
     } catch (e) {
-      console.log('Error deleting data');
+      return e;
     }
   }
 }

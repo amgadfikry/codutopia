@@ -9,8 +9,8 @@
         "start": "node ./server/app.js",
         "generate-key": "node ./secretKey.js",
         "test": "mocha --require @babel/register test/**/*.test.js --verbose",
-        "test-watch": "nodemon --watch . --exec 'mocha --require @babel/register test/**/*.test.js --verbose'",
-        "test-full": "npm-run-all --parallel start test-watch"
+        "test-watch": "nodemon --watch ./test --exec 'mocha --require @babel/register test/**/*.test.js --verbose'",
+        "test-full": "npm-run-all --parallel start-watch test-watch"
     },
     "author": "",
     "license": "ISC",

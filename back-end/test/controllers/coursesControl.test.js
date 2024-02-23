@@ -23,8 +23,7 @@ describe("Unittest of CoursesControl methods", () => {
           id: "60f3e3e3e3e3e3e3e3e3e3e3",
           email: "email",
           role: "user",
-          enrolledCourses: `["60f3e3e3e3e3e3e3e3e3e3e3"]`,
-          createdCourses: `["60f3e3e3e3e3e3e3e3e3e3e3"]`,
+          courses: `["60f3e3e3e3e3e3e3e3e3e3e3"]`,
         },
         token: "token",
       }
@@ -165,6 +164,7 @@ describe("Unittest of CoursesControl methods", () => {
   describe('EnrolledCourses method', () => {
     // Test case for enrolledCourses method with a successful response
     it('when a successful response', async () => {
+      sinon.stub(mongoDB, 'getOne').returns(['60f3e3e3e3e3e3e3e3e3e3e3']);
       sinon.stub(mongoDB, 'getFromList').returns([req.body]);
       await CoursesControl.enrolledCourses(req, res);
       expect(res.statusCode).to.equal(200);
@@ -184,12 +184,12 @@ describe("Unittest of CoursesControl methods", () => {
     // Test case for createCourse method with a successful response
     it('when a successful response', async () => {
       res.locals.user.role = "instructor";
-      sinon.stub(mongoDB, 'addOne').returns({ _id: "60f3e3e3e3e3e3e3e3e3e3e3", title: "title" });
+      sinon.stub(mongoDB, 'addOne').returns("60f3e3e3e3e3e3e3e3e3e3e3");
       sinon.stub(mongoDB, 'updateOne').returns('ok');
       sinon.stub(redisDB, 'setHashMulti').returns('ok');
       await CoursesControl.createCourse(req, res);
       expect(res.statusCode).to.equal(201);
-      expect(res.data).to.deep.equal({ msg: 'Course created' });
+      expect(res.data).to.deep.equal({ msg: 'Course created', courseId: "60f3e3e3e3e3e3e3e3e3e3e3" });
     });
     // Test case for createCourse method with an error response
     it('when there is an internal server error', async () => {
@@ -223,7 +223,7 @@ describe("Unittest of CoursesControl methods", () => {
     // Test case for deleteCourse method with a successful response
     it('when a successful response', async () => {
       sinon.stub(mongoDB, 'deleteOne').returns('ok');
-      sinon.stub(redisDB, 'setHashMulti').returns('ok');
+      sinon.stub(mongoDB, 'updateMany').returns('ok');
       await CoursesControl.deleteCourse(req, res);
       expect(res.statusCode).to.equal(200);
       expect(res.data).to.deep.equal({ msg: 'Course deleted' });

@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { expect, use } from 'chai';
+import { expect } from 'chai';
 import mongoDB from '../../databases/mongoDB.js';
 import redisDB from '../../databases/redisDB.js'
 
-// Test suite for routes integration
-describe('Integration tests for routes', () => {
+
+// Integration tests for users routes
+describe('Integration tests for users routes', () => {
   let requestData;
   let responsesResult;
   let cookies;
@@ -12,8 +13,7 @@ describe('Integration tests for routes', () => {
   let urlOptions;
   // Before ingesting the test, congigure databases and data or requests
   before(() => {
-    // configure redis database
-    redisDB.redis.select(1);
+    // clean redis database
     requestData = {
       user: {
         userName: 'learner',
@@ -21,7 +21,6 @@ describe('Integration tests for routes', () => {
         email: 'test@learner.com',
         fullName: 'learner test',
         role: 'learner',
-        enrolledCourses: [],
       },
       instructor: {
         userName: 'instructor',
@@ -29,7 +28,6 @@ describe('Integration tests for routes', () => {
         email: 'test@instructor@com',
         fullName: 'instructor test',
         role: 'instructor',
-        createdCourses: [],
       },
       course: {
         title: 'course',
@@ -168,7 +166,7 @@ describe('Integration tests for routes', () => {
         const response = await axios.get(`${url}/users/brief`, urlOptions);
       } catch (error) {
         expect(error.response.status).to.equal(401);
-        expect(error.response.data).to.have.property('msg', 'Not authorized');
+        expect(error.response.data).to.have.property('msg', 'Unauthorized');
       }
     });
   });
@@ -193,7 +191,7 @@ describe('Integration tests for routes', () => {
         const response = await axios.get(`${url}/users/details`, urlOptions);
       } catch (error) {
         expect(error.response.status).to.equal(401);
-        expect(error.response.data).to.have.property('msg', 'Not authorized');
+        expect(error.response.data).to.have.property('msg', 'Unauthorized');
       }
     });
   });
@@ -202,13 +200,16 @@ describe('Integration tests for routes', () => {
   describe('Update user route', () => {
     // Test Case of student update
     it('student update successfully', async () => {
-      requestData.user.fullName = 'new learner test';
       urlOptions.headers.Authorization = cookies.authTokenUser;
       const response = await axios.put(`${url}/users/update`, {
-        fullName: requestData.user.fullName,
+        fullName: 'new learner test',
       }, urlOptions);
       expect(response.status).to.equal(200);
       expect(response.data).to.have.property('msg', 'User updated successfully');
+      const userMongo = await axios.get(`${url}/users/details`, urlOptions);
+      expect(userMongo.data.data).to.have.property('fullName', 'new learner test');
+      const userRedis = await axios.get(`${url}/users/brief`, urlOptions);
+      expect(userRedis.data.data).to.have.property('fullName', 'new learner test');
     });
     // Test Case if not authorized user
     it('not authorized user', async () => {
@@ -218,7 +219,7 @@ describe('Integration tests for routes', () => {
         }, urlOptions);
       } catch (error) {
         expect(error.response.status).to.equal(401);
-        expect(error.response.data).to.have.property('msg', 'Not authorized');
+        expect(error.response.data).to.have.property('msg', 'Unauthorized');
       }
     });
   });
@@ -235,6 +236,30 @@ describe('Integration tests for routes', () => {
       expect(response.status).to.equal(200);
       expect(response.data).to.have.property('msg', 'Password updated successfully');
     });
+    // Test case if failed to login with old password
+    it('failed to login with old password', async () => {
+      try {
+        const response = await axios.post(`${url}/users/login`, {
+          email: requestData.user.email,
+          password: 'learner',
+          role: requestData.user.role,
+        });
+      } catch (error) {
+        expect(error.response.status).to.equal(401);
+        expect(error.response.data).to.have.property('msg', 'Invalid credentials');
+      }
+    });
+    // Test case if success to login with new password
+    it('success to login with new password', async () => {
+      const response = await axios.post(`${url}/users/login`, {
+        email: requestData.user.email,
+        password: requestData.user.password,
+        role: requestData.user.role,
+      });
+      cookies.authTokenUser = response.headers.authorization;
+      expect(response.status).to.equal(200);
+      expect(response.data).to.have.property('msg', 'Login successful');
+    });
     // Test case if same password
     it('same password', async () => {
       urlOptions.headers.Authorization = cookies.authTokenUser;
@@ -250,12 +275,13 @@ describe('Integration tests for routes', () => {
     // Test Case if not authorized user
     it('not authorized user', async () => {
       try {
+        urlOptions.headers.Authorization = '';
         const response = await axios.put(`${url}/users/updatePassword`, {
           password: requestData.user.password,
         }, urlOptions);
       } catch (error) {
         expect(error.response.status).to.equal(401);
-        expect(error.response.data).to.have.property('msg', 'Not authorized');
+        expect(error.response.data).to.have.property('msg', 'Unauthorized');
       }
     });
   });
@@ -275,7 +301,7 @@ describe('Integration tests for routes', () => {
         const response = await axios.delete(`${url}/users/delete`, urlOptions);
       } catch (error) {
         expect(error.response.status).to.equal(401);
-        expect(error.response.data).to.have.property('msg', 'Not authorized');
+        expect(error.response.data).to.have.property('msg', 'Unauthorized');
       }
     });
   });
@@ -295,7 +321,7 @@ describe('Integration tests for routes', () => {
         const response = await axios.get(`${url}/users/logout`, urlOptions);
       } catch (error) {
         expect(error.response.status).to.equal(401);
-        expect(error.response.data).to.have.property('msg', 'Not authorized');
+        expect(error.response.data).to.have.property('msg', 'Unauthorized');
       }
     });
   });

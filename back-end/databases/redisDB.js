@@ -12,6 +12,8 @@ class RedisBD {
     let db = 0;
     if (envVar === 'test') {
       db = 1;
+    } else if (envVar === 'dev') {
+      db = 2;
     }
     url += `/${db}`;
     this.redis = new ioredis(url);

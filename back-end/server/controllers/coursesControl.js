@@ -41,8 +41,8 @@ class CoursesControl {
   */
   static async coursesBySearch(req, res) {
     try {
-      const searchCritria = req.body;
-      const courses = await mongoDB.getAll('courses', searchCritria);
+      const { text } = req.params;
+      const courses = await mongoDB.getAll('courses', { title: { $regex: text, $options: 'i' } });
       return res.status(200).json({ msg: 'Courses found', data: courses });
     }
     catch (e) {
@@ -108,8 +108,8 @@ class CoursesControl {
     try {
       const user = res.locals.user;
       // retrive the ids list from the user object and parse it to an array and map it to an array of ObjectIds
-      const idsList = JSON.parse(user.enrolledCourses).map((id) => new ObjectId(id));
-      const courses = await mongoDB.getFromList('courses', '_id', idsList);
+      const idsList = await mongoDB.getOne(user.role, { _id: new ObjectId(user.id) });
+      const courses = await mongoDB.getFromList('courses', '_id', idsList.courses);
       return res.status(200).json({ msg: 'Courses found', data: courses });
     }
     catch (e) {
@@ -130,22 +130,22 @@ class CoursesControl {
       const user = res.locals.user;
       const course = req.body;
       // set the instructorId to the user id
-      course.instructorId = new ObjectId(user.id);
+      const courseData = {
+        ...course,
+        instructorId: new ObjectId(user.id),
+        reviews: [],
+        content: [],
+      };
       // add the course to the database
-      const newCourse = await mongoDB.addOne('courses', course);
+      const newCourse = await mongoDB.addOne('courses', courseData);
       // add the course id to the user createdCourses list in the mongo
       await mongoDB.updateOne(user.role,
-        { _id: course.instructorId },
-        { $push: { createdCourses: newCourse._id } }
+        { _id: new ObjectId(user.id) },
+        { $push: { courses: newCourse } }
       );
-      // add the course id to the user enrolledCourses list in redis
-      const newCreatedCourses = JSON.parse(user.createdCourses);
-      newCreatedCourses.push(newCourse._id);
-      await redisDB.setHashMulti(token, 'createdCourses', JSON.stringify(newCreatedCourses));
-      return res.status(201).json({ msg: 'Course created' });
+      return res.status(201).json({ msg: 'Course created', courseId: newCourse.toString() });
     }
     catch (e) {
-      console.log(e);
       return res.status(500).json({ msg: 'Internal server error' });
     }
   }
@@ -162,7 +162,7 @@ class CoursesControl {
       await mongoDB.updateOne(
         'courses',
         { _id: new ObjectId(id) },
-        { $set: { course } });
+        { $set: course });
       return res.status(200).json({ msg: 'Course updated' });
     }
     catch (e) {
@@ -180,12 +180,10 @@ class CoursesControl {
     try {
       const { id } = req.params;
       const user = res.locals.user;
-      const token = res.locals.token;
       // delete the course from the database mongo
       await mongoDB.deleteOne('courses', { _id: new ObjectId(id) });
-      // delete the course from the database redis
-      const createdCourses = JSON.parse(user.createdCourses).filter((courseId) => courseId !== id);
-      await redisDB.setHashMulti(token, 'createdCourses', JSON.stringify(createdCourses));
+      // delete the course from the user enrolled courses list in the mongo
+      await mongoDB.updateMany(user.role, { courses: new ObjectId(id) }, { $pull: { courses: new ObjectId(id) } });
       return res.status(200).json({ msg: 'Course deleted' });
     }
     catch (e) {
@@ -202,19 +200,14 @@ class CoursesControl {
   static async enrollCourse(req, res) {
     try {
       const { id } = req.params;
-      const token = res.locals.token;
       const user = res.locals.user;
       const courseId = new ObjectId(id);
       // add the course id to the user enrolledCourses list in the mongo
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $push: { enrolledCourses: courseId } }
+        { $push: { courses: courseId } }
       );
-      // add the course id to the user enrolledCourses list in redis
-      const enrolledCourses = JSON.parse(user.enrolledCourses)
-      enrolledCourses.push(id);
-      await redisDB.setHashMulti(token, 'enrolledCourses', JSON.stringify(enrolledCourses));
       return res.status(200).json({ msg: 'Course enrolled' });
     }
     catch (e) {
@@ -231,18 +224,14 @@ class CoursesControl {
   static async unenrollCourse(req, res) {
     try {
       const { id } = req.params;
-      const token = res.locals.token;
       const user = res.locals.user;
       const courseId = new ObjectId(id);
       // delete the course id from the user enrolledCourses list in the mongo
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $pull: { enrolledCourses: courseId } }
+        { $pull: { courses: courseId } }
       );
-      // delete the course id from the user enrolledCourses list in redis
-      const enrolledCourses = JSON.parse(user.enrolledCourses).filter((courseId) => courseId !== id);
-      await redisDB.setHashMulti(token, 'enrolledCourses', JSON.stringify(enrolledCourses));
       return res.status(200).json({ msg: 'Course unenrolled' });
     }
     catch (e) {

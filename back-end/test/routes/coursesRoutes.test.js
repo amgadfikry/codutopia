@@ -275,8 +275,10 @@ describe('Integration tests for courses routes', () => {
       expect(response.data.data).to.have.property('courses');
       expect(response.data.data.courses).to.be.an('array');
       expect(response.data.data.courses.length).to.equal(2);
-      expect(response.data.data.courses).to.include(responsesResult.course1);
-      expect(response.data.data.courses).to.include(responsesResult.course);
+      expect(response.data.data.courses[0].courseId).to.equal(responsesResult.course);
+      expect(response.data.data.courses[1].courseId).to.equal(responsesResult.course1);
+      expect(response.data.data.courses[0]).to.have.property('progress', 0);
+      expect(response.data.data.courses[0]).to.have.property('score', 0);
     });
     // Test Case of not authorized user
     it('not authorized user', async () => {
@@ -301,7 +303,8 @@ describe('Integration tests for courses routes', () => {
       expect(response.data).to.have.property('data');
       expect(response.data.data).to.be.an('array');
       expect(response.data.data.length).to.equal(2);
-      expect(response.data.data[0]).to.have.property('title', 'newTitle');
+      expect(response.data.data[0].title).to.equal('newTitle');
+      expect(response.data.data[1].title).to.equal('course1');
     });
     // Test Case of not authorized user
     it('not authorized user', async () => {
@@ -332,8 +335,7 @@ describe('Integration tests for courses routes', () => {
       expect(response.data.data).to.have.property('courses');
       expect(response.data.data.courses).to.be.an('array');
       expect(response.data.data.courses.length).to.equal(1);
-      expect(response.data.data.courses).to.include(responsesResult.course1);
-      expect(response.data.data.courses).to.not.include(responsesResult.course);
+      expect(response.data.data.courses[0].courseId).to.equal(responsesResult.course1);
     });
     // Test Case of not authorized user
     it('not authorized user', async () => {

@@ -14,7 +14,7 @@ coursesRouter.get('/page/:page/limit/:limit',
   CoursesControl.coursePagination);
 
 // Get Course by search criteria route
-coursesRouter.post('/search/',
+coursesRouter.get('/search/:text',
   CoursesControl.coursesBySearch);
 
 // get Course by search criteria pagination route
@@ -23,17 +23,17 @@ coursesRouter.post('/search/page/:page/limit/:limit',
 
 // Get course by id route
 coursesRouter.get('/:id',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['user', 'instructor'])],
+  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['learner', 'instructor'])],
   CoursesControl.coursesById);
 
 // Get Course by instructor id route
 coursesRouter.get('/instructor/:id',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor', 'user'])],
+  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor', 'learner'])],
   CoursesControl.coursesByInstructorId);
 
 // Get all enrolled courses route
 coursesRouter.get('/enrolled/all',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['user'])],
+  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['learner'])],
   CoursesControl.enrolledCourses);
 
 // Create a new course route
@@ -52,13 +52,13 @@ coursesRouter.delete('/delete/:id',
   CoursesControl.deleteCourse);
 
 // Enroll in a course route
-coursesRouter.post('/enroll/:id',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['user'])],
+coursesRouter.get('/enroll/:id',
+  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['learner'])],
   CoursesControl.enrollCourse);
 
 // Unenroll from a course route
 coursesRouter.delete('/unenroll/:id',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['user'])],
+  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['learner'])],
   CoursesControl.unenrollCourse);
 
 // Export the coursesRouter

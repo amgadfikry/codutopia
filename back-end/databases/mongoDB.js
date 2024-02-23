@@ -12,8 +12,10 @@ class MongoDB {
       const envVar = process.env.NODE_ENV;
       if (envVar === 'test') {
         this.db = client.db('test');
+      } else if (envVar === 'dev') {
+        this.db = client.db('dev');
       } else {
-        this.db = client.db('e.learning');
+        this.db = client.db('e-learning');
       }
     });
   }

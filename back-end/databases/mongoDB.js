@@ -124,6 +124,21 @@ class MongoDB {
     }
   }
 
+  /* method to update many documents in the collection
+    Parameters:
+    - coll - the collection name
+    - query - the query to find the documents
+    - data - the data to be updated
+    Returns:
+    - the result of the operation
+  */
+  async updateMany(coll, query, optionTOUpdate) {
+    try {
+      return await this.db.collection(coll).updateMany(query, optionTOUpdate);
+    } catch (e) {
+      return e;
+    }
+  }
 
   /* methods to delete one documents in the collection
     Parameters:

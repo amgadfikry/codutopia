@@ -21,10 +21,7 @@ class UsersControl {
       }
       // Hash the password
       const hashedPassword = await bcrypt.hash(data.password, 10);
-      const user = {
-        ...data,
-        password: hashedPassword,
-      };
+      const user = { ...data, password: hashedPassword, courses: [] };
       // Add the user to the database
       const newUser = await mongoDB.addOne(data.role, user);
       return res.status(201).json({ msg: `User created successfully`, userID: newUser.toString() });
@@ -105,7 +102,7 @@ class UsersControl {
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $set: { newData } });
+        { $set: newData });
       // Update the user in redis
       const redisData = Global.prepareDataToRedis(newData);
       await redisDB.setHashMulti(token, redisData);
@@ -136,7 +133,7 @@ class UsersControl {
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $set: { newPassword } });
+        { $set: { password: newPassword } });
       return res.status(200).json({ msg: 'Password updated successfully' });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });

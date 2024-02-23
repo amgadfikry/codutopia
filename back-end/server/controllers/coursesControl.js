@@ -108,8 +108,9 @@ class CoursesControl {
     try {
       const user = res.locals.user;
       // retrive the ids list from the user object and parse it to an array and map it to an array of ObjectIds
-      const idsList = await mongoDB.getOne(user.role, { _id: new ObjectId(user.id) });
-      const courses = await mongoDB.getFromList('courses', '_id', idsList.courses);
+      const userObj = await mongoDB.getOne(user.role, { _id: new ObjectId(user.id) });
+      const idsList = userObj.courses.map(course => course.courseId);
+      const courses = await mongoDB.getFromList('courses', '_id', idsList);
       return res.status(200).json({ msg: 'Courses found', data: courses });
     }
     catch (e) {
@@ -202,11 +203,11 @@ class CoursesControl {
       const { id } = req.params;
       const user = res.locals.user;
       const courseId = new ObjectId(id);
-      // add the course id to the user enrolledCourses list in the mongo
+      // push object of courseId, progress, score to the user courses list in the mongo
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $push: { courses: courseId } }
+        { $push: { courses: { courseId, progress: 0, score: 0 } } }
       );
       return res.status(200).json({ msg: 'Course enrolled' });
     }
@@ -230,7 +231,7 @@ class CoursesControl {
       await mongoDB.updateOne(
         user.role,
         { _id: new ObjectId(user.id) },
-        { $pull: { courses: courseId } }
+        { $pull: { courses: { courseId } } }
       );
       return res.status(200).json({ msg: 'Course unenrolled' });
     }

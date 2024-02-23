@@ -100,6 +100,16 @@ describe('Unittest of MongoDB', () => {
     expect(value.hobbies.length).to.equal(0);
   });
 
+  // Test case of update many docuemts in the collection
+  it('UpdateMany update many documents in the collection', async () => {
+    const result = await mongoDB.updateMany('test', { age: 20 }, { $set: { age: 30 } });
+    expect(result).to.be.an('object');
+    expect(result.modifiedCount).to.equal(15);
+    const value = await mongoDB.getAll('test', { age: 30 });
+    expect(value).to.be.an('array');
+    expect(value.length).to.equal(15);
+  });
+
   //Test case when delete one document from the collection
   it('DeleteOne delete one document from collection', async () => {
     const result = await mongoDB.deleteOne('test', { name5: 'test5' });
@@ -111,17 +121,17 @@ describe('Unittest of MongoDB', () => {
 
   //Test case when count documents from the collection
   it('Count count documents from collection', async () => {
-    const result = await mongoDB.countColl('test', { age: 20 });
+    const result = await mongoDB.countColl('test', { age: 30 });
     expect(result).to.be.a('number');
     expect(result).to.equal(15);
   });
 
   //Test case when delete many documents from the collection
   it('DeleteMany delete many documents from collection', async () => {
-    const result = await mongoDB.deleteMany('test', { age: 20 });
+    const result = await mongoDB.deleteMany('test', { age: 30 });
     expect(result).to.be.an('object');
     expect(result.deletedCount).to.equal(15);
-    const value = await mongoDB.countColl('test', { age: 20 });
+    const value = await mongoDB.countColl('test', { age: 30 });
     expect(value).to.equal(0);
   });
 });

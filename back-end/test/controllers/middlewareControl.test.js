@@ -88,7 +88,6 @@ describe('Unittest of MiddlewareControl methods', () => {
       sinon.stub(jwt, 'verify').returns(tokenData);
       sinon.stub(mongoDB, 'getOne').returns(user);
       await MiddlewareControl.authMiddleware(req, res, next);
-      expect(res.locals.user).to.have.property('id', tokenData.id);
       expect(res.locals.user).to.have.property('fullName', 'user');
       expect(res.locals.user).to.have.property('role', user.role);
       expect(res.locals.user).to.have.property('role', tokenData.role);

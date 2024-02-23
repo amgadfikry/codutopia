@@ -164,11 +164,11 @@ describe("Unittest of CoursesControl methods", () => {
   describe('EnrolledCourses method', () => {
     // Test case for enrolledCourses method with a successful response
     it('when a successful response', async () => {
-      sinon.stub(mongoDB, 'getOne').returns(['60f3e3e3e3e3e3e3e3e3e3e3']);
-      sinon.stub(mongoDB, 'getFromList').returns([req.body]);
+      sinon.stub(mongoDB, 'getOne').returns({ courses: [{ courseId: "60f3e3e3e3e3e3e3e3e3e3e3" }] });
+      sinon.stub(mongoDB, 'getFromList').returns([{ title: "title" }]);
       await CoursesControl.enrolledCourses(req, res);
       expect(res.statusCode).to.equal(200);
-      expect(res.data).to.deep.equal({ msg: 'Courses found', data: [req.body] });
+      expect(res.data).to.deep.equal({ msg: 'Courses found', data: [{ title: "title" }] });
     });
     // Test case for enrolledCourses method with an error response
     it('when there is an internal server error', async () => {

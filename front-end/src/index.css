@@ -1,3 +1,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  font-family: 'Roboto', sans-serif;
+}
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F7F8;
+}
+::-webkit-scrollbar-thumb {
+  background: #1B0E91;
+  border-radius: 5px;
+}
+::scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::scrollbar-track {
+  background: #F5F7F8;
+}
+::scrollbar-thumb {
+  background: #1B0E91;
+  border-radius: 5px;
+}
+
+@layer components {
+  .btn-light-blue {
+    @apply bg-transparent text-darker-blue border-2 border-darker-blue rounded-md px-3 py-1 font-medium
+    transition-all duration-300 ease-in-out hover:bg-darker-blue hover:text-white;
+  }
+  .btn-dark-blue {
+    @apply bg-darker-blue text-white border-2 border-darker-blue rounded-md px-3 py-1 font-medium
+    transition-all duration-300 ease-in-out hover:bg-transparent hover:text-darker-blue;
+  }
+  .btn-light-red {
+    @apply bg-transparent text-light-red border-2 border-light-red rounded-md px-3 py-1 font-medium
+    transition-all duration-300 ease-in-out hover:bg-light-red hover:text-white;
+  }
+  .btn-light-red {
+    @apply bg-light-red text-white border-2 border-light-red rounded-md px-3 py-1 font-medium
+    transition-all duration-300 ease-in-out hover:bg-transparent hover:text-light-red;
+  }
+  .sidebar-link-small {
+    @apply text-darker-blue font-medium relative 
+    transition-all duration-300 ease-in-out mb-1 ml-2 px-1 
+  }
+  .sidebar-hover{
+    @apply before:absolute before:content-[''] before:w-0
+    before:h-full before:bg-light-red before:top-0 before:left-0 before:transition-all before:duration-300 before:ease-in-out
+    hover:before:w-full before:z-[-1] before:rounded-md
+  }
+  .sidebar-link{
+    @apply text-xl font-semibold mb-1 mt-1 text-darker-blue flex items-center relative before:absolute before:left-0 
+    before:content-[''] before:w-0 before:h-[2px] before:bg-light-red before:rounded-md before:transition-all before:bottom-0
+    before:duration-300 before:ease-in-out transition-all duration-300 ease-in-out hover:before:w-full pb-1
+  }
+}

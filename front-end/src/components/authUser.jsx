@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import {
   useDispatch, setAuth, axios, optionsWithCookies, setUserData, useEffect, Loading,
-  useState, useNavigate, url
+  useState, useNavigate, url, Cookies
 } from '../import';
 
 function AuthUser({ children }) {
@@ -10,6 +10,7 @@ function AuthUser({ children }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    optionsWithCookies.headers['Authorization'] = Cookies.get('authToken');
     axios.get(`${url}/users/brief`, optionsWithCookies)
       .then(res => {
         if (res.status === 200) {
@@ -28,7 +29,9 @@ function AuthUser({ children }) {
           setLoading(false);
           dispatch(setAuth('public'));
           dispatch(setUserData({}));
-          navigate('/');
+          if (['instructor', 'learner'].includes(window.location.pathname.split('/')[1])) {
+            navigate('/');
+          }
         } else {
           setLoading(false);
           navigate('/server-down');

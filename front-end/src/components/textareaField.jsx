@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-function TextAreaField({ label, placeholder, error, value, onChange }) {
+function TextAreaField({ label, placeholder, value, onChange }) {
   return (
     <div className="flex flex-col p-1">
       <label className="mb-1 ml-1 font-medium text-light-black" htmlFor={label}>{label}</label>
@@ -12,7 +12,6 @@ function TextAreaField({ label, placeholder, error, value, onChange }) {
         onChange={onChange}
         rows={5}
       />
-      {error && <p className="mt-1 ml-1 text-red-500 text-sm">{error}</p>}
     </div>
   )
 }

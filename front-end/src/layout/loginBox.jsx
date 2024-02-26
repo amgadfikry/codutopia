@@ -24,7 +24,7 @@ function LoginBox() {
     axios.post(`${url}/users/login`, inputData)
       .then((res) => {
         if (inputData.remember) {
-          Cookies.set('authToken', res.headers['authorization'], { expires: 365 });
+          Cookies.set('authToken', res.headers['authorization'], { expires: 3 });
         } else {
           Cookies.set('authToken', res.headers['authorization']);
         }
@@ -39,7 +39,7 @@ function LoginBox() {
   }
 
   return (
-    <div className="w-full bg-light-gray rounded-xl drop-shadow-lg  md:mt-0 sm:max-w-md xl:p-0 text-darker-blue" >
+    <div className="w-full bg-opacity-90 bg-light-gray rounded-xl drop-shadow-lg  md:mt-0 sm:max-w-md xl:p-0 text-darker-blue" >
       <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
         <div className='text-center' ><Logo /></div>
         <h1 className="text-xl font-bold leading-tight tracking-tight  md:text-2xl text-center">

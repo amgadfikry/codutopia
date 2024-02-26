@@ -3,7 +3,7 @@
 import {
   useSelector, BsFillPersonFill, AiOutlineClose, userAuth, userData, TbCategoryFilled, Link,
   TbReportMoney, MdOutlineSupportAgent, TbBrandGoogleHome, RiFileInfoFill, SidebarLink,
-  FaFolderTree, IoCreate, IoSettingsSharp,
+  FaFolderTree, IoCreate, IoSettingsSharp, SidebarLogout,
 } from '../import'
 
 function Sidebar({ toggleSidebar, setToggleSidebar }) {
@@ -27,17 +27,16 @@ function Sidebar({ toggleSidebar, setToggleSidebar }) {
           </div>
         }
         <ul className='flex flex-col flex-grow h-full mt-5 text-darker-blue font-medium'>
-          {auth === 'learner'
-            ? <SidebarLink Icon={TbBrandGoogleHome} path='/learner' text='Dashboard' />
-            : <SidebarLink Icon={TbBrandGoogleHome} path='/instructor' text='Dashboard' />
-          }
           {auth !== 'public' &&
-            <SidebarLink Icon={FaFolderTree} path={`mycourses`} text='My courses' />
+            <>
+              <SidebarLink Icon={TbBrandGoogleHome} path={`/${auth}`} text='Dashboard' />
+              <SidebarLink Icon={FaFolderTree} path={`mycourses`} text='My courses' />
+            </>
           }
-          {auth === 'insructor' &&
+          {auth === 'instructor' &&
             <SidebarLink Icon={IoCreate} path='/instructor/createNew' text='Create New' />
           }
-          {auth !== 'insructor' &&
+          {auth !== 'instructor' &&
             <>
               <SidebarLink Icon={TbCategoryFilled} path='/categories' text='Categories' />
               <ul className='relative'>
@@ -66,15 +65,16 @@ function Sidebar({ toggleSidebar, setToggleSidebar }) {
                   <li className='sidebar-link-small sidebar-hover' >TypeScript</li>
                 </Link>
               </ul>
+              {/* <SidebarLink Icon={TbReportMoney} path='/pricing' text='Pricing' /> */}
             </>
           }
-          {auth !== 'insructor' &&
-            <SidebarLink Icon={TbReportMoney} path='/pricing' text='Pricing' />
-          }
           <SidebarLink Icon={MdOutlineSupportAgent} path='/support' text='Support' />
-          <SidebarLink Icon={RiFileInfoFill} path='/about' text='About' />
+          {/* <SidebarLink Icon={RiFileInfoFill} path='/about' text='About' /> */}
           {auth !== 'public' &&
-            <SidebarLink Icon={IoSettingsSharp} path='/setting' text='Setting' />
+            <>
+              {/* <SidebarLink Icon={IoSettingsSharp} path='/setting' text='Setting' /> */}
+              <SidebarLogout func={handleSidebar} />
+            </>
           }
         </ul>
       </div>

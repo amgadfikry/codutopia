@@ -35,3 +35,19 @@ export const checkDataError = (data, exception) => {
   }
   return ""
 }
+
+export const checkPassword = (data) => {
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}|:<>?~]).{8,}$/;
+  for (let [key, value] of Object.entries(data)) {
+    if (!value) return 'Fill required field';
+    if (['newPassword', 'confirmPassword', 'password'].includes(key) && !searchPattern(passwordPattern, value)) {
+      return 'Password contain at least (one special character, number, capital letter)\
+												and at least 8 characters'
+    }
+    if (key === 'confirmPassword') {
+      if (value !== data['newPassword'] && value !== data['password'])
+        return 'Not match password'
+    }
+  }
+  return "";
+}

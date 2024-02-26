@@ -13,7 +13,7 @@
   background: #F5F7F8;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1B0E91;
+  background: #FE786D;
   border-radius: 5px;
 }
 ::scrollbar {
@@ -24,7 +24,7 @@
   background: #F5F7F8;
 }
 ::scrollbar-thumb {
-  background: #1B0E91;
+  background: #FE786D;
   border-radius: 5px;
 }
 
@@ -41,7 +41,7 @@
     @apply bg-transparent text-light-red border-2 border-light-red rounded-md px-3 py-1 font-medium
     transition-all duration-300 ease-in-out hover:bg-light-red hover:text-white;
   }
-  .btn-light-red {
+  .btn-dark-red {
     @apply bg-light-red text-white border-2 border-light-red rounded-md px-3 py-1 font-medium
     transition-all duration-300 ease-in-out hover:bg-transparent hover:text-light-red;
   }

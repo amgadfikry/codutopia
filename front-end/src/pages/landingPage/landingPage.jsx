@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import {
-  NavBar, useState, Sidebar, useEffect, useSelector, userAuth, useNavigate, Footer, LoginBox
+  NavBar, useState, Sidebar, useEffect, useSelector, userAuth, useNavigate, Footer,
+  MainSection, LearningSection, InstructorSection, WhatisSection, ServicesSections,
+  SupportSection
 } from "../../import"
 
 function LandingPage() {
@@ -9,15 +11,19 @@ function LandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    auth !== 'public' && navigate('/dashboard');
+    auth !== 'public' && navigate(`/${auth}`);
   }, []);
 
   return (
     <>
       <NavBar toggleSidebar={toggleSidebar} setToggleSidebar={setToggleSidebar} />
       <Sidebar toggleSidebar={toggleSidebar} setToggleSidebar={setToggleSidebar} />
-      <div className="mt-20">LandingPage</div>
-      <LoginBox />
+      <MainSection />
+      <LearningSection />
+      <InstructorSection />
+      <WhatisSection />
+      <ServicesSections />
+      <SupportSection />
       <Footer />
     </>
   )

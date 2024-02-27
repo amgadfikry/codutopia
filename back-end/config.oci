@@ -1,0 +1,7 @@
+[DEFAULT]
+user=ocid1.user.oc1..aaaaaaaalkd6n4mztxh4p63lnfcym7yxmrygo3efsq6cwix5zcy5umfnlhnq
+fingerprint=f4:0b:c5:c8:77:e0:40:55:21:28:3c:8d:41:ac:5d:35
+tenancy=ocid1.tenancy.oc1..aaaaaaaapozjkg4qprxsijaomn4e5apolnbx7vi5mqjn6rnzuude22kxcrsq
+region=me-jeddah-1
+key_file=./key.pem
+content_type=application/json

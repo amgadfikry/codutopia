@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import {
-  InputField, TextAreaField, FaVideo, useState, checkDataError, AiFillWarning
+  InputField, TextAreaField, FaVideo, useState, checkDataError, AiFillWarning,
+  axios, url, optionsWithCookies, Cookies
 } from '../../import';
 
 function AddVideoField({ updateElement, index, content, deleteElemnet }) {
@@ -16,6 +17,22 @@ function AddVideoField({ updateElement, index, content, deleteElemnet }) {
     e.preventDefault();
     setError('');
     if (!checkDataError(content[index], ['complete'])) {
+      console.log(content[index].video)
+      const formData = new FormData();
+      formData.append('video', content[index].video);
+      axios.post(`${url}/files/upload`, formData, {
+         headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': Cookies.get('authToken')
+        },
+      })
+        .then(res => {
+          const metadata = { ...res.data.data, objectKey: content[index].video.name}
+          updateElement(index, 'metadata', metadata);
+        })
+        .catch(err => {
+          console.log(err);
+        })
       setCollapse(!collapse);
       updateElement(index, 'complete', true);
     } else {
@@ -56,9 +73,11 @@ function AddVideoField({ updateElement, index, content, deleteElemnet }) {
       <div className='flex items-center space-x-3'>
         <button className="btn-light-blue" onClick={(e) => deleteElemnet(e, index)}>Delete</button>
         {!collapse &&
-          <button className='btn-light-blue' onClick={handleAddVideo} >Add Resource</button>
+          <button className='btn-light-blue' onClick={handleAddVideo} >Add Video</button>
         }
-        <button className='btn-light-blue' onClick={handleCollapse}>{collapse ? 'Expand' : 'Collapse'}</button>
+        {!content[index].complete &&
+          <button className='btn-light-blue' onClick={handleCollapse}>{collapse ? 'Expand' : 'Collapse'}</button>  
+        }
       </div>
       {error ?
         <div className="flex items-center mt-1">

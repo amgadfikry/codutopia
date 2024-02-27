@@ -35,7 +35,7 @@ function CreateNew() {
   }
   const addVideo = (e) => {
     e.preventDefault();
-    setContent([...content, { type: 'video', name: '', description: '', video: '', complete: false }]);
+    setContent([...content, { type: 'video', name: '', description: '', video: '', complete: false, metadata: {} }]);
   }
   const addResource = (e) => {
     e.preventDefault();

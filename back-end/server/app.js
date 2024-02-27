@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import userRouter from './routes/usersRoutes.js';
 import coursesRouter from './routes/coursesRoutes.js';
+import filesRouter from './routes/filesRoutes.js';
 
 // Create a new express application instance
 const app = express();
@@ -23,6 +24,8 @@ app.use('/users', userRouter);
 
 // use the coursesRouter for any request that starts with /courses
 app.use('/courses', coursesRouter);
+
+app.use('/files', filesRouter);
 
 // start the server on port 3000
 app.listen(3000, () => {

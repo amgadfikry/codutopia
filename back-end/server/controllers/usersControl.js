@@ -22,6 +22,7 @@ class UsersControl {
       // Hash the password
       const hashedPassword = await bcrypt.hash(data.password, 10);
       const user = { ...data, password: hashedPassword, courses: [] };
+      delete user.confirmPassword;
       // Add the user to the database
       const newUser = await mongoDB.addOne(data.role, user);
       return res.status(201).json({ msg: `User created successfully`, userID: newUser.toString() });

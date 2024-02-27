@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import {
   useDispatch, setAuth, axios, optionsWithCookies, setUserData, useEffect, Loading,
-  useState, useNavigate, url, Cookies
+  useState, useNavigate, url, Cookies,
 } from '../import';
 
 function AuthUser({ children }) {
@@ -17,10 +17,8 @@ function AuthUser({ children }) {
           dispatch(setAuth(res.data.data.role));
           dispatch(setUserData(res.data.data));
           setLoading(false);
-          if (res.data.data.role === 'learner') {
-            navigate('/learner');
-          } else if (res.data.data.role === 'instructor') {
-            navigate('/instructor');
+          if (!window.location.pathname.includes(res.data.data.role)) {
+            return navigate(`../${res.data.data.role}`);
           }
         }
       })
@@ -30,14 +28,14 @@ function AuthUser({ children }) {
           dispatch(setAuth('public'));
           dispatch(setUserData({}));
           if (['instructor', 'learner'].includes(window.location.pathname.split('/')[1])) {
-            navigate('/');
+            return navigate('/');
           }
         } else {
           setLoading(false);
-          navigate('/server-down');
+          return navigate('/server-down');
         }
       });
-  }, [dispatch, navigate]);
+  }, [navigate, dispatch]);
 
   if (loading) {
     return <Loading />

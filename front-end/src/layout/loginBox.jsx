@@ -28,7 +28,7 @@ function LoginBox() {
         } else {
           Cookies.set('authToken', res.headers['authorization']);
         }
-        navigate('/');
+        navigate(`/${inputData.role}`);
       })
       .catch((err) => {
         if (err.response.status === 500) {

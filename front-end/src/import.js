@@ -42,6 +42,13 @@ import WhatisSection from './pages/landingPage/whatisSection.jsx';
 import ServiceComponent from './pages/landingPage/serviceComponent.jsx';
 import ServicesSections from './pages/landingPage/servicesSections.jsx';
 import SupportSection from './pages/landingPage/supportSection.jsx';
+// import instructor page
+import InstructorPage from './pages/instructorPage/instructorPage.jsx';
+import CreateNew from './pages/instructorPage/createNew.jsx';
+import InstructorDashboard from './pages/instructorPage/instructorDashboard.jsx';
+import CreateDescription from './pages/instructorPage/createDescription.jsx';
+import AddVideoField from './pages/instructorPage/addVideoField.jsx';
+import AddResourceField from './pages/instructorPage/addResourceField.jsx';
 // import redux
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserData, userData, setAuth, userAuth } from './redux/user';
@@ -51,6 +58,8 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, NavLink, Link, use
 import { useCookies, CookiesProvider } from 'react-cookie';
 // react hooks
 import { useEffect, useState, useRef } from 'react'
+//import immer
+import { produce } from 'immer';
 // import lazy loading
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 // import functions
@@ -58,18 +67,22 @@ import { samilarData, checkDataError, checkPassword } from './functions.js';
 // import icons
 import { AiFillWarning, AiOutlineClose } from "react-icons/ai";
 import { FiSearch } from "react-icons/fi";
-import { MdDarkMode, MdLightMode, MdOutlineSupportAgent, MdEmail, MdDriveFileRenameOutline, MdTopic } from 'react-icons/md';
+import {
+  MdDarkMode, MdLightMode, MdOutlineSupportAgent, MdEmail, MdDriveFileRenameOutline, MdTopic,
+  MdSubtitles
+} from 'react-icons/md';
 import { TbMenu2, TbMenuDeep, TbCategoryFilled, TbReportMoney, TbBrandGoogleHome } from 'react-icons/tb';
 import { IoMdNotifications } from 'react-icons/io';
 import { IoCreate, IoSettingsSharp, IoLogOut } from "react-icons/io5";
 import { BsFillPersonFill } from 'react-icons/bs';
 import { FcAbout } from "react-icons/fc";
 import { RiFileInfoFill, RiLockPasswordFill } from "react-icons/ri";
-import { FaFolderTree, FaLinkedinIn, FaGithub, FaXTwitter, FaUser, FaPython, FaJava, FaGolang } from "react-icons/fa6";
+import {
+  FaFolderTree, FaLinkedinIn, FaGithub, FaXTwitter, FaUser, FaPython, FaJava, FaGolang,
+  FaVideo, FaFile
+} from "react-icons/fa6";
 import { BiLogoJavascript } from "react-icons/bi";
 import { SiCsharp, SiCplusplus, SiRuby, SiTypescript } from "react-icons/si";
-
-
 // import images
 import serverImage from './assets/fixServer.jpg';
 import error404 from './assets/error404.jpg';
@@ -97,12 +110,16 @@ export {
   // export landing page
   LandingPage, MainSection, LearningSection, SkillComponent, InstructorSection, WhatisSection,
   ServiceComponent, ServicesSections, SupportSection,
+  // export instructor page
+  InstructorPage, CreateNew, InstructorDashboard, CreateDescription, AddVideoField, AddResourceField,
   // export redux
   useSelector, useDispatch, setUserData, userData, setAuth, userAuth,
   // export router-dom
   Router, Routes, Route, useNavigate, NavLink, Link, useLocation,
   // export cookies
   useCookies, CookiesProvider,
+  // export immer
+  produce,
   // export react hooks
   useEffect, useState, useRef,
   // export lazy loading
@@ -112,13 +129,13 @@ export {
   // export icons
   AiFillWarning, AiOutlineClose,
   FiSearch,
-  MdDarkMode, MdLightMode, MdOutlineSupportAgent, MdEmail, MdDriveFileRenameOutline, MdTopic,
+  MdDarkMode, MdLightMode, MdOutlineSupportAgent, MdEmail, MdDriveFileRenameOutline, MdTopic, MdSubtitles,
   TbMenu2, TbMenuDeep, TbCategoryFilled, TbReportMoney, TbBrandGoogleHome,
   IoMdNotifications, IoCreate, IoSettingsSharp, IoLogOut,
   BsFillPersonFill,
   FcAbout,
   RiFileInfoFill, RiLockPasswordFill,
-  FaFolderTree, FaLinkedinIn, FaGithub, FaXTwitter, FaUser, FaPython, FaJava, FaGolang,
+  FaFolderTree, FaLinkedinIn, FaGithub, FaXTwitter, FaUser, FaPython, FaJava, FaGolang, FaVideo, FaFile,
   BiLogoJavascript,
   SiCsharp, SiCplusplus, SiRuby, SiTypescript,
   // export images

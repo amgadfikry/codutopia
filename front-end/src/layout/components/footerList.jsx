@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-
+// footerList component to display footer list with title and list of links
 function FooterList({ list, title }) {
   return (
     <div className="text-center sm:text-left user-select-none">

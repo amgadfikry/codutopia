@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
+// import required hooks, components, images and icons
 import { FiSearch } from '../import';
 
+// SearchField component to display search field
 function SearchField({ placeholder, value, onChange, name }) {
   return (
     <div className="relative m-1">
@@ -13,6 +15,7 @@ function SearchField({ placeholder, value, onChange, name }) {
         value={value}
         onChange={onChange}
         name={name}
+        id={name}
       />
     </div>
   )

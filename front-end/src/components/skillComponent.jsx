@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
-import { Link } from '../../import.js';
+// import required hooks
+import { Link } from '../import.js';
 
+// SkillComponent component to display skill component of learning section
 function SkillComponent({ lang, Icon }) {
   return (
     <Link to={`/search/${lang}`}
@@ -8,8 +10,8 @@ function SkillComponent({ lang, Icon }) {
       before:content-[''] before:absolute before:bottom-0 before:left-0 before:h-1 before:bg-light-red before:rounded-md
       before:w-full before:transition-all before:duration-300 before:ease-in-out drop-shadow-md before:z-[-1] mb-6 mr-6
       hover:before:h-full text-darker-blue transition-all duration-300 ease-in-out lg:min-w-[190px] lg:min-h-[90px] ">
-      <Icon className="text-3xl mr-1 lg:text-4xl  " />
-      <p className='text-xl font-medium lg:text-2xl' >{lang}</p>
+      <Icon className="text-xl mr-1 lg:text-2xl" />
+      <p className='text-lg font-medium lg:text-xl' >{lang}</p>
     </Link>
   )
 }

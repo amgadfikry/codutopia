@@ -1,4 +1,5 @@
 // loading spinning component while waiting for data to load
+// loading component to display loading spinner
 function Loading() {
   return (
     <div className="flex justify-center items-center min-h-screen">

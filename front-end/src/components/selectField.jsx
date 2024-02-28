@@ -1,5 +1,7 @@
 /* eslint-disable react/prop-types */
+// SelectField component to display select field
 function SelectField({ name, label, options, value, onChange }) {
+  // generate random key for select field id
   const randomKey = Math.random().toString(36).substring(7);
   const id = label + randomKey;
 

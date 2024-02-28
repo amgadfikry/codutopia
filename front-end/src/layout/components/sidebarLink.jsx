@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
-import { Link } from '../import';
+// import required hooks
+import { Link } from '../../import.js';
 
+// SidebarLink component to display sidebar link with icon, path and text
 function SidebarLink({ Icon, path, text }) {
   return (
     <Link to={path}>
@@ -12,4 +14,4 @@ function SidebarLink({ Icon, path, text }) {
   )
 }
 
-export default SidebarLink
+export default SidebarLink;

@@ -1,8 +1,11 @@
+// import required hooks, components and images
 import {
-  ServiceComponent, liveImage, resourceImage, responsiveImage, assesmentImage
-} from '../../import';
+  liveImage, resourceImage, responsiveImage, assesmentImage
+} from '../../../import';
+import ServiceComponent from './serviceComponent.jsx';
 
 function ServicesSections() {
+  // Services data
   const services = [
     {
       image: liveImage,
@@ -30,10 +33,9 @@ function ServicesSections() {
     }
   ]
 
-
   return (
     <section className="py-16">
-      <h1 className="text-3xl text-center text-darker-blue font-bold lg:text-5xl
+      <h1 className="text-2xl text-center text-darker-blue font-bold lg:text-3xl
       border-b-4 border-light-red w-fit pb-2 mb-10 mx-auto">Our Services</h1>
       <div className="container mx-auto mt-10">
         {services.map((service, index) => (
@@ -46,7 +48,6 @@ function ServicesSections() {
           />
         ))}
       </div>
-
     </section>
   )
 }

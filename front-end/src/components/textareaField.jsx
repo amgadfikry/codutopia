@@ -1,5 +1,7 @@
 /* eslint-disable react/prop-types */
+// TextAreaField component to display textarea field
 function TextAreaField({ name, label, placeholder, value, onChange }) {
+  // generate random key for textarea field id
   const randomKey = Math.random().toString(36).substring(7);
   const id = label + randomKey;
 

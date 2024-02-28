@@ -20,6 +20,7 @@ import SidebarLogout from './components/sidebarLogout.jsx';
 import AuthUser from './components/authUser.jsx';
 import FooterList from './components/footerList.jsx';
 import Logo from './components/logo.jsx';
+import CourseBox from './components/courseBox.jsx';
 // import layouts
 import NavBar from './layout/navbar.jsx';
 import Sidebar from './layout/sidebar.jsx';
@@ -32,6 +33,7 @@ import NotFound from './pages/otherPages/notFound.jsx';
 import ServerDown from './pages/otherPages/serverDown.jsx';
 import Register from './pages/otherPages/register.jsx';
 import Support from './pages/otherPages/support.jsx';
+import SearchPage from './pages/otherPages/searchPage.jsx';
 // import landing page
 import LandingPage from './pages/landingPage/landingPage.jsx';
 import MainSection from './pages/landingPage/mainSection.jsx';
@@ -44,16 +46,18 @@ import ServicesSections from './pages/landingPage/servicesSections.jsx';
 import SupportSection from './pages/landingPage/supportSection.jsx';
 // import instructor page
 import InstructorPage from './pages/instructorPage/instructorPage.jsx';
-import CreateNew from './pages/instructorPage/createNew.jsx';
 import InstructorDashboard from './pages/instructorPage/instructorDashboard.jsx';
-import CreateDescription from './pages/instructorPage/createDescription.jsx';
-import AddVideoField from './pages/instructorPage/addVideoField.jsx';
-import AddResourceField from './pages/instructorPage/addResourceField.jsx';
+import CreateNew from './pages/instructorPage/createNew.jsx';
+import CreateDescription from './pages/instructorPage/createNew/createDescription.jsx';
+import AddVideoField from './pages/instructorPage/createNew/addVideoField.jsx';
+import AddResourceField from './pages/instructorPage/createNew/addResourceField.jsx';
+// import learner page
+import LearnerPage from './pages/learnerPage/learnerPage.jsx';
 // import redux
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserData, userData, setAuth, userAuth } from './redux/user';
 // router-dom
-import { BrowserRouter as Router, Routes, Route, useNavigate, NavLink, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, NavLink, Link, useLocation, useParams } from 'react-router-dom';
 // import cookies
 import { useCookies, CookiesProvider } from 'react-cookie';
 // react hooks
@@ -102,20 +106,22 @@ export {
   axios, Cookies, url, optionsWithCookies,
   // export components
   Loading, InputField, TextAreaField, SelectField, SearchField, SidebarLink, SidebarLogout, AuthUser,
-  FooterList, LoginBox,
+  FooterList, LoginBox, CourseBox,
   // export layout
   NavBar, Sidebar, Footer, Logo, RegisterBox,
   // export other Pages
-  NotFound, ServerDown, Register, Login, Support,
+  NotFound, ServerDown, Register, Login, Support, SearchPage,
   // export landing page
   LandingPage, MainSection, LearningSection, SkillComponent, InstructorSection, WhatisSection,
   ServiceComponent, ServicesSections, SupportSection,
   // export instructor page
   InstructorPage, CreateNew, InstructorDashboard, CreateDescription, AddVideoField, AddResourceField,
+  // export learner page
+  LearnerPage,
   // export redux
   useSelector, useDispatch, setUserData, userData, setAuth, userAuth,
   // export router-dom
-  Router, Routes, Route, useNavigate, NavLink, Link, useLocation,
+  Router, Routes, Route, useNavigate, NavLink, Link, useLocation, useParams,
   // export cookies
   useCookies, CookiesProvider,
   // export immer

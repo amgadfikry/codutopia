@@ -1,13 +1,12 @@
 /* eslint-disable no-unused-vars */
 import {
   LazyLoadImage, supportImage, useState, InputField, MdEmail, AiFillWarning, MdTopic,
-  TextAreaField, NavBar, Sidebar, Footer
+  TextAreaField,
 } from '../../import';
 
 function Support() {
   const [inputData, setInputData] = useState({ email: '', subject: '', message: '' });
   const [errorData, setErrorData] = useState("");
-  const [toggleSidebar, setToggleSidebar] = useState(true);
 
   const handleInputData = (e) => {
     setInputData({ ...inputData, [e.target.name]: e.target.value });
@@ -19,9 +18,7 @@ function Support() {
 
   return (
     <>
-      <NavBar toggleSidebar={toggleSidebar} setToggleSidebar={setToggleSidebar} />
-      <Sidebar toggleSidebar={toggleSidebar} setToggleSidebar={setToggleSidebar} />
-      <section className="mt-14">
+      <section className="">
         <div className="p-4 flex items-center relative min-h-screen justify-center  ">
           <div className='lg:w-1/2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full
       lg:relative lg:top-0 lg:left-0 lg:translate-x-0 lg:translate-y-0'>
@@ -52,7 +49,7 @@ function Support() {
                       value={inputData.message} onChange={handleInputData} />
                   </div>
                   <button type="submit" className="btn-dark-blue w-full" onClick={handleSend}>
-                    Sign In
+                    Send Message
                   </button>
                   {
                     errorData ?
@@ -68,7 +65,6 @@ function Support() {
           </div>
         </div>
       </section>
-      <Footer />
     </>
   )
 }

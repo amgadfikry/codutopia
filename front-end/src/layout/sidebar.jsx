@@ -7,8 +7,10 @@ import {
 } from '../import'
 
 function Sidebar({ toggleSidebar, setToggleSidebar }) {
+  const languages = ['Python', 'Java', 'JavaScript', 'Go', 'C++', 'Ruby', 'C#', 'TypeScript'];
   const auth = useSelector(userAuth);
   const user = useSelector(userData);
+  // const sidebarLinks = auth !== 'public' ? `/${auth}/search` : '/search';
 
   const handleSidebar = () => {
     setToggleSidebar(!toggleSidebar)
@@ -29,8 +31,8 @@ function Sidebar({ toggleSidebar, setToggleSidebar }) {
         <ul className='flex flex-col flex-grow h-full mt-5 text-darker-blue font-medium'>
           {auth !== 'public' &&
             <>
-              <SidebarLink Icon={TbBrandGoogleHome} path={`/${auth}`} text='Dashboard' />
-              <SidebarLink Icon={FaFolderTree} path={`mycourses`} text='My courses' />
+              <SidebarLink Icon={TbBrandGoogleHome} path={`/search/All`} text='Dashboard' />
+              {/* <SidebarLink Icon={FaFolderTree} path={`mycourses`} text='My courses' /> */}
             </>
           }
           {auth === 'instructor' &&
@@ -38,40 +40,21 @@ function Sidebar({ toggleSidebar, setToggleSidebar }) {
           }
           {auth !== 'instructor' &&
             <>
-              <SidebarLink Icon={TbCategoryFilled} path='/categories' text='Categories' />
+              <SidebarLink Icon={TbCategoryFilled} path={`/search/All`} text='Categories' />
               <ul className='relative'>
-                <Link to={`/search:Python`}>
-                  <li className='sidebar-link-small sidebar-hover' >Python</li>
-                </Link>
-                <Link to={`/search:Java`}>
-                  <li className='sidebar-link-small sidebar-hover' >Java</li>
-                </Link>
-                <Link to={`/search:JavaScript`}>
-                  <li className='sidebar-link-small sidebar-hover' >JavaScript</li>
-                </Link>
-                <Link to={`/search:Go`}>
-                  <li className='sidebar-link-small sidebar-hover' >Go</li>
-                </Link>
-                <Link to={`/search:C++`}>
-                  <li className='sidebar-link-small sidebar-hover' >C++</li>
-                </Link>
-                <Link to={`/search:Ruby`}>
-                  <li className='sidebar-link-small sidebar-hover' >Ruby</li>
-                </Link>
-                <Link to={`/search:C#`}>
-                  <li className='sidebar-link-small sidebar-hover' >C#</li>
-                </Link>
-                <Link to={`/search:TypeScript`}>
-                  <li className='sidebar-link-small sidebar-hover' >TypeScript</li>
-                </Link>
+                {languages.map((language, index) => (
+                  <Link key={index} to={`/search/${language}`}>
+                    <li className='sidebar-link-small sidebar-hover' >{language}</li>
+                  </Link>
+                ))}
               </ul>
               {/* <SidebarLink Icon={TbReportMoney} path='/pricing' text='Pricing' /> */}
             </>
           }
-          <SidebarLink Icon={MdOutlineSupportAgent} path='/support' text='Support' />
           {/* <SidebarLink Icon={RiFileInfoFill} path='/about' text='About' /> */}
           {auth !== 'public' &&
             <>
+              <SidebarLink Icon={MdOutlineSupportAgent} path={`/${auth}/support`} text='Support' />
               {/* <SidebarLink Icon={IoSettingsSharp} path='/setting' text='Setting' /> */}
               <SidebarLogout func={handleSidebar} />
             </>

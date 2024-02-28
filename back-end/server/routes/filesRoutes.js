@@ -14,7 +14,7 @@ filesRouter.get('/get/:key',
   [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor', 'learner'])],
   FilesControl.getVideo)
 
-filesRouter.post('/delete/:key',
+filesRouter.delete('/delete/:key',
   [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor'])],
   FilesControl.deleteVideo);
 

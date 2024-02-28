@@ -1,5 +1,7 @@
+// import hooks
 import { Link } from '../import.js';
 
+// Logo component to display logo with animation and link to home page
 function Logo() {
   return (
     <div>
@@ -14,4 +16,4 @@ function Logo() {
   )
 }
 
-export default Logo
+export default Logo;

@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
+// InputField component to display input field
 function InputField({ name, type, Icon, label, placeholder, value, onChange }) {
+  // generate random key for input field id
   const randomKey = Math.random().toString(36).substring(7);
   const id = label + randomKey;
 

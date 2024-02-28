@@ -1,9 +1,9 @@
-
+// whatisSection component in homePage
 function WhatisSection() {
   return (
     <section className="bg-dark-gray py-16">
       <div className="container mx-auto px-3">
-        <h3 className="text-3xl text-darker-blue font-bold lg:text-5xl border-b-4 border-light-red w-fit
+        <h3 className="text-2xl text-darker-blue font-bold lg:text-3xl border-b-4 border-light-red w-fit
         pb-2 mb-10 mx-auto">
           What is E-Learning Platform?
         </h3>

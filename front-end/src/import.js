@@ -15,44 +15,9 @@ import InputField from './components/inputField.jsx';
 import TextAreaField from './components/textareaField.jsx';
 import SelectField from './components/selectField.jsx';
 import SearchField from './components/searchField.jsx';
-import SidebarLink from './components/sidebarLink.jsx';
-import SidebarLogout from './components/sidebarLogout.jsx';
-import AuthUser from './components/authUser.jsx';
-import FooterList from './components/footerList.jsx';
 import Logo from './components/logo.jsx';
 import CourseBox from './components/courseBox.jsx';
-// import layouts
-import NavBar from './layout/navbar.jsx';
-import Sidebar from './layout/sidebar.jsx';
-import Footer from './layout/footer.jsx';
-import LoginBox from './layout/loginBox.jsx';
-import RegisterBox from './layout/registerBox.jsx';
-import Login from './pages/otherPages/login.jsx';
-// import other Pages
-import NotFound from './pages/otherPages/notFound.jsx';
-import ServerDown from './pages/otherPages/serverDown.jsx';
-import Register from './pages/otherPages/register.jsx';
-import Support from './pages/otherPages/support.jsx';
-import SearchPage from './pages/otherPages/searchPage.jsx';
-// import landing page
-import LandingPage from './pages/landingPage/landingPage.jsx';
-import MainSection from './pages/landingPage/mainSection.jsx';
-import LearningSection from './pages/landingPage/learningSection.jsx';
-import SkillComponent from './pages/landingPage/skillComponent.jsx';
-import InstructorSection from './pages/landingPage/instructorSection.jsx';
-import WhatisSection from './pages/landingPage/whatisSection.jsx';
-import ServiceComponent from './pages/landingPage/serviceComponent.jsx';
-import ServicesSections from './pages/landingPage/servicesSections.jsx';
-import SupportSection from './pages/landingPage/supportSection.jsx';
-// import instructor page
-import InstructorPage from './pages/instructorPage/instructorPage.jsx';
-import InstructorDashboard from './pages/instructorPage/instructorDashboard.jsx';
-import CreateNew from './pages/instructorPage/createNew.jsx';
-import CreateDescription from './pages/instructorPage/createNew/createDescription.jsx';
-import AddVideoField from './pages/instructorPage/createNew/addVideoField.jsx';
-import AddResourceField from './pages/instructorPage/createNew/addResourceField.jsx';
-// import learner page
-import LearnerPage from './pages/learnerPage/learnerPage.jsx';
+import SkillComponent from './components/skillComponent.jsx';
 // import redux
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserData, userData, setAuth, userAuth } from './redux/user';
@@ -105,19 +70,7 @@ export {
   // export axios
   axios, Cookies, url, optionsWithCookies,
   // export components
-  Loading, InputField, TextAreaField, SelectField, SearchField, SidebarLink, SidebarLogout, AuthUser,
-  FooterList, LoginBox, CourseBox,
-  // export layout
-  NavBar, Sidebar, Footer, Logo, RegisterBox,
-  // export other Pages
-  NotFound, ServerDown, Register, Login, Support, SearchPage,
-  // export landing page
-  LandingPage, MainSection, LearningSection, SkillComponent, InstructorSection, WhatisSection,
-  ServiceComponent, ServicesSections, SupportSection,
-  // export instructor page
-  InstructorPage, CreateNew, InstructorDashboard, CreateDescription, AddVideoField, AddResourceField,
-  // export learner page
-  LearnerPage,
+  Loading, InputField, TextAreaField, SelectField, SearchField, CourseBox, SkillComponent, Logo,
   // export redux
   useSelector, useDispatch, setUserData, userData, setAuth, userAuth,
   // export router-dom

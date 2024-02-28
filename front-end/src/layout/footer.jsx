@@ -1,6 +1,12 @@
-import { FooterList, Link, FaLinkedinIn, FaGithub, FaXTwitter } from '../import.js';
+// import required hooks, components and icons
+import {
+  Link, FaLinkedinIn, FaGithub, FaXTwitter
+} from '../import.js';
+import FooterList from './components/footerList.jsx';
 
+// Footer component to display footer with links and social media icons
 function Footer() {
+  // list of links to display in footer
   const aboutusList = ["Our History", "Meet the Team", "Careers"];
   const servicesList = ["Courses", "Become Instructor", "Assesments"];
   const resourcesList = ["Terms of Service", "Privacy Policy", "Sitemap"];
@@ -9,6 +15,7 @@ function Footer() {
   return (
     <footer className="bg-darker-blue">
       <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8">
+        {/* display footer links */}
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <FooterList list={aboutusList} title={"About Us"} />
           <FooterList list={servicesList} title={"Our Services"} />
@@ -16,6 +23,7 @@ function Footer() {
           <FooterList list={HelpfulLinks} title={"Helpful Links"} />
         </div>
         <div className="mt-16">
+          {/* display social media icons */}
           <ul className="flex justify-center gap-6 sm:justify-end sm:pr-5">
             <a href="https://github.com/amgadfikry" target="_blank" rel="noopener noreferrer">
               <FaLinkedinIn className='text-white text-xl transition-all duration-300 hover:text-light-red' />
@@ -28,6 +36,7 @@ function Footer() {
             </a>
           </ul>
           <div className="mt-16 sm:flex sm:items-center sm:justify-between flex flex-col sm:flex-row">
+            {/* displaylogo with animation */}
             <Link to="/" className='text-xl cursor-pointer mr-auto whitespace-nowrap font-[700] text-white
             relative before:content-[""] before:absolute before:w-5 before:h-5 before:bg-light-red
             before:top-[-3px] before:left-[-5px] before:rounded-full mx-auto sm:mx-0
@@ -35,6 +44,7 @@ function Footer() {
             after:right-[-5px] after:rounded-full after:animate-ping before:animate-ping'>
               E-Learnig
             </Link>
+            {/* display copy right text */}
             <div className="mt-4 text-center text-sm text-light-gray sm:mt-0 sm:text-right flex flex-col items-center">
               <p className="mb-2">
                 Copyright &copy; {new Date().getFullYear()}. All rights reserved. by Amgad Fikry Mohamed<br></br>

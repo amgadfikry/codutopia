@@ -1,6 +1,6 @@
 import {
   SkillComponent, FaPython, FaGolang,
-  BiLogoJavascript, SiCsharp, SiCplusplus, SiRuby, SiTypescript,
+  BiLogoJavascript, SiCsharp, SiCplusplus, SiRuby, SiTypescript, FaJava
 } from '../../import.js';
 
 function LearningSection() {
@@ -12,6 +12,7 @@ function LearningSection() {
     { lang: 'C++', Icon: SiCplusplus },
     { lang: 'Ruby', Icon: SiRuby },
     { lang: 'TypeScript', Icon: SiTypescript },
+    { lang: 'Java', Icon: FaJava }
   ];
 
   return (

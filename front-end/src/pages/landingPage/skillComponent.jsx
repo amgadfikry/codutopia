@@ -3,7 +3,7 @@ import { Link } from '../../import.js';
 
 function SkillComponent({ lang, Icon }) {
   return (
-    <Link to={`/search:${lang}`}
+    <Link to={`/search/${lang}`}
       className="flex justify-center items-center bg-white rounded-md px-4 py-2 relative min-w-[150px] min-h-[70px]
       before:content-[''] before:absolute before:bottom-0 before:left-0 before:h-1 before:bg-light-red before:rounded-md
       before:w-full before:transition-all before:duration-300 before:ease-in-out drop-shadow-md before:z-[-1] mb-6 mr-6

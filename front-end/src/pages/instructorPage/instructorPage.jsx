@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import {
   NavBar, useState, Sidebar, useEffect, useSelector, userAuth, useNavigate, Footer, Routes, Route,
-  CreateNew, InstructorDashboard
+  CreateNew, InstructorDashboard, Support, NotFound
 } from "../../import"
 
 function InstructorPage() {
@@ -10,7 +10,7 @@ function InstructorPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    auth !== 'public' && navigate(`/${auth}`);
+    auth !== 'public' ? navigate(`/${auth}`) : navigate('/login');
   }, []);
 
   return (
@@ -20,6 +20,8 @@ function InstructorPage() {
       <Routes>
         <Route path="/" element={<InstructorDashboard />} />
         <Route path="/createNew" element={<CreateNew />}></Route>
+        <Route path="/support" element={<Support />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
     </>

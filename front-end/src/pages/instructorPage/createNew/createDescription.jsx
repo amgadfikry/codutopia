@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import {
   InputField, TextAreaField, SelectField, MdSubtitles
-} from '../../import';
+} from '../../../import';
 
 
 function CreateDescription({ courseData, handleData }) {

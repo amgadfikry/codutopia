@@ -18,6 +18,21 @@ class CoursesControl {
     }
   }
 
+  /* Get all courses by category method
+    get all courses by category from the database
+    return 200 status code and the courses
+    if there is an error, return 500 status code
+  */
+  static async coursesByCategory(req, res) {
+    try {
+      const courses = await mongoDB.getAll('courses', { category: req.params.category });
+      return res.status(200).json({ msg: 'Courses found', data: courses });
+    }
+    catch (e) {
+      return res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
+
   /* Get course pagination method that returns a specific number of courses per page
     get a specific number of courses per page from the database
     return 200 status code and the courses
@@ -135,7 +150,6 @@ class CoursesControl {
         ...course,
         instructorId: new ObjectId(user.id),
         reviews: [],
-        content: [],
       };
       // add the course to the database
       const newCourse = await mongoDB.addOne('courses', courseData);

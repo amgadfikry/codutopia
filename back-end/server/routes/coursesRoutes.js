@@ -9,6 +9,10 @@ const coursesRouter = Router();
 coursesRouter.get('/all',
   CoursesControl.allCourses);
 
+// Get all courses by category route
+coursesRouter.get('/category/:category',
+  CoursesControl.coursesByCategory);
+
 // get course navigation route
 coursesRouter.get('/page/:page/limit/:limit',
   CoursesControl.coursePagination);

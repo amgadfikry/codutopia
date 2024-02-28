@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { FiSearch } from '../import';
 
-function SearchField({ placeholder, value, onChange }) {
+function SearchField({ placeholder, value, onChange, name }) {
   return (
     <div className="relative m-1">
       <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-light-blue h-5 w-5" />
@@ -12,6 +12,7 @@ function SearchField({ placeholder, value, onChange }) {
         type="text"
         value={value}
         onChange={onChange}
+        name={name}
       />
     </div>
   )

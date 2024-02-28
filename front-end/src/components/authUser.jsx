@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import {
   useDispatch, setAuth, axios, optionsWithCookies, setUserData, useEffect, Loading,
-  useState, useNavigate, url, Cookies,
+  useState, useNavigate, url, Cookies
 } from '../import';
 
 function AuthUser({ children }) {
@@ -11,16 +11,17 @@ function AuthUser({ children }) {
 
   useEffect(() => {
     optionsWithCookies.headers['Authorization'] = Cookies.get('authToken');
-    axios.get(`${url}/users/brief`, optionsWithCookies)
+    axios.get(`${url}/users/details`, optionsWithCookies)
       .then(res => {
-        if (res.status === 200) {
-          dispatch(setAuth(res.data.data.role));
-          dispatch(setUserData(res.data.data));
-          setLoading(false);
-          if (!window.location.pathname.includes(res.data.data.role)) {
-            return navigate(`../${res.data.data.role}`);
-          }
+        dispatch(setUserData(res.data));
+        dispatch(setAuth(res.data.data.role));
+        setLoading(false);
+        const user = window.location.pathname.split('/')[1];
+        const path = window.location.pathname.split('/')[2];
+        if (path && user === res.data.data.role) {
+          return navigate(`/${res.data.data.role}/${path}`);
         }
+        return navigate(`/${res.data.data.role}`);
       })
       .catch(err => {
         if (err.response.status === 401) {

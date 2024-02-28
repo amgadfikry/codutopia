@@ -1,15 +1,17 @@
 import {
-  IoLogOut, useNavigate, axios, optionsWithCookies, Cookies, url
+  IoLogOut, useNavigate, axios, optionsWithCookies, Cookies, url, useDispatch, setAuth
 } from '../import';
 
 function SidebarLogout() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const logout = () => {
     optionsWithCookies.headers['Authorization'] = Cookies.get('authToken');
     axios.get(`${url}/users/logout`, optionsWithCookies)
       .then(res => {
         if (res.status === 200) Cookies.remove('authToken');
+        dispatch(setAuth('public'));
         navigate(0);
       })
       .catch(err => {

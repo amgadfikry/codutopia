@@ -1,6 +1,8 @@
+/* eslint-disable no-unused-vars */
 import {
   CreateDescription, LazyLoadImage, instructorImage, useState, AddVideoField, produce,
-  checkDataError, AiFillWarning, AddResourceField
+  checkDataError, AiFillWarning, AddResourceField, axios, url, Cookies, optionsWithCookies,
+  useNavigate
 } from '../../import';
 
 function CreateNew() {
@@ -9,10 +11,10 @@ function CreateNew() {
     category: 'Python',
     level: 'Beginner',
     description: '',
-    content: [],
   });
   const [content, setContent] = useState([]);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleData = (e) => {
     e.preventDefault();
@@ -23,9 +25,20 @@ function CreateNew() {
   }
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!checkDataError(courseData, ['content'])) {
+    if (!checkDataError(courseData, [])) {
       if (content.every(item => item.complete)) {
-        console.log('all complete')
+        optionsWithCookies.headers['Authorization'] = Cookies.get('authToken');
+        const data = { ...courseData, content };
+        axios.post(`${url}/courses/create`, data, optionsWithCookies)
+          .then(res => {
+            return navigate('/');
+          })
+          .catch(err => {
+            if (err.response.status === 401) {
+              return navigate('/login');
+            }
+            return navigate('/server-down')
+          })
       } else {
         setError('Please fill all content fields');
       }
@@ -35,7 +48,7 @@ function CreateNew() {
   }
   const addVideo = (e) => {
     e.preventDefault();
-    setContent([...content, { type: 'video', name: '', description: '', video: '', complete: false, metadata: {} }]);
+    setContent([...content, { type: 'video', name: '', description: '', video: '', complete: false }]);
   }
   const addResource = (e) => {
     e.preventDefault();
@@ -46,8 +59,7 @@ function CreateNew() {
       draft[index][name] = value;
     }));
   }
-  const deleteElemnet = (e, index) => {
-    e.preventDefault();
+  const deleteElemnet = (index) => {
     setContent(content.filter((_, i) => i !== index));
   }
 

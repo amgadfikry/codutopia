@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import {
   InputField, TextAreaField, FaFile, useState, checkDataError, AiFillWarning
-} from '../../import';
+} from '../../../import';
 
 function AddResourceField({ updateElement, index, content, deleteElemnet }) {
   const [collapse, setCollapse] = useState(false);
@@ -21,10 +21,18 @@ function AddResourceField({ updateElement, index, content, deleteElemnet }) {
     } else {
       setError('Please fill all fields');
     }
+    setTimeout(() => {
+      setError('');
+    }, 3000);
+  }
+
+  const handleDeleteResource = (e) => {
+    e.preventDefault();
+    deleteElemnet(index);
   }
 
   return (
-    <fieldset className="space-y-4 text-darker-blue border border-light-blue p-4">
+    <fieldset className="text-darker-blue border border-light-blue p-2">
       <legend className="text-xl font-bold px-2">{`Add Resource (lesson ${index + 1})`}</legend>
       <div className={`space-y-2 transition-all duration-500 ease-in-out overflow-hidden origin-top
         ${collapse ? 'max-h-0 scale-y-0' : 'max-h-[600px] scale-y-100'}`}>
@@ -54,19 +62,22 @@ function AddResourceField({ updateElement, index, content, deleteElemnet }) {
           onChange={(e) => updateElement(index, e.target.name, e.target.value)}
         />
       </div>
-      <div className='flex items-center space-x-3'>
-        <button className="btn-light-blue" onClick={(e) => deleteElemnet(e, index)}>Delete</button>
-        {!collapse &&
-          <button className='btn-light-blue' onClick={handleAddResource} >Add Resource</button>
+      <div className={`flex items-center ${content[index].complete && 'justify-center'}
+      ${!collapse && 'mt-3'}`}>
+        <button className="btn-light-red mr-2" onClick={handleDeleteResource}>Delete</button>
+        <button className={`btn-light-blue ${content[index].complete && 'pointer-events-none btn-dark-blue'}`}
+          onClick={handleAddResource} >
+          {content[index].complete ? 'Resource Added' : 'Add Resource'}
+        </button>
+        {!content[index].complete &&
+          <button className='btn-light-blue ml-auto' onClick={handleCollapse}>{collapse ? 'Expand' : 'Collapse'}</button>
         }
-        <button className='btn-light-blue' onClick={handleCollapse}>{collapse ? 'Expand' : 'Collapse'}</button>
       </div>
-      {error ?
+      {error &&
         <div className="flex items-center mt-1">
           <AiFillWarning className="text-red-500" />
           <p className="ml-1 text-sm text-red-500">{error}</p>
         </div>
-        : <div className="h-5"></div>
       }
     </fieldset>
   )

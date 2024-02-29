@@ -17,11 +17,13 @@ Welcome to the E-Learning Platform repository! This project is designed to provi
 ## Get started
 
 To get started with the project locally, follow the instructions
+
 1- First clone repository
 ```
 git clone https://github.com/amgadfikry/e-learning-platform.git
 ```
 2- Choose mode you want to start with by change this line in docker compose file in main directory
+
 	- test for testing server mode
 	- dev for develpomental mode
 	- prod for production mode

@@ -64,6 +64,7 @@ import assesmentImage from './assets/assesment.jpg';
 import liveImage from './assets/live.jpg';
 import resourceImage from './assets/resource.jpg';
 import responsiveImage from './assets/responsive.jpg';
+import courseImage from './assets/course.jpg';
 
 // export
 export {
@@ -99,5 +100,5 @@ export {
   SiCsharp, SiCplusplus, SiRuby, SiTypescript,
   // export images
   serverImage, error404, registerImage, loginImage, supportImage, mainImage, instructorImage,
-  assesmentImage, liveImage, resourceImage, responsiveImage,
+  assesmentImage, liveImage, resourceImage, responsiveImage, courseImage
 };

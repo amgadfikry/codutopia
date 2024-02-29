@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // import required hooks, components, images and icons
 import {
   CookiesProvider, Routes, Route, useEffect, useDispatch, setAuth, setUserData,
@@ -16,6 +17,8 @@ import Register from './pages/registerPage/register.jsx';
 import Support from './pages/otherPages/support.jsx';
 import ServerDown from './pages/otherPages/serverDown.jsx';
 import NotFound from './pages/otherPages/notFound.jsx';
+import CourseDetails from './pages/courseDetails/courseDetails.jsx';
+import LearnCourse from './pages/learnCourse/learnCourse.jsx';
 
 // App component to display all pages and components
 function App() {
@@ -49,7 +52,7 @@ function App() {
           return navigate('/server-down');
         }
       });
-  }, [dispatch, navigate]);
+  }, [navigate, dispatch]);
 
   // if loading, show loading component
   if (loading) return <Loading />;
@@ -63,6 +66,8 @@ function App() {
           <Route path="/createNew" element={<CreateNewPage />} />
           <Route path="/myCourses" element={<MyCoursesPage />} />
           <Route path="/search/:search" element={<SearchPage />} />
+          <Route path="/course/:id" element={<CourseDetails />} />
+          <Route path="/learn/:id" element={<LearnCourse />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/support" element={<Support />} />

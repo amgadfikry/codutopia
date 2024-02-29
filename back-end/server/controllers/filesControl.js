@@ -1,5 +1,7 @@
 import common from 'oci-common';
 import objectStorage from 'oci-objectstorage';
+import { getStreamAsBuffer } from 'get-stream';
+import { pipeline } from 'stream/promises';
 
 // Set up the authentication provider and the Object Storage client to use the Object Storage service.
 const config = {
@@ -50,20 +52,20 @@ class FilesControl {
   */
   static async getVideo(req, res) {
     try {
-      const { key } = req.params
+      const { key } = req.params;
       const getObjectRequest = {
         namespaceName: 'axtryshpute3',
         bucketName: 'e-learning',
         objectName: key,
       };
       const response = await objectStorageClient.getObject(getObjectRequest);
-      const videoBuffer = response.value.buffer;
+      res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Content-Type', 'video/mp4');
-      res.setHeader('Content-Length', videoBuffer.length);
       res.setHeader('Content-Disposition', `inline; filename="${key}"`);
-      return res.status(200).send(videoBuffer);
+      // Stream the data directly to the response
+      await pipeline(response.value, res);
     } catch (err) {
-      res.status(500).json({ msg: 'Error getting file' });
+      console.log(err);
     }
   }
 

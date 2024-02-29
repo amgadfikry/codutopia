@@ -12,33 +12,7 @@ Welcome to the E-Learning Platform repository! This project is designed to provi
 
 ## Architecture Diagram
 
-```mermaid
-graph TD
-  subgraph Server-Side-Container
-    C[Express.js] -->|Connects to| D[MongoDB]
-    C -->|Connects to| E[Redis]
-    C -->|Connects to| F[Oracle Object Storage]
-  end
-  subgraph Client-Side
-    A[React App] -->|Styled with| B[Tailwind CSS]
-    A -->|Send Request| C
-  end
-  subgraph MongoDB-Container
-    D -->|Stores Data| G[MongoDB]
-  end
-  subgraph Cloud-Storage
-    F -->|Stores Files| I[Oracle Object Storage]
-  end
-  subgraph Redis-Container
-    E -->|Caches Data| H[Redis]
-  end
-  subgraph Docker
-    J[Docker compose] --> A
-    J --> C
-    J --> G
-    J --> H
-  end
-  ```
+![Diagram](./architecture.png)
 
 ## License
 

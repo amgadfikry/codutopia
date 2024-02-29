@@ -20,7 +20,7 @@ function SidebarLogout() {
         if (res.status === 200) Cookies.remove('authToken');
         dispatch(setAuth('public'));
         dispatch(setUserData({}));
-        return navigate(0);
+        navigate(0);
       })
       .catch(err => {
         if (err.response.status === 500) {

@@ -27,7 +27,6 @@ coursesRouter.post('/search/page/:page/limit/:limit',
 
 // Get course by id route
 coursesRouter.get('/:id',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['learner', 'instructor'])],
   CoursesControl.coursesById);
 
 // Get Course by instructor id route

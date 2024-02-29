@@ -11,7 +11,6 @@ filesRouter.post('/upload',
   FilesControl.uploadVideo);
 
 filesRouter.get('/get/:key',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor', 'learner'])],
   FilesControl.getVideo)
 
 filesRouter.delete('/delete/:key',

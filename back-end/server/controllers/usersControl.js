@@ -86,6 +86,8 @@ class UsersControl {
     try {
       const user = res.locals.user;
       const userDB = await mongoDB.getOne(user.role, { _id: new ObjectId(user.id) });
+      delete userDB.password;
+      delete userDB.confirmPassword;
       return res.status(200).json({ msg: 'User found', data: userDB });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
@@ -108,6 +110,35 @@ class UsersControl {
       const redisData = Global.prepareDataToRedis(newData);
       await redisDB.setHashMulti(token, redisData);
       return res.status(200).json({ msg: 'User updated successfully' });
+    } catch (error) {
+      return res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
+
+  /* updateProgress method to update a user progress in mongoDB
+    if the course is not found, return 404 status code
+    if the course is found, update the progress and return 200 status code
+  */
+  static async updateProgress(req, res) {
+    try {
+      const token = res.locals.token;
+      const user = res.locals.user;
+      const { courseId, progress } = req.body;
+      const currentData = await mongoDB.getOne(user.role, { _id: new ObjectId(user.id) });
+      const courses = currentData.courses;
+      const courseIndex = courses.findIndex(course => course.courseId.toString() === courseId);
+      if (courseIndex === -1) {
+        return res.status(404).json({ msg: 'Course not found' });
+      }
+      courses[courseIndex].progress = progress;
+      await mongoDB.updateOne(
+        user.role,
+        { _id: new ObjectId(user.id) },
+        { $set: { courses } }
+      );
+      const redisData = Global.prepareDataToRedis({ courses });
+      await redisDB.setHashMulti(token, redisData);
+      return res.status(200).json({ msg: 'Progress updated successfully' });
     } catch (error) {
       return res.status(500).json({ msg: 'Internal server error' });
     }

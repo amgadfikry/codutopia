@@ -1,6 +1,7 @@
 import mongoDB from "../../databases/mongoDB.js";
 import { ObjectId } from "mongodb";
 import redisDB from "../../databases/redisDB.js";
+import oracleStorage from '../../databases/oracleStorage.js';
 
 class CoursesControl {
   /* Get all courses method
@@ -185,6 +186,30 @@ class CoursesControl {
     }
   }
 
+  /* delete a lesson method
+    delete a lesson from the database mongo
+    delete a lesson from oracle storage
+    return 200 status code and the course
+    if there is an error, return 500 status code
+  */
+  static async deleteLesson(req, res) {
+    try {
+      const { id, index } = req.params;
+      const course = await mongoDB.getOne('courses', { _id: new ObjectId(id) });
+      const lesson = course.content[index];
+      await oracleStorage.delete(lesson.file.objectKey, lesson.type);
+      await mongoDB.updateOne(
+        'courses',
+        { _id: new ObjectId(id) },
+        { $pull: { content: { type: lesson.type, name: lesson.name } } }
+      );
+      return res.status(200).json({ msg: 'Lesson deleted' });
+    }
+    catch (e) {
+      return res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
+
   /* Delete a course method
     delete a course from the database mongo
     delete a course from the database redis
@@ -195,6 +220,11 @@ class CoursesControl {
     try {
       const { id } = req.params;
       const user = res.locals.user;
+      const course = await mongoDB.getOne('courses', { _id: new ObjectId(id) });
+      course.content.forEach(async (lesson) => {
+        await oracleStorage.delete(lesson.file.objectKey, lesson.type);
+      });
+      await oracleStorage.delete(course.image.objectKey, 'image');
       // delete the course from the database mongo
       await mongoDB.deleteOne('courses', { _id: new ObjectId(id) });
       // delete the course from the user enrolled courses list in the mongo

@@ -1,91 +1,65 @@
-import common from 'oci-common';
-import objectStorage from 'oci-objectstorage';
-import { getStreamAsBuffer } from 'get-stream';
+import oracleStorage from '../../databases/oracleStorage.js';
 import { pipeline } from 'stream/promises';
-
-// Set up the authentication provider and the Object Storage client to use the Object Storage service.
-const config = {
-  // Provide authentication details to access the Object Storage service.
-  authenticationDetailsProvider: new common.ConfigFileAuthenticationDetailsProvider(
-    './config.oci', 'DEFAULT'),
-  region: 'me-jeddah-1',
-};
-
-// Create an Object Storage client to use the Object Storage service.
-const objectStorageClient = new objectStorage.ObjectStorageClient(config);
 
 // Define the FilesControl class to handle file upload, retrieval, and deletion operations.
 class FilesControl {
-  /*
-    * The uploadVideo method uploads a video file to the Object Storage service.
+
+  /* The upload method uploads a file to the Object Storage service.
     * It takes a request and a response object as parameters and returns a response object.
-    * create a putObjectRequest object to specify the namespace, bucket, object name, and the video file to upload.
-    * Call the putObject method of the Object Storage client to upload the video file.
-    * Return a response object with a success message and the response from the Object Storage service.
-    * If an error occurs, return a response object with an error message.
+    * Extract the type and originalname properties from the request file object.
+    * Call the upload method of the OracleStorage class to upload the file to the Object Storage service.
+    * Return a response status of 200 with a success message and the response from the Object Storage service.
+    * If an error occurs, return a response status of 500 with an error message.
   */
-  static async uploadVideo(req, res) {
+  static async upload(req, res) {
     try {
+      const { type } = req.params;
       const { originalname, buffer } = req.file;
-      const putObjectRequest = {
-        namespaceName: 'axtryshpute3',
-        bucketName: 'e-learning',
-        objectName: originalname,
-        putObjectBody: buffer,
-        contentLength: buffer.length,
-      };
-      const response = await objectStorageClient.putObject(putObjectRequest);
+      const response = await oracleStorage.upload(type, originalname, buffer);
       res.status(200).json({ msg: 'File uploaded successfully', data: response });
     } catch (err) {
       res.status(500).json({ msg: 'Error uploading file' });
     }
   }
 
-  /*
-    * The getVideo method retrieves a video file from the Object Storage service.
+  /* The get method retrieves a file from the Object Storage service.
     * It takes a request and a response object as parameters and returns a response object.
-    * Create a getObjectRequest object to specify the namespace, bucket, and object name of the video file to retrieve.
-    * Call the getObject method of the Object Storage client to retrieve the video file.
-    * Set the content type, length, and disposition headers of the response object.
-    * Return a response object with the video file as the response body.
-    * If an error occurs, return a response object with an error message.
-  */
-  static async getVideo(req, res) {
+    * Extract the key and type properties from the request parameters.
+    * Call the get method of the OracleStorage class to retrieve the file from the Object Storage service.
+    * Set the response headers based on the file type.
+    * Stream the file data directly to the response.
+    * If an error occurs no response is returned.
+    */
+  static async get(req, res) {
     try {
-      const { key } = req.params;
-      const getObjectRequest = {
-        namespaceName: 'axtryshpute3',
-        bucketName: 'e-learning',
-        objectName: key,
-      };
-      const response = await objectStorageClient.getObject(getObjectRequest);
+      const { key, type } = req.params;
+      const response = await oracleStorage.get(key, type);
       res.setHeader('Accept-Ranges', 'bytes');
-      res.setHeader('Content-Type', 'video/mp4');
+      if (type === 'image') {
+        res.setHeader('Content-Type', 'image/jpeg');
+      } else if (type === 'video') {
+        res.setHeader('Content-Type', 'video/mp4');
+      } else if (type === 'pdf') {
+        res.setHeader('Content-Type', 'application/pdf');
+      }
       res.setHeader('Content-Disposition', `inline; filename="${key}"`);
-      // Stream the data directly to the response
       await pipeline(response.value, res);
     } catch (err) {
-      console.log(err);
+      // end stream
     }
   }
 
-  /*
-    * The deleteVideo method deletes a video file from the Object Storage service.
+  /* The delete method deletes a file from the Object Storage service.
     * It takes a request and a response object as parameters and returns a response object.
-    * Create a deleteObjectRequest object to specify the namespace, bucket, and object name of the video file to delete.
-    * Call the deleteObject method of the Object Storage client to delete the video file.
-    * Return a response object with a success message.
-    * If an error occurs, return a response object with an error message.
-  */
-  static async deleteVideo(req, res) {
+    * Extract the key and type properties from the request parameters.
+    * Call the delete method of the OracleStorage class to delete the file from the Object Storage service.
+    * Return a response status of 200 with a success message.
+    * If an error occurs, return a response status of 500 with an error message.
+    */
+  static async delete(req, res) {
     try {
-      const { key } = req.params
-      const deleteObjectRequest = {
-        namespaceName: 'axtryshpute3',
-        bucketName: 'e-learning',
-        objectName: key,
-      };
-      await objectStorageClient.deleteObject(deleteObjectRequest);
+      const { key, type } = req.params
+      await oracleStorage.delete(key, type);
       res.status(200).json({ msg: 'File deleted successfully' })
     } catch (error) {
       res.status(500).json({ msg: 'Error deleting file' });
@@ -95,4 +69,3 @@ class FilesControl {
 
 // Export the FilesControl class and the objectStorageClient object.
 export default FilesControl;
-export { objectStorageClient };

@@ -6,16 +6,16 @@ import multer from 'multer';
 const filesRouter = Router();
 const upload = multer();
 
-filesRouter.post('/upload',
-  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor']), upload.single('video')],
-  FilesControl.uploadVideo);
+filesRouter.post('/upload/:type',
+  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor']), upload.single('file')],
+  FilesControl.upload);
 
-filesRouter.get('/get/:key',
-  FilesControl.getVideo)
+filesRouter.get('/get/:type/:key',
+  FilesControl.get)
 
-filesRouter.delete('/delete/:key',
+filesRouter.delete('/delete/:type/:key',
   [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor'])],
-  FilesControl.deleteVideo);
+  FilesControl.delete);
 
 
 export default filesRouter;

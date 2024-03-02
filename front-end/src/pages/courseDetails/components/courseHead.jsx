@@ -1,17 +1,16 @@
 /* eslint-disable react/prop-types */
 // import required hooks, components, images and icons
 import {
-  LazyLoadImage, courseImage, url
+  LazyLoadImage, courseImage
 } from '../../../import';
 
 // CourseHead component to display course head
-function CourseHead({ courseDetails, auth, userCourse }) {
-  const imageUrl = `${url}/files/get/image/${courseDetails.image.objectKey}`;
+function CourseHead({ courseDetails, auth, userCourse, imageUrls }) {
 
   return (
     <div className='flex flex-col md:flex-row p-1 bg-darker-blue rounded-lg'>
       <LazyLoadImage
-        src={imageUrl}
+        src={imageUrls}
         alt='course'
         className='md:w-80 rounded-lg object-cover'
         placeholderSrc={courseImage}

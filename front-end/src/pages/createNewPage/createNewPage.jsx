@@ -3,11 +3,10 @@
 import {
   LazyLoadImage, instructorImage, useState, produce,
   checkDataError, AiFillWarning, axios, url, Cookies, optionsWithCookies,
-  useNavigate, useEffect, useSelector, userAuth, Loading
+  useNavigate, useEffect, useSelector, userAuth, Loading, FaVideo, FaFile
 } from '../../import';
 import CreateDescription from './components/createDescription.jsx';
-import AddResourceField from './components/addResourceField.jsx';
-import AddVideoField from './components/addVideoField.jsx';
+import AddFileSection from './components/addFileSection.jsx';
 
 // CreateNewPage component to create new course by instructor
 function CreateNewPage() {
@@ -17,6 +16,7 @@ function CreateNewPage() {
     category: 'Python',
     level: 'Beginner',
     description: '',
+    image: ''
   });
   const [content, setContent] = useState([]);
   const [error, setError] = useState('');
@@ -34,7 +34,6 @@ function CreateNewPage() {
 
   // handleData function to handle course data change
   const handleData = (e) => {
-    e.preventDefault();
     const { name, value } = e.target;
     setCourseData(produce(draft => {
       draft[name] = value;
@@ -74,26 +73,10 @@ function CreateNewPage() {
       setError('Please fill description fileds');
     }
   }
-  // addVideo function to create new video content
-  const addVideo = (e) => {
+  // addSection function to create new section content
+  const addSection = (e, type) => {
     e.preventDefault();
-    setContent([...content, { type: 'video', name: '', description: '', video: '', complete: false }]);
-  }
-  // addResource function to create new resource content
-  const addResource = (e) => {
-    e.preventDefault();
-    setContent([...content, { type: 'resource', name: '', description: '', url: '', complete: false }]);
-  }
-
-  // updateElement function to update content element
-  const updateElement = (index, name, value) => {
-    setContent(produce(draft => {
-      draft[index][name] = value;
-    }));
-  }
-  // deleteElemnet function to delete content element
-  const deleteElemnet = (index) => {
-    setContent(content.filter((_, i) => i !== index));
+    setContent([...content, { type: type, name: '', description: '', file: '', complete: false }]);
   }
 
   // return create new course form
@@ -117,20 +100,15 @@ function CreateNewPage() {
         <CreateDescription courseData={courseData} handleData={handleData} />
         {/* contents fields */}
         {
-          content.map((item, index) => {
-            if (item.type === 'video') {
-              return <AddVideoField key={index} updateElement={updateElement} index={index} content={content}
-                deleteElemnet={deleteElemnet} />
-            } else if (item.type === 'resource') {
-              return <AddResourceField key={index} updateElement={updateElement} index={index} content={content}
-                deleteElemnet={deleteElemnet} />
-            }
-          })
+          content.map((item, index) =>
+            <AddFileSection key={index} index={index} content={content} setContent={setContent}
+              Icon={item.type === 'video' ? FaVideo : FaFile} />
+          )
         }
         {/* add video and resource buttons */}
         <div className="flex items-center justify-end space-x-3 mt-4">
-          <button onClick={addVideo} className="btn-dark-blue">Add Video</button>
-          <button onClick={addResource} className="btn-dark-blue">Add Resource</button>
+          <button onClick={(e) => addSection(e, 'video')} className="btn-dark-blue">Add Video</button>
+          <button onClick={(e) => addSection(e, 'pdf')} className="btn-dark-blue">Add Resource</button>
         </div>
         {/* create course button and error message */}
         <div className='pb-6'>

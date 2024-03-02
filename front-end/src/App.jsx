@@ -2,7 +2,7 @@
 // import required hooks, components, images and icons
 import {
   CookiesProvider, Routes, Route, useEffect, useDispatch, setAuth, setUserData,
-  axios, Cookies, url, optionsWithCookies, useState, Loading, useNavigate
+  axios, Cookies, url, optionsWithCookies, useState, useNavigate
 } from './import';
 // import required components
 import NavBar from './layout/navbar.jsx';
@@ -17,14 +17,12 @@ import Register from './pages/registerPage/register.jsx';
 import Support from './pages/otherPages/support.jsx';
 import ServerDown from './pages/otherPages/serverDown.jsx';
 import NotFound from './pages/otherPages/notFound.jsx';
-import CourseDetails from './pages/courseDetails/courseDetails.jsx';
-import LearnCourse from './pages/learnCourse/learnCourse.jsx';
+import CoursePage from './pages/courseDetails/coursePage.jsx';
 
 // App component to display all pages and components
 function App() {
   // use state variables for loading and toggle sidebar
   const [toggleSidebar, setToggleSidebar] = useState(true);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -38,24 +36,20 @@ function App() {
         // if success, set user data and auth from server
         dispatch(setUserData(res.data.data));
         dispatch(setAuth(res.data.data.role));
-        setLoading(false);
       })
       .catch(err => {
         // if error, set auth to public and user data to empty
         if (err.response.status === 401) {
-          setLoading(false);
           dispatch(setAuth('public'));
           dispatch(setUserData({}));
         } else {
           // if server error, navigate to server down page
-          setLoading(false);
-          return navigate('/server-down');
+          navigate('/server-down');
         }
       });
   }, [navigate, dispatch]);
 
   // if loading, show loading component
-  if (loading) return <Loading />;
   return (
     <>
       <CookiesProvider defaultSetOptions={{ path: '/' }}>
@@ -66,8 +60,8 @@ function App() {
           <Route path="/createNew" element={<CreateNewPage />} />
           <Route path="/myCourses" element={<MyCoursesPage />} />
           <Route path="/search/:search" element={<SearchPage />} />
-          <Route path="/course/:id" element={<CourseDetails />} />
-          <Route path="/learn/:id" element={<LearnCourse />} />
+          <Route path="/course/:id/*" element={<CoursePage />} />
+          {/* <Route path="/learn/:id" element={<LearnCourse />} /> */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/support" element={<Support />} />

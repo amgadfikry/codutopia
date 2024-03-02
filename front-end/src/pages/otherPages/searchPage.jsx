@@ -11,7 +11,7 @@ function SearchPage() {
   // skills array
   const skills = [
     { lang: 'Python', Icon: FaPython },
-    { lang: 'Golang', Icon: FaGolang },
+    { lang: 'Go', Icon: FaGolang },
     { lang: 'JavaScript', Icon: BiLogoJavascript },
     { lang: 'C#', Icon: SiCsharp },
     { lang: 'C++', Icon: SiCplusplus },
@@ -77,7 +77,7 @@ function SearchPage() {
           <p className='flex justify-center 
             text-2xl font-semibold text-darker-gray'>No result found</p>}
         {!loading && searchResult.length > 0 &&
-          <div className='flex flex-wrap justify-center items-center md:justify-start flex-row'>
+          <div className='flex flex-wrap justify-center items-center flex-row'>
             {searchResult.map((result) => (
               <CourseBox className='drop-shadow-lg' course={result} key={result._id} id={result._id} />
             ))}

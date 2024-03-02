@@ -8,11 +8,13 @@ import './index.css'
 import { Provider } from 'react-redux'
 import { store } from './redux/store.js'
 import { Router } from './import.js'
+import ScrollToTop from './components/scrollToTop.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
       <Router>
+        <ScrollToTop />
         <App className="scroll-smooth" />
       </Router>
     </Provider>

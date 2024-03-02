@@ -48,7 +48,7 @@ import { FcAbout } from "react-icons/fc";
 import { RiFileInfoFill, RiLockPasswordFill } from "react-icons/ri";
 import {
   FaFolderTree, FaLinkedinIn, FaGithub, FaXTwitter, FaUser, FaPython, FaJava, FaGolang,
-  FaVideo, FaFile
+  FaVideo, FaFile, FaArrowUp19, FaArrowDown19
 } from "react-icons/fa6";
 import { BiLogoJavascript } from "react-icons/bi";
 import { SiCsharp, SiCplusplus, SiRuby, SiTypescript } from "react-icons/si";
@@ -96,6 +96,7 @@ export {
   FcAbout,
   RiFileInfoFill, RiLockPasswordFill,
   FaFolderTree, FaLinkedinIn, FaGithub, FaXTwitter, FaUser, FaPython, FaJava, FaGolang, FaVideo, FaFile,
+  FaArrowUp19, FaArrowDown19,
   BiLogoJavascript,
   SiCsharp, SiCplusplus, SiRuby, SiTypescript,
   // export images

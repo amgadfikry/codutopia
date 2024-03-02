@@ -49,6 +49,11 @@ coursesRouter.put('/update/:id',
   [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor'])],
   CoursesControl.updateCourse);
 
+// delete lesson route
+coursesRouter.delete('/lesson/:id/:index',
+  [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor'])],
+  CoursesControl.deleteLesson);
+
 // Delete a course route
 coursesRouter.delete('/delete/:id',
   [MiddlewareControl.authMiddleware, MiddlewareControl.roleMiddleware(['instructor'])],

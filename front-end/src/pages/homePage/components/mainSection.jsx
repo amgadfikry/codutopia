@@ -15,7 +15,7 @@ function MainSection() {
         <div className="lg:w-1/2 mb-3 lg:mb-0 px-3">
           <h1 className="text-2xl text-darker-blue font-bold lg:text-3xl">The Best Way to Learn<br></br> Coding</h1>
           <p className="mt-4 text-dark-blue font-light">
-            E-Learning will help you to learn coding with the best way.
+            Codutopia will help you to learn coding with the best way.
             You will learn the key patterns necessary
             to solve almost any interview question and gain the systematic knowledge you need to prove
             your expertise. Be more confident as you learn to think like a software engineer.

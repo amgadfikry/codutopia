@@ -42,7 +42,7 @@ function Footer() {
             before:top-[-3px] before:left-[-5px] before:rounded-full mx-auto sm:mx-0
             after:content-[""] after:absolute after:w-5 after:h-5 after:bg-light-red after:bottom-[-3px]
             after:right-[-5px] after:rounded-full after:animate-ping before:animate-ping'>
-              E-Learnig
+              Codutopia
             </Link>
             {/* display copy right text */}
             <div className="mt-4 text-center text-sm text-light-gray sm:mt-0 sm:text-right flex flex-col items-center">

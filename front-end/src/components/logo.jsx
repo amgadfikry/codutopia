@@ -10,7 +10,7 @@ function Logo() {
         before:top-[-3px] before:left-[-5px] before:rounded-full before:z-[-1]
         after:content-[""] after:absolute after:w-5 after:h-5 after:bg-light-red after:bottom-[-3px]
         after:right-[-5px] after:rounded-full after:z-[-1] after:animate-bounce before:animate-bounce'>
-        E-Learnig
+        Codutopia
       </Link>
     </div>
   )

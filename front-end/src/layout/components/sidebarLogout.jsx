@@ -20,11 +20,11 @@ function SidebarLogout() {
         if (res.status === 200) Cookies.remove('authToken');
         dispatch(setAuth('public'));
         dispatch(setUserData({}));
-        navigate(0);
+        navigate('/login');
       })
       .catch(err => {
         if (err.response.status === 500) {
-          return navigate('/server-down');
+          navigate('/server-down');
         }
       });
   }

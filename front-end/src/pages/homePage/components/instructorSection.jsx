@@ -30,7 +30,7 @@ function InstructorSection() {
           </p>
           <Link to={auth === 'instructor' ? '/myCourses' : '/register'}>
             <button className="btn-dark-red mt-4 text-lg">
-              {auth === 'instructor' ? 'Your Dashboard' : 'Become an instructor'}
+              {auth === 'instructor' ? 'My Courses' : 'Become an instructor'}
             </button>
           </Link>
         </div>

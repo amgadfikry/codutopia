@@ -8,7 +8,7 @@ function LearningSection() {
   // skills array with language and icon
   const skills = [
     { lang: 'Python', Icon: FaPython },
-    { lang: 'Golang', Icon: FaGolang },
+    { lang: 'Go', Icon: FaGolang },
     { lang: 'JavaScript', Icon: BiLogoJavascript },
     { lang: 'C#', Icon: SiCsharp },
     { lang: 'C++', Icon: SiCplusplus },

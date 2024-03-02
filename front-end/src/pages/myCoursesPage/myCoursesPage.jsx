@@ -61,7 +61,7 @@ function MyCoursesPage() {
             {auth === 'instructor' ? 'No courses created yet' : 'No courses enrolled yet'}
           </p>}
         {!loading && searchResult.length > 0 &&
-          <div className='flex flex-wrap justify-center items-center  flex-row'>
+          <div className='flex flex-wrap justify-center items-center flex-row'>
             {searchResult.map((result) => (
               <CourseBox course={result} key={result._id} id={result._id} />
             ))}

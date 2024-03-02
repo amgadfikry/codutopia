@@ -19,7 +19,6 @@
         "@babel/preset-modules": "^0.1.6",
         "@types/cookie-parser": "^1.4.6",
         "@types/jsonwebtoken": "^9.0.5",
-        "@types/mocha": "^10.0.6",
         "bcrypt": "^5.1.1",
         "cookie-parser": "^1.4.6",
         "cors": "^2.8.5",
@@ -35,13 +34,12 @@
         "multer": "^1.4.5-lts.1",
         "npm": "^10.5.0",
         "oci-common": "^2.80.0",
-        "oci-objectstorage": "^2.80.0",
-        "react-player": "^2.15.0",
-        "stream-to-buffer": "^0.1.0"
+        "oci-objectstorage": "^2.80.0"
     },
     "devDependencies": {
         "@babel/core": "^7.23.9",
         "@babel/preset-env": "^7.23.9",
+        "@types/mocha": "^10.0.6",
         "@types/sinon": "^17.0.3",
         "axios": "^1.6.7",
         "chai": "^5.1.0",

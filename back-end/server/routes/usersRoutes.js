@@ -23,6 +23,9 @@ userRouter.get('/details', MiddlewareControl.authMiddleware, UserControl.getUser
 // Update user route
 userRouter.put('/update', MiddlewareControl.authMiddleware, UserControl.updateUser);
 
+// Update user progress in course route
+userRouter.put('/updateProgress', MiddlewareControl.authMiddleware, UserControl.updateProgress);
+
 // update user password route
 userRouter.put('/updatePassword', MiddlewareControl.authMiddleware, UserControl.updatePassword);
 

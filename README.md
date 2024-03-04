@@ -1,6 +1,6 @@
-# E-Learning Platform
+# Codutopia
 
-Welcome to the E-Learning Platform repository! This project is designed to provide a comprehensive and user-friendly platform for online education. Whether you are a student looking for courses or an instructor wanting to create and manage content, my platform aims to cater to your e-learning needs.
+Welcome to the Codutopia repository! This project is designed to provide a comprehensive and user-friendly platform for online education. Whether you are a student looking for courses or an instructor wanting to create and manage content, my platform aims to cater to your e-learning needs.
 
 ## Features
 
@@ -61,11 +61,11 @@ docker-compose down
 ```
 ## Contributing
 
-Thank you for considering contributing to my E-Learning Platform! Contributions are welcome from everyone.
+Thank you for considering contributing to my Codutopia Platform! Contributions are welcome from everyone.
 
 ### Bug Reports and Feature Requests
 
-If you come across a bug or have a feature request, please open an issue on our [GitHub repository](https://github.com/amgadfikry/e-learning-platform/issues). I appreciate your feedback and will address issues promptly.
+If you come across a bug or have a feature request, please open an issue on our [GitHub repository](https://github.com/amgadfikry/codutopia/issues). I appreciate your feedback and will address issues promptly.
 
 ### Pull Requests
 
@@ -76,7 +76,7 @@ I welcome contributions through pull requests. Here's a basic guide to help you 
 3. Create a new branch for your changes: `git checkout -b feature/your-feature`
 4. Make your changes and commit them: `git commit -m "Add your feature"`
 5. Push your changes to your forked repository: `git push origin feature/your-feature`
-6. Open a pull request on our [GitHub repository](https://github.com/amgadfikry/e-learning-platform/pulls) with a detailed description of your changes.
+6. Open a pull request on our [GitHub repository](https://github.com/amgadfikry/codutopia/pulls) with a detailed description of your changes.
 
 ### Development Setup
 
@@ -110,4 +110,4 @@ I am excited about these upcoming features and welcome contributions and feedbac
 
 This project is licensed under the [MIT License](./LICENSE). Feel free to use, modify, and distribute the code as per the terms of the license.
 
-Thank you for your interest in My E-Learning Platform!
+Thank you for your interest in My Codutopia Platform!

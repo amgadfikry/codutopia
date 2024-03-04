@@ -33,7 +33,7 @@ To get started with the project locally, follow the instructions
 
 1. First clone repository
 ```
-git clone https://github.com/amgadfikry/e-learning-platform.git
+git clone https://github.com/amgadfikry/codutopia.git
 ```
 2. Choose mode you want to start with by change this line in docker compose file in main directory
 - test for testing server mode
@@ -72,7 +72,7 @@ If you come across a bug or have a feature request, please open an issue on our 
 I welcome contributions through pull requests. Here's a basic guide to help you get started:
 
 1. Fork the repository.
-2. Clone your forked repository: `git clone https://github.com/your-username/e-learning-platform.git`
+2. Clone your forked repository: `git clone https://github.com/your-username/codutopia.git`
 3. Create a new branch for your changes: `git checkout -b feature/your-feature`
 4. Make your changes and commit them: `git commit -m "Add your feature"`
 5. Push your changes to your forked repository: `git push origin feature/your-feature`

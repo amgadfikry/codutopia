@@ -11,7 +11,8 @@ const app = express();
 app.use(express.json());
 // allow the server to accept requests from the front-end and set the credentials to true
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:80',
+    'http://localhost', 'https://localhost', 'https://localhost:443'],
   credentials: true
 }));
 // set the headers to expose the token in the response header

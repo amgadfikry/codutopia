@@ -21,7 +21,7 @@ services:
   # Back-end service (server) container configuration
   server:
     container_name: server
-    build: ./back-end
+    image: amgadfikry/server-codutopia
     restart: always
     networks:
       client-server:
@@ -31,7 +31,7 @@ services:
     volumes:
       - ./back-end:/app
     environment:
-      - NODE_ENV=test
+      - NODE_ENV=pro
     env_file:
       - ./back-end/.env
     depends_on:

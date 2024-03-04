@@ -23,9 +23,9 @@ function Sidebar({ toggleSidebar, setToggleSidebar }) {
   }
 
   return (
-    <div className={`fixed top-1/2 translate-y-[-50%] left-4 translate-x-0 rounded-xl py-5 px-3 shadow-lg border whitespace-nowrap
+    <div className={`fixed top-1/2 translate-y-[-50%] left-0 translate-x-0 rounded-xl py-5 px-3 shadow-lg border whitespace-nowrap
       bg-white border-dark-gray z-50 text-dark-color transition duration-300 ${toggleSidebar && 'translate-x-[-103%]'}
-      user-select-none`} onClick={handleSidebar} >
+      user-select-none max-h-screen overflow-y-auto`} onClick={handleSidebar} >
       <div className='h-full flex flex-col relative pr-10'>
         {/* display close icon */}
         <AiOutlineClose className='absolute  -top-2 right-0 text-xl cursor-pointer text-light-red'

@@ -10,12 +10,13 @@ class MongoDB {
     const url = process.env.MONGO_URL || 'mongodb://localhost:27017';
     MongoClient.connect(url).then((client) => {
       const envVar = process.env.NODE_ENV;
+      // set the database name based on the environment where the server is running
       if (envVar === 'test') {
         this.db = client.db('test');
       } else if (envVar === 'dev') {
         this.db = client.db('dev');
       } else {
-        this.db = client.db('e-learning');
+        this.db = client.db('codutopia');
       }
     });
   }
@@ -36,7 +37,13 @@ class MongoDB {
     }
   }
 
-  // method to add many documents to the collection
+  /* methods to add many documents to the collection
+    Parameters:
+    - coll - the collection name
+    - data - the data to be added
+    Returns:
+    - the result of the operation
+  */
   async addMany(coll, data) {
     try {
       return await this.db.collection(coll).insertMany(data);

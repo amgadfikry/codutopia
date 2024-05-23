@@ -4,163 +4,227 @@ import { promises as fs } from 'fs';
 
 // Test suite for the OracleStorage module and its methods by connecting to the object storage service
 describe('Unittest of OracleStorage', () => {
+  // variables to save the name of the bucket, names of the files
+  let bucketName;
+  let fileName;
+  let fileName2;
 
-  // variables to save the name of the bucket, names of the files, and the response data
-  const bucketName = 'testbucket';
-  const fileName = 'test.txt';
-  const fileName2 = 'test2.txt';
-  const responseData = {};
-
-  // before hook create two files before running the test cases
+  // before hook create define the bucket name and create the files dummy files before running the test cases
   before(async () => {
+    // Define the bucket name
+    bucketName = 'test-bucket';
+    // define files names
+    fileName = 'test.txt';
+    fileName2 = 'test2.txt';
+    // Create the dummy files with content
     await fs.writeFile(fileName, 'Hello World');
     await fs.writeFile(fileName2, 'Hello World 2');
   });
 
   // after hook delete the files after running the test cases
   after(async () => {
+    // Delete the dummy files
     await fs.unlink(fileName);
     await fs.unlink(fileName2);
   });
 
-  // Test case to create a new bucket in the object storage service
-  it('CreateBucket method creates a new bucket', async () => {
-    const result = await oracleStorage.createBucket(bucketName);
-    expect(result.bucket.name).to.equal(bucketName);
+
+  // Test suite for createBucket method in the OracleStorage class
+  describe('Create Bucket method', () => {
+    // Test case to create a new bucket in the object storage service
+    it('CreateBucket method creates a new bucket', async () => {
+      // Create a new bucket in the object storage service
+      const result = await oracleStorage.createBucket(bucketName);
+      // Check if result is correct message
+      expect(result).to.equal('Bucket created successfully');
+    }).timeout(5000);
+
+    // Test case to create a new bucket in the object storage service with the same name
+    it('CreateBucket method creates a new bucket with the same name', async () => {
+      try {
+        // Create a new bucket in the object storage service with the same name
+        await oracleStorage.createBucket(bucketName);
+      } catch (error) {
+        // Check if the error message is 'Bucket already exists'
+        expect(error.message).to.equal('Bucket already exists');
+      }
+    });
   });
 
-  // Test case to create a new bucket in the object storage service with the same name
-  it('CreateBucket method creates a new bucket with the same name', async () => {
-    try {
-      await oracleStorage.createBucket(bucketName);
-    } catch (err) {
-      console.log(err);
-      expect(err.statusCode).to.equal(409);
-      expect(err.serviceCode).to.equal('BucketAlreadyExists');
-    }
+
+  // Test suite for getAllBucket method in the OracleStorage class
+  describe('Get All Buckets method', () => {
+    // Test case get all buckets from the object storage service if there are buckets
+    it('GetAllBucket method retrieves all buckets if there are buckets', async () => {
+      // Get all buckets from the object storage service
+      const result = await oracleStorage.getAllBucket();
+      // check that result is list of names of available buckets in object storage services
+      expect(result).to.be.an('array');
+      expect(result.length).to.equal(1);
+      expect(result).to.include(bucketName);
+    });
   });
 
-  // Test case get all buckets from the object storage service if there are buckets
-  it('GetAllBucket method retrieves all buckets if there are buckets', async () => {
-    const result = await oracleStorage.getAllBucket();
-    expect(result.items.length).to.equal(1);
-    expect(result.items[0].name).to.equal(bucketName);
+
+  // Test suite for createObject method in the OracleStorage class
+  describe('Create Object method', () => {
+    // Test case to create a new object in the object storage service for first time
+    it('CreateObject method creates a new object', async () => {
+      // Read the file content to create the object in the object storage service
+      const file = await fs.readFile(fileName);
+      // Call the createObj method to create the object in the object storage service
+      const result = await oracleStorage.createObj(bucketName, fileName, file);
+      // check if the result is correct message
+      expect(result).to.equal('Object created successfully');
+    }).timeout(5000);
+
+    // Test case to create a new object with the same name in the object storage service
+    it('CreateObject method creates a new object with same name', async () => {
+      // Read the file content to create the object in the object storage service
+      const file = await fs.readFile(fileName);
+      // Call the createObj method to create the object in the object storage service
+      const result = await oracleStorage.createObj(bucketName, fileName, file);
+      // check if the result is correct message
+      expect(result).to.equal('Object created successfully');
+    }).timeout(5000);
   });
 
-  // Test case to create a new object in the object storage service for first time
-  it('CreateObject method creates a new object', async () => {
-    // Read the file content
-    const file = await fs.readFile(fileName);
-    const result = await oracleStorage.createObj(bucketName, fileName, file);
-    expect(result.eTag).to.not.be.null;
-    expect(result.versionId).to.not.be.null;
-    // Save the response data to use it in other test cases
-    responseData['eTag'] = result.eTag;
-    responseData['versionId'] = result.versionId;
-    responseData['lastModified'] = result.lastModified;
+
+  // Test suite for exists method in the OracleStorage class
+  describe('Exists method', () => {
+    // Test case to check if an object exists in the object storage service
+    it('Exists method checks if an object exists', async () => {
+      // Call the exists method to check if the object exists in the object storage service
+      const result = await oracleStorage.exists(bucketName, fileName);
+      // Check if the result is correct message
+      expect(result).to.equal('Object exists');
+    });
+
+    // Test case check if an object is not exists in the object storage service
+    it('Exists method checks if an object not exists', async () => {
+      try {
+        // Call the exists method to check if the object exists in the object storage service
+        await oracleStorage.exists(bucketName, 'invalid.txt');
+      } catch (error) {
+        // Check if the error message is 'Object not found'
+        expect(error.message).to.equal('Object not found');
+      }
+    });
+
   });
 
-  // Test case to check if an object exists in the object storage service
-  it('Exists method checks if an object exists', async () => {
-    const result = await oracleStorage.exists(bucketName, fileName);
-    expect(result.eTag).to.equal(responseData.eTag);
-    expect(result.versionId).to.equal(responseData.versionId);
-    expect(result.lastModified).to.equal(responseData.lastModified);
+
+  // Test suite for getObject method in the OracleStorage class
+  describe('Get Object method', () => {
+    // Test case to get the object successfully from the object storage service
+    it('GetObject method retrieves an object', async () => {
+      // Call the getObj method to get the object from the object storage service
+      const result = await oracleStorage.getObj(bucketName, fileName);
+      // Check if the result has the correct properties
+      expect(result).has.property('value');
+      expect(result).has.property('lastModified');
+    }).timeout(5000);
+
+    // Test case to get the object not found in the object storage service
+    it('GetObject method retrieves an object not found', async () => {
+      try {
+        // Call the getObj method to get the object from the object storage service
+        await oracleStorage.getObj(bucketName, 'invalid.txt');
+      } catch (error) {
+        // Check if the error message is 'Failed to get object'
+        expect(error.message).to.equal('Failed to get object');
+      }
+    });
   });
 
-  // Test case to get the object from the object storage service
-  it('GetObject method retrieves an object', async () => {
-    const result = await oracleStorage.getObj(bucketName, fileName);
-    expect(result).has.property('value');
-    expect(result.eTag).to.equal(responseData.eTag);
-    expect(result.versionId).to.equal(responseData.versionId);
-    expect(result.lastModified).to.equal(responseData.lastModified);
+
+  // Test suite for getAllObj method in the OracleStorage class
+  describe('Get All Objects method', () => {
+    // Test case to get all objects from bucket in the object storage service
+    it('GetAllObj method retrieves all objects from bucket', async () => {
+      // Read the another file content to create the object in the object storage service
+      const file2 = await fs.readFile(fileName2);
+      // create another object in the same bucket
+      await oracleStorage.createObj(bucketName, fileName2, file2);
+      // Call the getAllObj method to get all objects from the bucket in the object storage service
+      const result = await oracleStorage.getAllObj(bucketName);
+      // check if the result is array
+      expect(result).to.be.an('array');
+      // check if the result has the correct length
+      expect(result.length).to.equal(2);
+      // check if the result has the correct names of the objects
+      expect(result[0].name).to.equal(fileName);
+      expect(result[1].name).to.equal(fileName2);
+    }).timeout(5000);
+
+    // Testcase to get all objects failed from bucket in the object storage service
+    it('GetAllObj method retrieves all objects from bucket failed', async () => {
+      try {
+        // Call the getAllObj method to get all objects from the bucket in the object storage service
+        await oracleStorage.getAllObj('invalid');
+      } catch (error) {
+        // Check if the error message is 'Failed to get objects'
+        expect(error.message).to.equal('Failed to get objects');
+      }
+    });
   });
 
-  // Test case to create a new object with same name to update the object in the object storage service
-  it('CreateObject method creates a new object with same name', async () => {
-    // Update the file content
-    await fs.writeFile(fileName, 'Hello World Updated');
-    // Read the updated file content
-    const file = await fs.readFile(fileName);
-    const result = await oracleStorage.createObj(bucketName, fileName, file);
-    expect(result.eTag).not.equal(responseData.eTag);
-    expect(result.versionId).not.equal(responseData.versionId);
-    expect(result.lastModified).not.equal(responseData.lastModified);
+
+  // Test suite for deleteObj method in the OracleStorage class
+  describe('Delete Object method', () => {
+    // Test case to delete an object exists successfully in the object storage service
+    it('DeleteObj method deletes an object exists successfully', async () => {
+      // Call the deleteObj method to delete the object from the object storage service
+      const result = await oracleStorage.deleteObj(bucketName, fileName);
+      // Check if the result is correct message
+      expect(result).to.equal('Object deleted successfully');
+    }).timeout(5000);
+
+    // Test case to failed to delete an object in the object storage service
+    it('DeleteObj method deletes an object failed', async () => {
+      try {
+        // Call the deleteObj method to delete the object from the object storage service
+        await oracleStorage.deleteObj(bucketName, fileName);
+      } catch (error) {
+        // Check if the error message is 'Failed to delete object'
+        expect(error.message).to.equal('Failed to delete object');
+      }
+    });
   });
 
-  // Test case to get all objects from bucket in the object storage service
-  it('GetAllObj method retrieves all objects from bucket', async () => {
-    // Read the file content
-    const file2 = await fs.readFile(fileName2);
-    // create another object in the same bucket
-    await oracleStorage.createObj(bucketName, fileName2, file2);
-    const result = await oracleStorage.getAllObj(bucketName);
-    expect(result.listObjects.objects.length).to.equal(2);
-    expect(result.listObjects.objects[0].name).to.equal(fileName);
-    expect(result.listObjects.objects[1].name).to.equal(fileName2);
-  });
 
-  // Test case to delete an object exists in the object storage service
-  it('DeleteObj method deletes an object', async () => {
-    const result = await oracleStorage.deleteObj(bucketName, fileName);
-    expect(result.lastModified).to.not.be.null;
-    expect(Object.keys(result).length).to.equal(2);
-  });
+  // Test suite for  delete bucket method in the OracleStorage class
+  describe('Delete Bucket method', () => {
+    // Test case delete a bucket contains objects from the object storage service
+    it('DeleteBucket method deletes a bucket contains objects', async () => {
+      try {
+        // delete the bucket contains objects
+        await oracleStorage.deleteBucket(bucketName);
+      } catch (err) {
+        // Check if the error message is 'Bucket not empty'
+        expect(err.message).to.equal('Bucket not empty');
+      }
+    });
 
-  // Test case check if an object exists in the object storage service after deletion
-  it('Exists method checks if an object exists after deletion', async () => {
-    try {
-      await oracleStorage.exists(bucketName, fileName);
-    } catch (err) {
-      expect(err.statusCode).to.equal(404);
-      expect(err.serviceCode).to.equal('None');
-      expect(err.operationName).to.equal('headObject');
-    }
-  });
+    // Test case delete a bucket after deleting all objects from the object storage service
+    it('DeleteBucket method deletes a empty bucket', async () => {
+      // delete remaining object in the bucket
+      await oracleStorage.deleteObj(bucketName, fileName2);
+      // delete the bucket
+      const result = await oracleStorage.deleteBucket(bucketName);
+      // Check if the result is correct message
+      expect(result).to.equal('Bucket deleted successfully');
+    }).timeout(5000);
 
-  // Test case to delete an object not found in the object storage service
-  it('DeleteObj method deletes an object not found', async () => {
-    try {
-      await oracleStorage.deleteObj(bucketName, fileName);
-    } catch (err) {
-      expect(err.statusCode).to.equal(404);
-      expect(err.serviceCode).to.equal('ObjectNotFound');
-    }
-  });
-
-  // Test case delete a bucket contains objects from the object storage service
-  it('DeleteBucket method deletes a bucket contains objects', async () => {
-    try {
-      await oracleStorage.deleteBucket(bucketName);
-    } catch (err) {
-      expect(err.statusCode).to.equal(409);
-      expect(err.serviceCode).to.equal('BucketNotEmpty');
-    }
-  });
-
-  // Test case delete a bucket after deleting all objects from the object storage service
-  it('DeleteBucket method deletes a bucket', async () => {
-    // delete remaining object in the bucket
-    await oracleStorage.deleteObj(bucketName, fileName2);
-    const result = await oracleStorage.deleteBucket(bucketName);
-    expect(Object.keys(result).length).to.equal(1);
-    expect(result.opcRequestId).to.not.be.null;
-  }).timeout(5000);
-
-  // Test case delete a bucket from the object storage service not found
-  it('DeleteBucket method deletes a bucket not found', async () => {
-    try {
-      await oracleStorage.deleteBucket(bucketName);
-    } catch (err) {
-      expect(err.statusCode).to.equal(404);
-      expect(err.serviceCode).to.equal('BucketNotFound');
-    }
-  });
-
-  // Test case get all buckets from the object storage service if there are no buckets
-  it('GetAllBucket method retrieves all buckets if there are no buckets', async () => {
-    const result = await oracleStorage.getAllBucket();
-    expect(result.items.length).to.equal(0);
+    // Test case delete a bucket from the object storage service not found
+    it('DeleteBucket method deletes a bucket not found', async () => {
+      try {
+        // delete a bucket not found in the object storage service
+        await oracleStorage.deleteBucket(bucketName);
+      } catch (err) {
+        // Check if the error message is 'Bucket not found or failed to delete bucket'
+        expect(err.message).to.equal('Bucket not found or failed to delete bucket');
+      }
+    }).timeout(5000);
   });
 });

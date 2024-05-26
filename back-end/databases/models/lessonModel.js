@@ -46,7 +46,6 @@ class LessonModel extends LessonSchema {
       // Get the lesson from the database
       const result = await this.lesson.findById(lessonId);
       // Return the result object
-      console.log(result);
       return result;
     } catch (error) {
       // throw an error if the lesson could not be found

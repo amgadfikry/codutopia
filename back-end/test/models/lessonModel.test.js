@@ -82,7 +82,6 @@ describe("lessonModel", () => {
     it("GetLesson method get a lesson with valid lessonId", async () => {
       // Get the lesson from the database
       const result = await lessonModel.getLesson(lessonId);
-      console.log(result);
       // check if the result is object
       expect(result).to.be.an("object");
       // check if the result is equal to the lesson object

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import UserModel from './models/userModel.js';
 import LessonModel from './models/lessonModel.js';
+import QuizModel from './models/quizModel.js';
 
 // MongoDB class represents the connection to the database and the methods to interact with it
 class MongoDB {
@@ -29,9 +30,10 @@ const mongoDB = new MongoDB();
 // Create an instance of all models to interact with the database
 const userModel = new UserModel();
 const lessonModel = new LessonModel();
+const quizModel = new QuizModel();
 
 // Export the mongoDB instance and all models
 export default mongoDB;
 export {
-  userModel, lessonModel,
+  userModel, lessonModel, quizModel,
 }

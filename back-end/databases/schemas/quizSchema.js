@@ -63,13 +63,6 @@ class QuizSchema {
   static validateArrayLength(arr, len) {
     return arr.length >= len;
   }
-
-  /* static method retrieve specific number of questions from the quiz accord to the number of questions per quiz
-    Parameters:
-    - doc: quiz document to retrieve questions from
-    Returns:
-    - doc with specific number of questions randomly selected
-  */
 }
 
 // Export the QuizSchema class

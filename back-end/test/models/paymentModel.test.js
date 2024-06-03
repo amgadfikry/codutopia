@@ -123,4 +123,40 @@ describe("paymentModel", () => {
 
   });
 
+
+  // Test suite for the courseTotalPayment method
+  describe("courseTotalPayment method", () => {
+    // Test case for calculating the total payment amount for a course with valid courseId
+    it("CourseTotalPayment method calculate the total payment amount for a course with valid courseId", async () => {
+      // Calculate the total payment amount for the course
+      const result = await paymentModel.courseTotalPayment(payment.courseId);
+      // check if the result is equal to the payment amount
+      expect(result).to.equal(payment.paymentAmount);
+    });
+
+    // Test case for calculating the total payment amount for a course with invalid courseId
+    it("CourseTotalPayment method calculate the total payment amount for a course with invalid courseId", async () => {
+      try {
+        // Calculate the total payment amount for the course with invalid courseId
+        await paymentModel.courseTotalPayment("invalidId");
+      } catch (error) {
+        // check if the error message is correct
+        expect(error.message).to.equal("Course not found");
+      }
+    });
+
+  });
+
+
+  // Test suite for the totalPayment method
+  describe("totalPayment method", () => {
+    // Test case for calculating the total payment amount
+    it("TotalPayment method calculate the total payment amount", async () => {
+      // Calculate the total payment amount
+      const result = await paymentModel.totalPayment();
+      // check if the result is equal to the payment amount
+      expect(result).to.equal(payment.paymentAmount);
+    });
+  });
+
 });

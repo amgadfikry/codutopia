@@ -72,6 +72,43 @@ class PaymentModel extends PaymentSchema {
       throw new Error(`Payment not found`);
     }
   }
+
+  /* CourseTotalPayment method calculate the total payment amount for specific course
+    Parameters:
+      - courseId: string value that represents the course id
+    Returns:
+      - the total payment amount for the course
+      - error if not course found with specific message
+  */
+  async courseTotalPayment(courseId) {
+    try {
+      // Get the total payment amount for the course
+      const totalPayment = await this.payment.aggregate([
+        { $match: { courseId: courseId } },
+        { $group: { _id: null, total: { $sum: "$paymentAmount" } } }
+      ]);
+      // Return the total payment amount
+      return totalPayment[0].total;
+    } catch (error) {
+      // throw an error if the course does not exist
+      throw new Error(`Course not found`);
+    }
+  }
+
+  /* TotalPayment method calculate the total payment amount for all courses
+    Parameters:
+      - None
+    Returns:
+      - the total payment amount for all courses
+  */
+  async totalPayment() {
+    // Get the total payment amount for all courses
+    const totalPayment = await this.payment.aggregate([
+      { $group: { _id: null, total: { $sum: "$paymentAmount" } } }
+    ]);
+    // Return the total payment amount
+    return totalPayment[0].total;
+  }
 }
 
 // Export the PaymentModel class

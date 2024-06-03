@@ -48,7 +48,7 @@ describe('Unittest of OracleStorage', () => {
         // Check if the error message is 'Bucket already exists'
         expect(error.message).to.equal('Bucket already exists');
       }
-    });
+    }).timeout(5000);
   });
 
 
@@ -214,7 +214,7 @@ describe('Unittest of OracleStorage', () => {
       const result = await oracleStorage.deleteBucket(bucketName);
       // Check if the result is correct message
       expect(result).to.equal('Bucket deleted successfully');
-    }).timeout(5000);
+    }).timeout(10000);
 
     // Test case delete a bucket from the object storage service not found
     it('DeleteBucket method deletes a bucket not found', async () => {

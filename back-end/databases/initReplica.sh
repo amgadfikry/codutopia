@@ -2,12 +2,12 @@
 
 sleep 10
 echo "Init replica set"
-mongo --host 172.29.0.5:27017 <<EOF
+mongo --host mongoDB1 <<EOF
 rs.initiate({
   _id: "rs0",
   members: [
-    { _id: 0, host: "172.29.0.5:27017" },
-    { _id: 1, host: "172.29.0.6:27017" },
+    { _id: 0, host: "mongoDB1" },
+    { _id: 1, host: "mongoDB2" },
     ]
   })
 EOF

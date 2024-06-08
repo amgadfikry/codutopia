@@ -1,107 +1,128 @@
-// Import schema of the lessonSchema
 import LessonSchema from "../schemas/lessonSchema.js";
 
 // LessonModel class to interact with the lessons collection in the database
 class LessonModel extends LessonSchema {
+
   constructor() {
-    // Call the parent class constructor which initializes the lesson schema and model
     super();
   }
 
   /* CreateLesson method to create a new lesson in the database
     Parameters:
       - lesson: object with the lesson data
+      - session: optional session for the transaction
     Returns:
-      - the ID of the new lesson
-      - error if the lesson could not be created with specific message
+      - created object data
+    Errors:
+      - Lesson could not be created
+      - Missing required field
+      - Other errors
   */
-  async createLesson(lesson) {
-    // check if lesson object is contain invalid fields
-    const invalidFields = Object.keys(lesson).filter(key => !Object.keys(this.lessonSchema.obj).includes(key));
-    // throw an error if the lesson object contain invalid fields
-    if (invalidFields.length > 0) {
-      throw new Error(`Fields not in schema: ${invalidFields.join(', ')}`);
-    }
-
+  async createLesson(lesson, session = null) {
     try {
+      // Define session in options object if it exists
+      const options = session ? { session } : {};
       // Create a new lesson in the database
-      const newLesson = await this.lesson.create(lesson);
-      // Return the ID of the new lesson
-      return newLesson._id;
-    } catch (error) {
-      // throw an error if the lesson could not be created
-      throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
+      const newLesson = await this.lesson.create([lesson], options);
+      // if the lesson could not be created, throw an error
+      if (!newLesson) {
+        throw new Error(`Lesson could not be created`);
+      }
+      return newLesson[0];
+    }
+    catch (error) {
+      // If the error is a validation error, throw an error with the missing field
+      if (error.name === 'ValidationError') {
+        throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
+      } else {
+        throw error;
+      }
     }
   }
 
   /* GetLesson method to get a lesson from the database
     Parameters:
       - lessonId: ID of the lesson to get
+      - session: optional session for the transaction
     Returns:
       - the lesson object
-      - error if the lesson could not be found with specific message
+    Errors:
+      - Lesson could not be found
   */
-  async getLesson(lessonId) {
+  async getLesson(lessonId, session = null) {
     try {
+      // Define session in options object if it exists
+      const options = session ? { session } : {};
       // Get the lesson from the database
-      const result = await this.lesson.findById(lessonId);
-      // Return the result object
+      const result = await this.lesson.findById(lessonId, {}, options);
+      // if the lesson is not found, throw an error
+      if (!result) {
+        throw new Error(`Lesson not found`);
+      }
       return result;
-    } catch (error) {
-      // throw an error if the lesson could not be found
-      throw new Error(`Lesson not found`);
+    }
+    catch (error) {
+      throw new Error('Lesson not found');
     }
   }
 
   /* UpdateLesson method to update a lesson in the database
     Parameters:
       - lessonId: ID of the lesson to update
-      - lesson: object with the lesson data to update
+      - lessonData: object with new lesson data to update
+      - session: optional session for the transaction
     Returns:
-      - the updated lesson object
-      - error if the lesson could not be updated with specific message
+      - Update lesson object data
+    Errors:
+      - Lesson not found
   */
-  async updateLesson(lessonId, lesson) {
-    // check if lesson object is contain invalid fields
-    const invalidFields = Object.keys(lesson).filter(key => !Object.keys(this.lessonSchema.obj).includes(key));
-    // throw an error if the lesson object contain invalid fields
-    if (invalidFields.length > 0) {
-      throw new Error(`Fields not in schema: ${invalidFields.join(', ')}`);
-    }
-
+  async updateLesson(lessonId, lesson, session = null) {
     try {
+      // Define session in options object if it exists
+      const options = session ? { session } : {};
       // Update the lesson in the database
-      await this.lesson.findByIdAndUpdate(
+      const result = await this.lesson.findByIdAndUpdate(
         lessonId,
         lesson,
+        { new: true, ...options }
       );
-      // return message if the lesson is updated
-      return "Lesson updated successfully";
-    } catch (error) {
-      // throw an error if the lesson could not be updated
-      throw new Error(`Lesson not found`);
+      // if the lesson is not found, throw an error
+      if (!result) {
+        throw new Error(`Lesson not found`);
+      }
+      return result;
+    }
+    catch (error) {
+      throw new Error('Lesson not found');
     }
   }
 
   /* DeleteLesson method to delete a lesson from the database
     Parameters:
       - lessonId: ID of the lesson to delete
+      - session: optional session for the transaction
     Returns:
-      - the deleted lesson object
-      - error if the lesson could not be deleted with specific message
+      - message that the lesson is deleted
+    Errors:
+      - Lesson not found
   */
-  async deleteLesson(lessonId) {
+  async deleteLesson(lessonId, session = null) {
     try {
+      // Define session in options object if it exists
+      const options = session ? { session } : {};
       // Delete the lesson from the database
-      const result = await this.lesson.findByIdAndDelete(lessonId);
-      // Return message if the lesson is deleted
+      const result = await this.lesson.findByIdAndDelete(lessonId, options);
+      // if the lesson is not found, throw an error
+      if (!result) {
+        throw new Error(`Lesson not found`);
+      }
       return "Lesson deleted successfully";
-    } catch (error) {
-      // throw an error if the lesson could not be deleted
-      throw new Error(`Lesson not found`);
+    }
+    catch (error) {
+      throw new Error('Lesson not found');
     }
   }
 }
 
-// Export the LessonModel class
+
 export default LessonModel;

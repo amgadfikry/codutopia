@@ -25,7 +25,6 @@ services:
     restart: always
     networks:
       client-server:
-        ipv4_address: 172.28.0.5
       server-mongo:
       server-redis:
     ports:
@@ -48,7 +47,8 @@ services:
     restart: always
     networks:
       server-redis:
-        ipv4_address: 172.30.0.5
+    expose:
+      - 6379
     volumes:
       - redisdb:/data
 
@@ -97,19 +97,11 @@ networks:
   # Client-server network configuration
   client-server:
     driver: bridge
-    name: client-server
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.28.0.0/16
+    name: client-servers
   # Server-redis network configuration
   server-redis:
     driver: bridge
     name: server-redis
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.30.0.0/16
   # Server-mongo network configuration
   server-mongo:
     driver: bridge

@@ -1,11 +1,9 @@
 # docker file to build the server image
 # start from the node alpine image
-FROM node:current-slim
+FROM node:latest
 
 # set the working directory in the container
 WORKDIR /app
-
-COPY key.pem key.pem
 
 # expose the port 3000
 EXPOSE 3000

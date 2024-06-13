@@ -2,26 +2,24 @@ import QuizSchema from "../schemas/quizSchema.js";
 
 // QuizModel class to interact with the quizzes collection in the database
 class QuizModel extends QuizSchema {
+
   constructor() {
-    // Call the parent class constructor
     super();
   }
 
   /* CreateQuiz method to create a new quiz in the database
     Parameters:
       - quiz: object with the quiz data
+      - session: optional session for the transaction
     Returns:
-      - the ID of the new quiz
-      - error if the quiz could not be created with specific message
+      - quiz id of the created quiz
+    Errors:
+      - Quiz could not be created
+      - Missing required field
+      - Quiz must have answers for each question
+      - Other errors
   */
-  async createQuiz(quiz) {
-    // check if quiz object is contain invalid fields
-    const invalidFields = Object.keys(quiz).filter(key => !Object.keys(this.quizSchema.obj).includes(key));
-    // throw an error if the quiz object contain invalid fields
-    if (invalidFields.length > 0) {
-      throw new Error(`Fields not in schema: ${invalidFields.join(', ')}`);
-    }
-
+  async createQuiz(quiz, session = null) {
     // validate answers is same length as questions
     if (quiz.questions.length > 1 && quiz.answers.length !== quiz.questions.length) {
       throw new Error('Quiz must have answers for each question');
@@ -34,16 +32,22 @@ class QuizModel extends QuizSchema {
 
     try {
       // Create a new quiz in the database
-      const newQuiz = await this.quiz.create(quiz);
-      // Return the ID of the new quiz
-      return newQuiz._id;
-    } catch (error) {
-      // if the error message includes 'You need', throw an error with the message
+      const newQuiz = await this.quiz.create([quiz], { session });
+      // if the quiz could not be created, throw an error
+      if (!newQuiz) {
+        throw new Error(`Quiz could not be created`);
+      }
+      return newQuiz[0]._id;
+    }
+    catch (error) {
+      // if the error message includes 'Quiz must have', throw an error with the message
       if (error.message.includes('Quiz must have')) {
         throw new Error(error.message.split(': ')[2]);
-      } else {
-        // throw an error if the quiz could not be created
+      } else if (error.name === 'ValidationError') {
+        // If the error is a validation error, throw an error with the missing field
         throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
+      } else {
+        throw error;
       }
     }
   }
@@ -51,14 +55,20 @@ class QuizModel extends QuizSchema {
   /* GetQuiz method to retrieve a quiz from the database
     Parameters:
       - quizId: ID of the quiz to retrieve
+      - session: optional session for the transaction
     Returns:
-      - the quiz object with the specific ID
-      - error if the quiz could not be found
+      - the quiz object with the questions length equal to questionsPerQuiz randomly selected questions
+    Errors:
+      - Quiz not found
   */
-  async getQuiz(quizId) {
+  async getQuiz(quizId, session = null) {
     try {
       // Retrieve the quiz with the specific ID
-      const quiz = await this.quiz.findById(quizId);
+      const quiz = await this.quiz.findById(quizId, {}, { session });
+      // if the quiz is not found, throw an error
+      if (!quiz) {
+        throw new Error('Quiz not found');
+      }
       // retrieve questions from the quiz document
       const questions = quiz.questions;
       // shuffle the questions array
@@ -67,10 +77,9 @@ class QuizModel extends QuizSchema {
       quiz.questions = questions.slice(0, quiz.questionsPerQuiz);
       // remove answers from returned quiz
       quiz.answers = undefined;
-      // Return the quiz object
       return quiz;
-    } catch (error) {
-      // throw an error if the quiz could not be found
+    }
+    catch (error) {
       throw new Error('Quiz not found');
     }
   }
@@ -93,22 +102,18 @@ class QuizModel extends QuizSchema {
     return array;
   }
 
-  /* updateQuizMetaData method to update a quiz in the database
+  /* updateQuizMetaData method to update a quiz metadata in the database
     Parameters:
       - quizId: ID of the quiz to update
       - quiz: object with the new quiz data
+      - session: optional session for the transaction
     Returns:
       - message of the updated quiz is successful
-      - error if the quiz could not be updated
+    Errors:
+      - cannot update answers or questions fields
+      - Quiz not found
   */
-  async updateQuizMetaData(quizId, quiz) {
-    // check if quiz object is contain invalid fields
-    const invalidFields = Object.keys(quiz).filter(key => !Object.keys(this.quizSchema.obj).includes(key));
-    // throw an error if the quiz object contain invalid fields
-    if (invalidFields.length > 0) {
-      throw new Error(`Fields not in schema: ${invalidFields.join(', ')}`);
-    }
-
+  async updateQuizMetaData(quizId, quiz, session = null) {
     // check if quiz object is contain answers or questions fields
     if (quiz.answers || quiz.questions) {
       throw new Error('You cannot update answers or questions fields');
@@ -116,20 +121,23 @@ class QuizModel extends QuizSchema {
 
     try {
       // Update the quiz with the specific ID
-      await this.quiz.findByIdAndUpdate(
+      const result = await this.quiz.findByIdAndUpdate(
         quizId,
         quiz,
-        { runValidators: true },
+        { runValidators: true, session },
       );
-      // Return message of the updated quiz
-      return 'Quiz updated successfully';
-    } catch (error) {
-      // if error is invalid id, throw an error with the message
-      if (error.message.includes('Cast to ObjectId failed')) {
+      // if the quiz is not found, throw an error
+      if (!result) {
         throw new Error('Quiz not found');
-      } else {
-        // throw an error if the quiz could not be updated
+      }
+      return 'Quiz updated successfully';
+    }
+    catch (error) {
+      if (error.name === 'ValidationError') {
+        // If the error is a validation error, throw an error with the missing field
         throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
+      } else {
+        throw new Error('Quiz not found');
       }
     }
   }
@@ -140,33 +148,46 @@ class QuizModel extends QuizSchema {
       - questionId: ID of the question to update
       - questionData: object with the new question data
       - answer: string value of the new answer
+      - session: optional session for the transaction
     Returns:
       - message of the updated question and answer is successful
-      - error if the quiz could not be updated
+    Errors:
+      - Quiz not found
+      - Question not found
+      - Missing question field
+      - Quiz must have 2 options for each question
   */
-  async updateQuestionAndAnswer(quizId, questionId, questionData, answer) {
+  async updateQuestionAndAnswer(quizId, questionId, questionData, answer, session = null) {
+    // check if questionId is valid or quiz not found
+    const quiz = await this.quiz.findById(quizId, {}, { session });
+    if (!quiz) {
+      throw new Error('Quiz not found');
+    }
+    if (quiz.questions.length <= questionId) {
+      throw new Error('Question not found');
+    }
+
     try {
       // Update the quiz with the specific ID
-      await this.quiz.findByIdAndUpdate(
+      const result = await this.quiz.findByIdAndUpdate(
         quizId,
         { 'questions.$[question]': questionData, [`answers.${questionId}`]: answer },
         {
           runValidators: true,
-          new: true,
-          arrayFilters: [{ 'question.id': questionId }]
+          arrayFilters: [{ 'question.id': questionId }],
+          session,
         },
       );
-      // Return message of the updated question and answer
       return 'Question and answer updated successfully';
-    } catch (error) {
-      // if error is invalid id, throw an error with the message
-      if (error.message.includes('Cast to ObjectId failed')) {
-        throw new Error('Question not found');
-      } else if (error.message.includes('Quiz must have')) {
+    }
+    catch (error) {
+      if (error.message.includes('Quiz must have')) {
         throw new Error(error.message.split(': ')[2]);
-      } else {
-        // throw an error if the quiz could not be updated
+      } else if (error.name === 'ValidationError') {
+        // If the error is a validation error, throw an error with the missing field
         throw new Error(`Missing question field`);
+      } else {
+        throw new Error('Quiz not found');
       }
     }
   }
@@ -176,32 +197,39 @@ class QuizModel extends QuizSchema {
       - quizId: ID of the quiz to update
       - questionData: object with the new question data
       - answer: string value of the new answer
+      - session: optional session for the transaction
     Returns:
       - message of the added question and answer is successful
-      - error if the quiz could not be updated
+    Errors:
+      - Quiz not found
+      - Quiz must have 2 options for each question
+      - Missing question field
   */
-  async addQuestionAndAnswer(quizId, questionData, answer) {
+  async addQuestionAndAnswer(quizId, questionData, answer, session = null) {
     try {
       // update questionData with id equal to the length of questions array
-      const quiz = await this.quiz.findById(quizId);
+      const quiz = await this.quiz.findById(quizId, {}, { session });
+      // check if the quiz is not found
+      if (!quiz) {
+        throw new Error('Quiz not found');
+      }
       questionData.id = quiz.questions.length;
       // Update the quiz with the specific ID
       await this.quiz.findByIdAndUpdate(
         quizId,
         { $push: { questions: questionData, answers: answer } },
-        { runValidators: true },
+        { runValidators: true, session },
       );
-      // Return message of the added question and answer
       return 'Question and answer added successfully';
-    } catch (error) {
-      // if error is invalid id, throw an error with the message
-      if (error.message.includes('Cast to ObjectId failed')) {
-        throw new Error('Quiz not found');
-      } else if (error.message.includes('Quiz must have')) {
+    }
+    catch (error) {
+      if (error.message.includes('Quiz must have')) {
         throw new Error(error.message.split(': ')[2]);
-      } else {
-        // throw an error if the quiz could not be updated
+      } else if (error.name === 'ValidationError') {
+        // If the error is a validation error, throw an error with the missing field
         throw new Error(`Missing question field`);
+      } else {
+        throw new Error('Quiz not found');
       }
     }
   }
@@ -210,18 +238,26 @@ class QuizModel extends QuizSchema {
     Parameters:
       - quizId: ID of the quiz to update
       - questionId: ID of the question to remove
+      - session: optional session for the transaction
     Returns:
       - message of the removed question and answer is successful
-      - error if the quiz could not be updated
+    Errors:
+      - Quiz not found
+      - Question not found
   */
-  async removeQuestionAndAnswer(quizId, questionId) {
+  async removeQuestionAndAnswer(quizId, questionId, session = null) {
+    // Get the answers from the quiz document
+    const quiz = await this.quiz.findById(quizId, {}, { session });
+    // check if the quiz is not found
+    if (!quiz) {
+      throw new Error('Quiz not found');
+    }
+    // check if questionId is valid
+    if (quiz.questions.length <= questionId) {
+      throw new Error('Question not found');
+    }
+
     try {
-      // Get the answers from the quiz document
-      const quiz = await this.quiz.findById(quizId);
-      // check if questionId is valid
-      if (!quiz.questions[questionId]) {
-        throw error;
-      }
       // remove answer with index equal to questionId
       quiz.answers.splice(questionId, 1);
       // remove question with id equal to questionId
@@ -232,18 +268,12 @@ class QuizModel extends QuizSchema {
       await this.quiz.findByIdAndUpdate(
         quizId,
         { questions: quiz.questions, answers: quiz.answers },
-        { runValidators: true },
+        { runValidators: true, session },
       );
-      // Return message of the removed question and answer
       return 'Question and answer removed successfully';
-    } catch (error) {
-      // if error is invalid id, throw an error with the message
-      if (error.message.includes('Cast to ObjectId failed')) {
-        throw new Error('Quiz not found');
-      } else {
-        // throw an error if the quiz could not be updated
-        throw new Error('Question not found');
-      }
+    }
+    catch (error) {
+      throw new Error('Quiz not found');
     }
   }
 
@@ -251,18 +281,26 @@ class QuizModel extends QuizSchema {
     Parameters:
       - quizId: ID of the quiz to check
       - answersObj: object with the answers key is question id and value is the answer
+      - session: optional session for the transaction
     Returns:
-      - object with the result of the answers
-      - error if the quiz could not be found
+      - object with the result of the answers, corrections, and score
+    Errors:
+      - Quiz not found
+      - Answers must be same length as questions
   */
-  async correctAnswers(quizId, answersObj) {
+  async correctAnswers(quizId, answersObj, session = null) {
+    // Retrieve the quiz with the specific ID
+    const quiz = await this.quiz.findById(quizId, {}, { session });
+    // if the quiz is not found, throw an error
+    if (!quiz) {
+      throw new Error('Quiz not found');
+    }
+    // check if the answers length is same as questions length
+    if (Object.keys(answersObj).length !== quiz.questionsPerQuiz) {
+      throw new Error('Answers must be same length as questions');
+    }
+
     try {
-      // Retrieve the quiz with the specific ID
-      const quiz = await this.quiz.findById(quizId);
-      // check if the answers length is same as questions length
-      if (Object.keys(answersObj).length !== quiz.questionsPerQuiz) {
-        throw error;
-      }
       // check if the answers are correct
       const correctAnswers = Object.keys(answersObj).map((questionId) => answersObj[questionId] === quiz.answers[questionId]);
       // calculate the score in percentage
@@ -276,28 +314,27 @@ class QuizModel extends QuizSchema {
         score
       };
     } catch (error) {
-      // if error is invalid id, throw an error with the message
-      if (error.message.includes('Cast to ObjectId failed')) {
-        throw new Error('Quiz not found');
-      } else {
-        // throw an error answers length is not same as questions length
-        throw new Error('Answers must be same length as questions');
-      }
+      throw new Error('Quiz not found');
     }
   }
 
   /* deleteQuiz method to delete a quiz from the database
     Parameters:
       - quizId: ID of the quiz to delete
+      - session: optional session for the transaction
     Returns:
       - message of the deleted quiz is successful
-      - error if the quiz could not be deleted
+    Errors:
+      - Quiz not found
   */
-  async deleteQuiz(quizId) {
+  async deleteQuiz(quizId, session = null) {
     try {
       // Delete the quiz with the specific ID
-      await this.quiz.findByIdAndDelete(quizId);
-      // Return message of the deleted quiz
+      const result = await this.quiz.findByIdAndDelete(quizId, { session });
+      // if the quiz is not found, throw an error
+      if (!result) {
+        throw new Error('Quiz not found');
+      }
       return 'Quiz deleted successfully';
     } catch (error) {
       // throw an error if the quiz could not be deleted

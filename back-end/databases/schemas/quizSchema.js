@@ -1,51 +1,36 @@
 import mongoose from "mongoose";
-// Save schema class from mongoose to a variable
 const Schema = mongoose.Schema;
 
 // Abstract class for quiz schema with pre and post hooks
 class QuizSchema {
 
   constructor() {
-    // Create a new schema for the quizzes collection
+    // Define schema for the quizzes collection
     this.quizSchema = new Schema({
-      // title: string value that is required
       title: { type: String, required: true, },
-      // questions: list of questions in quiz with validation format of question, options
+      courseId: { type: String, ref: 'courses', required: true, },
       questions: {
-        // disable _id for subdocuments
-        _id: false,
-        // required: true to enforce the validation
+        _id: false, // disable _id for subdocuments
         required: true,
-        // validate: validate the length of the questions array
-        validate: {
+        validate: { // validate: validate the length of the questions array
           validator: (questions) => QuizSchema.validateArrayLength(questions, 1),
           message: 'Quiz must have at least one question',
         },
-        // type: array of objects with question, options, and answers
-        type: [{
-          // id: number value that is required
+        type: [{ // describe the type of the questions array with subdocument schema
           id: { type: Number, required: true, },
-          // question: string value that is required
           question: { type: String, required: true, },
-          // options: list of options for the question
           options: {
-            // required: true to enforce the validation
             required: true,
-            // validate: validate the length of the options array
-            validate: {
+            validate: { // validate: validate the length of the options array
               validator: (options) => QuizSchema.validateArrayLength(options, 2),
               message: 'Quiz must have at least two options for each question',
             },
-            // type: array of strings
             type: [{ type: String, required: true, }],
           }
         }],
       },
-      // answers: list of answers in quiz with validation format of string
-      answers: [{ type: String, required: true, }],
-      // qusetionsPerQuiz: number value that is required
-      questionsPerQuiz: { type: Number, required: true, default: 1, },
-      // timeToFinish: number value that is required
+      answers: [{ type: String, required: true, }], // array of correct answers
+      questionsPerQuiz: { type: Number, required: true, default: 1, }, // number of questions per quiz
       timeToFinish: { type: Number, required: true, },
     }, { timestamps: true, }); // add timestamps to the schema
 
@@ -65,5 +50,5 @@ class QuizSchema {
   }
 }
 
-// Export the QuizSchema class
+
 export default QuizSchema;

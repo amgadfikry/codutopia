@@ -1,15 +1,19 @@
 import { expect } from "chai";
 import { userModel } from "../../databases/mongoDB.js";
+import mongoDB from "../../databases/mongoDB.js";
 
-// Test suite for the User Model in the database mongoDB
+// Test suite for to test all the methods in the UserModel class
 describe("User Model in mongoDB", () => {
+  // Declare the variables to be used across all tests
   let user;
   let userId;
+  let instructorId;
   let token;
   let invalidId;
   let course;
+  let instructor;
 
-  // before running any tests prepare data uses for the tests
+  // Before hook to prepare the data before all test start
   before(() => {
     // create learner user object with userName, email, and password
     user = {
@@ -24,640 +28,1341 @@ describe("User Model in mongoDB", () => {
       courseId: '60b8d295f8d9f3608c8d9f37',
       paymentId: '60b8d295f8d9f3608c8d9f38',
     }
+    // create instructor user object with userName, email, and password
+    instructor = {
+      userName: "instructor",
+      email: "instructor@mail.com",
+      password: "123instructor",
+      roles: ['instructor'],
+    }
   });
 
-  // after finish all tests empty users collection
+  // After hook to clean up users collection after all tests are done
   after(async () => {
-    // delete all users from the users collection
     await userModel.user.deleteMany({});
   });
 
 
-  // Test suite for the createUser method in the User Model
-  describe("CreateUser method", () => {
-    // Test case for create a new user with only required fields
-    it('CreateUser method create a new user with only required fields', async () => {
-      // call the createUser method with the user object data
-      const result = await userModel.createUser(user);
-      // check if the result is not null
-      expect(result).to.not.equal(null);
-      // set the userId to the result _id
-      userId = result;
+  // Test suite for the createUser method with all scenarios
+  describe("Test suite for CreateUser method", () => {
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
     });
 
-    // Test case for create a user with the same userName
-    it('CreateUser method not create a user with the same userName', async () => {
+    // Test case for create a new user with only required fields and return the created object
+    it('create a new user with only required fields and return the created object', async () => {
+      const result = await userModel.createUser(user);
+      // check if the result is correct
+      expect(result).to.be.an('object');
+      expect(result.userName).to.equal(user.userName);
+      expect(result.email).to.equal(user.email);
+      expect(result.roles[0]).to.equal('learner');
+      expect(result).have.property('firstName');
+      expect(result).have.property('lastName');
+      expect(result).have.property('phoneNumber');
+      expect(result).have.property('address');
+      expect(result).have.property('avatar');
+    });
+
+    // Test case for create a user with the same userName and throw an error 'User already exists'
+    it('create a user with the same userName and throw an error "User already exists"', async () => {
       try {
-        // call the createUser method with the user object data
         await userModel.createUser(user);
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('User already exists');
       }
     });
 
-    // Test case for create a user with the same email
-    it('CreateUser method not create a user with the same email', async () => {
+    // Test case for create a user with the same email and throw an error 'User already exists'
+    it('create a user with the same email and throw an error "User already exists"', async () => {
       try {
-        // create a new user object with the same email
-        const newUser = {
+        // create tempUser object with the same email and different userName
+        const tempUser = {
           userName: "newLearner",
           email: user.email,
           password: "123newLearner",
         }
-        // call the createUser method with the new user object data
-        await userModel.createUser(newUser);
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.createUser(tempUser);
+      }
+      catch (error) {
         expect(error.message).to.equal('User already exists');
       }
     });
 
-    // Test case for create a user with missing email required fields
-    it('CreateUser method not create a user with email missing required fields', async () => {
+    // Test case for create a user with missing email required fields and throw an error 'Missing email field'
+    it('create a user with email missing required fields and throw an error "Missing email field"', async () => {
       try {
-        // create a new user object with missing email required fields
-        const newUser = {
+        // create a tempUser object with missing email required fields
+        const tempUser = {
           userName: "newLearner",
           password: "123"
         }
-        // call the createUser method with the new user object data
-        await userModel.createUser(newUser);
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.createUser(tempUser);
+      }
+      catch (error) {
         expect(error.message).to.equal('Missing email field');
       }
     });
 
-    // Test case for create a user with missing userName required fields
-    it('CreateUser method not create a user with userName missing required fields', async () => {
-      try {
-        // create a new user object with missing userName required fields
-        const newUser = {
-          email: user.email,
-          password: "123"
-        }
-        // call the createUser method with the new user object data
-        await userModel.createUser(newUser);
-      } catch (error) {
-        // check if the error message is the expected message
-        expect(error.message).to.equal('Missing userName field');
-      }
+    // Test case for create a user with instructor role and return the created object
+    it('create a user with instructor role and return the created object', async () => {
+      const result = await userModel.createUser(instructor);
+      // check if the result is correct
+      expect(result).to.be.an('object');
+      expect(result.userName).to.equal(instructor.userName);
+      expect(result.email).to.equal(instructor.email);
+      expect(result.roles[0]).to.equal('instructor');
+      expect(result).have.property('firstName');
     });
 
-    // Test case for create a user with data not in schema of the user collection
-    it('CreateUser method not create a user with data not in schema of the user collection', async () => {
+    // Test case for create a user with valid data through session and in successful transaction
+    it('create a user with valid data through session and in successful transaction', async () => {
+      // create a two new users object with valid data
+      const newUser1 = { userName: "newLearner1", email: "newlearner1@mail.com", password: "123newLearner1", }
+      const newUser2 = { userName: "newLearner2", email: "newlearner2@mail.com", password: "123newLearner2", }
+      // create a session
+      const session = await mongoDB.startSession();
+      // create two new users in a transaction with the session
+      await userModel.createUser(newUser1, session);
+      await userModel.createUser(newUser2, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the users are created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(4);
+    });
+
+    // Test case for create a user with invalid data through session and in failed transaction
+    it('create a user with invalid data through session and in failed transaction', async () => {
+      // create a new users object with valid data
+      const newUser = { userName: "newLearner3", email: "newlearner3@mail.com", password: "123newLearner3", }
+      // create a session
+      const session = await mongoDB.startSession();
       try {
-        // create a new user object with data not in schema of the user collection
-        const newUser = { ...user, invalid: 'invalidField' }
-        // call the createUser method with the new user object data
-        await userModel.createUser(newUser);
-      } catch (error) {
-        // check if the error message is the expected message
-        expect(error.message).to.equal('Fields not in schema: invalid');
+        // create a two new users in a transaction with the session both with same data
+        await userModel.createUser(newUser, session);
+        await userModel.createUser(newUser, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
       }
+      catch (error) {
+        expect(error.message).to.equal('User already exists');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the users are not created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(4);
     });
   });
 
 
-  // Test suite for the getUserById method in the User Model
-  describe("GetUserById method", () => {
-    // Test case for get a user by id that exists
-    it('GetUserById method get a user by id that exists', async () => {
-      // call the getUserById method with the userId
+  // Test suite for the getUserById method with all scenarios
+  describe("Test suite for GetUserById method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for get a user by id that exists and return the user object
+    it('get a user by id that exists and return the user object', async () => {
       const result = await userModel.getUserById(userId);
-      // check if the result is an object
+      // check if the result is correct
       expect(result).to.be.an('object');
-      // check if the result has the userName, and email properties
       expect(result).to.have.property('userName');
       expect(result).to.have.property('email');
-      // check if the result has the correct userName, email, and roles values
       expect(result.userName).to.equal(user.userName);
       expect(result.email).to.equal(user.email);
       expect(result.roles[0]).to.equal('learner');
-      // check if the result has the profileCompleted property and value
       expect(result).to.have.property('profileCompleted');
       expect(result.profileCompleted).to.equal(40);
-      // check password is undefined
       expect(result.password).to.equal(undefined);
+      expect(result.resetPasswordToken).to.equal(undefined);
+      expect(result.resetPasswordExpires).to.equal(undefined);
     });
 
-    // Test case for get a user by id that does not exist
-    it('GetUserById method not get a user by id that does not exist', async () => {
+    // Test case for get a user by id that does not exist and throw an error 'User not found'
+    it('get a user by id that does not exist and throw an error "User not found"', async () => {
       try {
-        // call the getUserById method with an invalid userId
         await userModel.getUserById(invalidId);
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
+    });
+
+    // Test case for get a user by valid id through session and in successful transaction
+    it('get a user by valid id through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // get the user by id in a transaction with the session and create a new user object
+      await userModel.getUserById(userId, session);
+      const newUser = { userName: "newLearner", email: "newlearner@mail", password: "123newLearner", }
+      await userModel.createUser(newUser, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the users are created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(2);
+    });
+
+    // Test case for get a user by invalid id through session and in failed transaction
+    it('get a user by invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // get the user by invalid id in a transaction with the session with create a new user object
+        await userModel.getUserById(invalidId, session);
+        const newUser = { userName: "newLearner2", email: "newlearner2@mail", password: "123newLearner2", }
+        await userModel.createUser(newUser, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the users are not created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(2);
     });
   });
 
 
-  // Test suite for the getUserByField method in the User Model
-  describe("GetUserByField method", () => {
-    // Test case for get a user by userName that exists
-    it('GetUserByField method get a user by userName that exists', async () => {
-      // call the getUserByField method with the userName
+  // Test suite for the getUserByField method with all scenarios
+  describe("Test suite for GetUserByField method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for get a user by userName that exists and return the user object
+    it('get a user by userName that exists and return the user object', async () => {
       const result = await userModel.getUserByField({ userName: user.userName });
-      // check if the result is an object
+      // check if the result is correct
       expect(result).to.be.an('object');
-      // check if the result has the userName, and email properties
-      expect(result).to.have.property('userName');
-      expect(result).to.have.property('email');
-      // check if the result has the correct userName, email, and roles values
       expect(result.userName).to.equal(user.userName);
       expect(result.email).to.equal(user.email);
       expect(result.roles[0]).to.equal('learner');
-      // check if the result has the profileCompleted property and value
       expect(result).to.have.property('profileCompleted');
       expect(result.profileCompleted).to.equal(40);
-      // check password is undefined
       expect(result.password).to.equal(undefined);
     });
 
-    // Test case for get a user by email that exists
-    it('GetUserByField method get a user by email that exists', async () => {
-      // call the getUserByField method with the email
+    // Test case for get a user by email that exists and return the user object
+    it('get a user by email that exists and return the user object', async () => {
       const result = await userModel.getUserByField({ email: user.email });
-      // check if the result is an object
+      // check if the result is correct
       expect(result).to.be.an('object');
-      // check if the result has the userName, and email properties
-      expect(result).to.have.property('userName');
-      expect(result).to.have.property('email');
-      // check if the result has the correct userName, email, and roles values
       expect(result.userName).to.equal(user.userName);
       expect(result.email).to.equal(user.email);
       expect(result.roles[0]).to.equal('learner');
-      // check if the result has the profileCompleted property and value
       expect(result).to.have.property('profileCompleted');
       expect(result.profileCompleted).to.equal(40);
-      // check password is undefined
       expect(result.password).to.equal(undefined);
     });
 
-    // Test case for get a user by field that does not exist
-    it('GetUserByField method not get a user by field that does not exist', async () => {
+    // Test case for get a user by field that does not exist and throw an error 'User not found'
+    it('get a user by field that does not exist and throw an error "User not found"', async () => {
       try {
-        // call the getUserByField method with an invalid field
         await userModel.getUserByField({ invalid: 'invalidField' });
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
     });
 
-    // Test case for get a user by userName that does not exist
-    it('GetUserByField method not get a user by userName that does not exist', async () => {
+    // Test case for get a user by userName that does not exist and throw an error 'User not found'
+    it('get a user by userName that does not exist and throw an error "User not found"', async () => {
       try {
-        // call the getUserByField method with a userName that does not exist
         const result = await userModel.getUserByField({ userName: 'invalidUserName' });
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
+    });
+
+    // Test case for get a user by userName that exists through session and in successful transaction
+    it('get a user by userName that exists through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // get the user by userName in a transaction with the session and create a new user object
+      await userModel.getUserByField({ userName: user.userName }, session);
+      const newUser = { userName: "newLearner", email: "newlearner@mail", password: "123newLearner", }
+      await userModel.createUser(newUser, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the users are created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(2);
+    });
+
+    // Test case for get a user by invalid field through session and in failed transaction
+    it('get a user by invalid field through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // get the user by invalid field in a transaction with the session with create a new user object
+        await userModel.getUserByField({ invalid: 'invalidField' }, session);
+        const newUser = { userName: "newLearner2", email: "newlearner2@mail", password: "123newLearner2", }
+        await userModel.createUser(newUser, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the users are not created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(2);
     });
   });
 
 
-  // Test suite for the countRoleUsers method in the User Model
-  describe("CountRoleUsers method", () => {
-    // Test case for count the number of users with a role 'learner'
-    it('CountRoleUsers method count the number of users with a role "learner"', async () => {
-      // call the countRoleUsers method with the role 'learner'
+  // Test suite for the countRoleUsers method with all scenarios
+  describe("Test suite for CountRoleUsers method", () => {
+
+    // before hook create a new learner and instructor user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+      const result2 = await userModel.createUser(instructor);
+      instructorId = result2._id;
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for count the number of users with a role 'learner' and return the number of learners users
+    it('count the number of users with a role "learner" and return the number of learners users', async () => {
       const result = await userModel.countRoleUsers('learner');
-      // check if the result is a number
+      // check if the result is correct
       expect(result).to.be.a('number');
-      // check if the result is 1
       expect(result).to.equal(1);
     });
 
-    // Test case for count the number of users with a role 'instructor'
-    it('CountRoleUsers method count the number of users with a role "instructor"', async () => {
-      // call the countRoleUsers method with the role 'instructor'
+    // Test case for count the number of users with a role 'instructor' and return the number of instructors users
+    it('count the number of users with a role "instructor" and return the number of instructors users', async () => {
       const result = await userModel.countRoleUsers('instructor');
-      // check if the result is a number
+      // check if the result is correct
       expect(result).to.be.a('number');
-      // check if the result is 0
-      expect(result).to.equal(0);
+      expect(result).to.equal(1);
     });
 
-    // Test case for count the number of users with a role not exist
-    it('CountRoleUsers method count the number of users with a role not exist', async () => {
+    // Test case for count the number of users with a role not exist and throw an error 'Invalid role'
+    it('count the number of users with a role not exist and throw an error "Invalid role"', async () => {
       try {
-        // call the countRoleUsers method with the role 'invalidRole'
         await userModel.countRoleUsers('invalidRole');
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('Invalid role');
       }
+    });
+
+    // Test case for count the number of users with a role 'learner' through session and in successful transaction
+    it('count the number of users with a role "learner" through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // count the number of users with a role 'learner' in a transaction with the session and create a new user object
+      await userModel.countRoleUsers('learner', session);
+      const newUser = { userName: "newLearner", email: "newlearner@mail", password: "123newLearner", }
+      await userModel.createUser(newUser, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the users are created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(3);
+    });
+
+    // Test case for count the number of users with a role not exist through session and in failed transaction
+    it('count the number of users with a role not exist through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // count the number of users with a role not exist in a transaction with the session with create a new user object
+        await userModel.countRoleUsers('invalidRole', session);
+        const newUser = { userName: "newLearner2", email: "newlearner2@mail", password: "123newLearner2", }
+        await userModel.createUser(newUser, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('Invalid role');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the users are not created
+      const users = await userModel.user.find({}).countDocuments();
+      expect(users).to.equal(3);
     });
   });
 
 
-  // Test suite for the updateUserById method in the User Model
-  describe("UpdateUserById method", () => {
-    // Test case for update a user by id with new data
-    it('UpdateUserById method update a user by id with new data', async () => {
-      // create a new user object with new data
-      const newUser = {
-        phoneNumber: '1234567890',
-        userName: 'newLearner',
-      }
-      // call the updateUserById method with the userId and the new user object data 
-      const result = await userModel.updateUserById(userId, newUser);
-      // check if the result is an object
-      expect(result).to.be.an('object');
-      // check if the result has the correct userName, email, phoneNumber, and roles values
-      expect(result.userName).to.equal(newUser.userName);
-      expect(result.email).to.equal(user.email);
-      expect(result.roles[0]).to.equal('learner');
-      expect(result.phoneNumber).to.equal(newUser.phoneNumber);
-      // update the user object with the new data
-      user.userName = newUser.userName;
-      // check password is undefined
-      expect(result.password).to.equal(undefined);
-      // check if the result has the profileCompleted property and value
-      expect(result).to.have.property('profileCompleted');
-      expect(result.profileCompleted).to.equal(50);
+  // Test suite for the updateUserById method with all scenarios
+  describe("Test suite for UpdateUserById method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
     });
 
-    // Test case for update a user by id with invalid id
-    it('UpdateUserById method not update a user by id with invalid id', async () => {
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for update a user by id with new data and return the updated user object
+    it('update a user by id with new data and return the updated user object', async () => {
+      // update the user object with new data
+      const updatedUser = { firstName: 'FirstName', lastName: 'newLastName' }
+      const result = await userModel.updateUserById(userId, updatedUser);
+      // check if the result is correct
+      expect(result).to.be.an('object');
+      expect(result.userName).to.equal(user.userName);
+      expect(result.email).to.equal(user.email);
+      expect(result.firstName).to.equal(updatedUser.firstName);
+      expect(result.lastName).to.equal(updatedUser.lastName);
+      expect(result.password).to.equal(undefined);
+      expect(result).to.have.property('profileCompleted');
+      expect(result.profileCompleted).to.equal(60);
+    });
+
+    // Test case for update a user by id with invalid id and throw an error 'User not found'
+    it('update a user by id with invalid id and throw an error "User not found"', async () => {
       try {
-        // call the updateUserById method with an invalid userId
         await userModel.updateUserById(invalidId, { userName: 'newLearner' });
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
     });
 
-    // Test case for update a user by id with invalid data
-    it('UpdateUserById method not update a user by id with invalid data', async () => {
+    // Test case for update a user by id with new data through session and in successful transaction
+    it('update a user by id with new data through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // update the user by id with new userName twice in a transaction with the session
+      await userModel.updateUserById(userId, { userName: 'updatedLearner1' }, session);
+      await userModel.updateUserById(userId, { userName: 'updatedLearner2' }, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the user are updated
+      const result = await userModel.getUserById(userId);
+      expect(result.userName).to.equal('updatedLearner2');
+    });
+
+    // Test case for update a user by id with invalid id through session and in failed transaction
+    it('update a user by id with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
       try {
-        // call the updateUserById method with invalid data
-        await userModel.updateUserById(userId, { invalid: 'invalidData', invalid2: 'invalidData2' });
-      } catch (error) {
-        // check if the error message is the expected message
-        expect(error.message).to.equal('Fields not in schema: invalid, invalid2');
+        // update the user twice one with valid id and one with invalid id in a transaction with the session
+        await userModel.updateUserById(userId, { userName: 'newLearner' }, session);
+        await userModel.updateUserById(invalidId, { userName: 'newLearner' }, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
       }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the user are not updated
+      const result = await userModel.getUserById(userId);
+      expect(result.userName).to.equal('updatedLearner2');
     });
   });
 
 
-  // Test suite for the confimUser method in the User Model
-  describe("ConfimUser method", () => {
-    // Test case for confirm a user by id
-    it('ConfimUser method confirm a user by id', async () => {
-      // call the confimUser method with the userId
+  // Test suite for the confimUser method with all scenarios
+  describe("Test suite for ConfimUser method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for confirm a user by id with valid id and return true
+    it('confirm a user by id with valid id and return true', async () => {
       const result = await userModel.confimUser(userId);
       // check if the result is true
       expect(result).to.equal(true);
     });
 
-    // Test case for confirm a user by id with invalid id
-    it('ConfimUser method not confirm a user by id with invalid id', async () => {
+    // Test case for confirm a user by id with invalid id throw an error 'User not found'
+    it('confirm a user by id with invalid id and throw an error "User not found"', async () => {
       try {
-        // call the confimUser method with an invalid userId
-        await userModel.confimUser('invalidUserId');
+        await userModel.confimUser(invalidId);
       } catch (error) {
-        // check if the error message is the expected message
         expect(error.message).to.equal('User not found');
       }
+    });
+
+    // Test case for confirm a user by id with valid id through session and in successful transaction
+    it('confirm a user by id with valid id through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // confirm the user by id in a transaction with the session
+      await userModel.confimUser(userId, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the user is confirmed
+      const result = await userModel.getUserById(userId);
+      expect(result.confirmed).to.equal(true);
+    });
+
+    // Test case for confirm a user by id with invalid id through session and in failed transaction
+    it('confirm a user by id with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // confirm the user by invalid id in a transaction with the session
+        await userModel.confimUser(userId, session);
+        await userModel.confimUser(invalidId, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the user is not confirmed
+      const result = await userModel.getUserById(userId);
+      expect(result.confirmed).to.equal(true);
     });
   });
 
 
-  // Test suite for the addNewRole method in the User Model
-  describe("AddNewRole method", () => {
-    // Test case for add a new role to a user by id
-    it('AddNewRole method add a new role to a user by id', async () => {
-      // call the addNewRole method with the userId and the role 'instructor'
-      const result = await userModel.addNewRole(userId, 'instructor');
-      // check if the result is array
-      expect(result).to.be.an('array');
-      // check if the result has the correct roles values
-      expect(result).to.have.lengthOf(2);
-      expect(result).deep.equal(['learner', 'instructor']);
-      // update the user object with the new role
-      user.roles = result;
+  // Test suite for the addNewRole method with all scenarios
+  describe("Test suite for AddNewRole method", () => {
+
+    // before hook create a new learner and instructor user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+      const result2 = await userModel.createUser(instructor);
+      instructorId = result2._id;
     });
 
-    // Test case if the role is already exist
-    it('AddNewRole method not add a new role to a user by id if the role is already exist', async () => {
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for add a new instructor role to a learner user by id and return the updated roles array
+    it('add a new instructor role to a learner user by id and return the updated roles array', async () => {
       const result = await userModel.addNewRole(userId, 'instructor');
-      // check if the result is array
+      // check if the result is correct
       expect(result).to.be.an('array');
-      // check if the result has the correct roles values
       expect(result).to.have.lengthOf(2);
       expect(result).deep.equal(['learner', 'instructor']);
     });
 
-    // Test case for add a new role to a user by id with invalid id
-    it('AddNewRole method not add a new role to a user by id with invalid id', async () => {
+    // Test case for add a new learner role to an instructor user by id and return the updated roles array
+    it('add a new learner role to an instructor user by id and return the updated roles array', async () => {
+      const result = await userModel.addNewRole(instructorId, 'learner');
+      // check if the result is correct
+      expect(result).to.be.an('array');
+      expect(result).to.have.lengthOf(2);
+      expect(result).deep.equal(['instructor', 'learner']);
+    });
+
+    // Test case for add a new role to a user by id if the role is already exist and return the updated roles array
+    it('add a new role to a user by id if the role is already exist and return the updated roles array', async () => {
+      const result = await userModel.addNewRole(userId, 'instructor');
+      // check if the result is correct
+      expect(result).to.be.an('array');
+      expect(result).to.have.lengthOf(2);
+      expect(result).deep.equal(['learner', 'instructor']);
+    });
+
+    // Test case for add a new role to a user by id with invalid id and throw an error 'User not found'
+    it('add a new role to a user by id with invalid id and throw an error "User not found"', async () => {
       try {
-        // call the addNewRole method with an invalid userId and the role 'instructor'
-        await userModel.addNewRole('invalidUserId', 'instructor');
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.addNewRole(invalidId, 'instructor');
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
     });
 
-    // Test case for add a new role to a user by id with invalid role
-    it('AddNewRole method not add a new role to a user by id with invalid role', async () => {
+    // Test case for add a new role to a user by id with invalid role and throw an error 'Invalid role'
+    it('add a new role to a user by id with invalid role and throw an error "Invalid role"', async () => {
       try {
-        // call the addNewRole method with the userId and the role 'invalidRole'
         await userModel.addNewRole(userId, 'invalidRole');
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('Invalid role');
       }
     });
+
+    // Test case for add a new role to a user by id through session and in successful transaction
+    it('add a new role to a user by id through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // add a new role to a user by id in a transaction with the session
+      await userModel.addNewRole(userId, 'instructor', session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the user has the new role
+      const result = await userModel.getUserById(userId);
+      expect(result.roles).to.have.lengthOf(2);
+      expect(result.roles).deep.equal(['learner', 'instructor']);
+    });
+
+    // Test case for add a new role to a user by id with invalid id through session and in failed transaction
+    it('add a new role to a user by id with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // add a new role to a user by invalid id in a transaction with the session
+        await userModel.addNewRole(userId, 'instructor', session);
+        await userModel.addNewRole(invalidId, 'instructor', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the user has the new role
+      const result = await userModel.getUserById(userId);
+      expect(result.roles).to.have.lengthOf(2);
+      expect(result.roles).deep.equal(['learner', 'instructor']);
+    });
   });
 
 
-  // Test suite for the checkUserPassword method in the User Model
-  describe("CheckUserPassword method", () => {
-    // Test case for check the user password is correct
-    it('CheckUserPassword method check the user password is correct', async () => {
-      // call the checkUserPassword method with the user email and password
+  // Test suite for the checkUserPassword method with all scenarios
+  describe("Test suite for CheckUserPassword method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for check the user password in case the user password is correct and return the user id
+    it('check the user password in case the user password is correct and return the user id', async () => {
       const result = await userModel.checkUserPassword(user.email, user.password);
-      // check if the result user id is equal to the userId
+      // check if the result is correct
       expect(result.toString()).to.equal(userId.toString());
     });
 
-    // Test case for check the user password is incorrect
-    it('CheckUserPassword method check the user password is incorrect', async () => {
+    // Test case for check the user password in case the user password is incorrect and throw an error 'Password is incorrect'
+    it('check the user password is case the user password is incorrect and throw an error "Password is incorrect"', async () => {
       try {
-        // call the checkUserPassword method with the user email and an incorrect password
         await userModel.checkUserPassword(user.email, 'incorrectPassword');
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('Password is incorrect');
       }
     });
 
-    // Test case for check the user password with invalid email
-    it('CheckUserPassword method not check the user password with invalid email', async () => {
+    // Test case for check the user password in case the user email is incorrect and throw an error 'User not found'
+    it('check the user password in case the user email is incorrect and throw an error "User not found"', async () => {
       try {
-        // call the checkUserPassword method with an invalid email and password
         await userModel.checkUserPassword('invalidEmail', user.password);
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
     });
-  });
 
-
-  // Test suite for the resetPasswordToken method in the User Model
-  describe("ResetPasswordToken method", () => {
-    // Test case for reset the user password token
-    it('ResetPasswordToken method reset the user password token', async () => {
-      // call the resetPasswordToken method with the user email
-      const result = await userModel.resetPasswordToken(user.email);
-      // check if the result is a string
-      expect(result).to.be.a('string');
-      // set the token to the result
-      token = result;
+    // Test case for check the user password in case the user password is correct through session and in successful transaction
+    it('check the user password in case the user password is correct through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // check the user password in a transaction with the session
+      await userModel.checkUserPassword(user.email, user.password, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
     });
 
-    // Test case for reset the user password token with invalid email
-    it('ResetPasswordToken method not reset the user password token with invalid email', async () => {
+    // Test case for check the user password in case the user password is incorrect through session and in failed transaction
+    it('check the user password in case the user password is incorrect through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
       try {
-        // call the resetPasswordToken method with an invalid email
-        await userModel.resetPasswordToken('invalidEmail');
-      } catch (error) {
-        // check if the error message is the expected message
-        expect(error.message).to.equal('User not found');
+        // check the user password with incorrect password in a transaction with the session
+        await userModel.checkUserPassword(user.email, 'incorrectPassword', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('Password is incorrect');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
       }
     });
   });
 
 
-  // Test suite for the verifyByToken method in the User Model
-  describe("VerifyByToken method", () => {
-    // Test case for verify the reset password token
-    it('VerifyByToken method verify the reset password token', async () => {
-      // call the verifyByToken method with the token
+  // Test suite for the resetPasswordToken method with all scenarios
+  describe("Test suite for ResetPasswordToken method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for reset the user password token with the user email and return the token
+    it('reset the user password token with the user email and return the token', async () => {
+      const result = await userModel.resetPasswordToken(user.email);
+      expect(result).to.be.a('string');
+    });
+
+    // Test case for reset the user password token with invalid email and throw an error 'User not found'
+    it('reset the user password token with invalid email and throw an error "User not found"', async () => {
+      try {
+        await userModel.resetPasswordToken('invalidEmail');
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+      }
+    });
+
+    // Test case for reset the user password token with the user email through session and in successful transaction
+    it('reset the user password token with the user email through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // reset the user password token in a transaction with the session
+      await userModel.resetPasswordToken(user.email, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+    });
+
+    // Test case for reset the user password token with invalid email through session and in failed transaction
+    it('reset the user password token with invalid email through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // reset the user password token with invalid email in a transaction with the session
+        await userModel.resetPasswordToken('invalidEmail', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+    });
+  });
+
+
+  // Test suite for the verifyByToken method with all scenarios
+  describe("Test suite for VerifyByToken method", () => {
+
+    // before hook create a new user object and get the user id and generate a reset password token
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+      token = await userModel.resetPasswordToken(user.email);
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for verify the reset password token with valid token and return the user id
+    it('verify the reset password token with valid token and return the user id', async () => {
       const result = await userModel.verifyByToken(token);
-      // expect the result to be object
+      // expect the result is correct
       expect(result).to.be.an('object');
-      // check if the result is userId
       expect(result.toString()).to.equal(userId.toString());
     });
 
-    // Test case for verify the reset password token with invalid token
-    it('VerifyByToken method not verify the reset password token with invalid token', async () => {
+    // Test case for verify the reset password token with invalid token and throw an error 'Token is invalid or expired'
+    it('verify the reset password token with invalid token and throw an error "Token is invalid or expired"', async () => {
       try {
-        // call the verifyByToken method with an invalid token
         await userModel.verifyByToken('invalidToken');
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('Token is invalid or expired');
       }
     });
+
+    // Test case for verify the reset password token with valid token through session and in successful transaction
+    it('verify the reset password token with valid token through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // verify the reset password token in a transaction with the session
+      await userModel.verifyByToken(token, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+    });
+
+    // Test case for verify the reset password token with invalid token through session and in failed transaction
+    it('verify the reset password token with invalid token through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // verify the reset password token with invalid token in a transaction with the session
+        await userModel.verifyByToken('invalidToken', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('Token is invalid or expired');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+    });
   });
 
 
-  // Test suite for the updatePassword method in the User Model
-  describe("UpdatePassword method", () => {
-    // Test case for update the user password
-    it('UpdatePassword method update the user password', async () => {
-      // call the updatePassword method with the userId and the new password
-      user.password = '123newPassword';
-      const result = await userModel.updatePassword(userId, user.password);
-      // check if the result is a string with the expected message
-      expect(result).to.equal('Password updated');
+  // Test suite for the updatePassword method with all scenarios
+  describe("Test suite for UpdatePassword method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
     });
 
-    // Test case for update the user password with invalid id
-    it('UpdatePassword method not update the user password with invalid id', async () => {
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for update the user password with the userId and the new password and return the message Password updated successfully
+    it('update the user password with the userId and the new password and return the message Password updated', async () => {
+      const result = await userModel.updatePassword(userId, '123newPassword');
+      // check if the result is correct
+      expect(result).to.equal('Password updated successfully');
+    });
+
+    // Test case for update the user password with invalid id and throw an error 'User not found'
+    it('update the user password with invalid id and throw an error "User not found"', async () => {
       try {
-        // call the updatePassword method with an invalid userId and the new password
-        await userModel.updatePassword('invalidUserId', user.password);
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.updatePassword(invalidId, '123newPassword');
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
     });
 
-    // test case for check the user password is correct after update
-    it('CheckUserPassword method check the user password is correct after update', async () => {
-      // call the checkUserPassword method with the user email and new password
-      const result = await userModel.checkUserPassword(user.email, user.password);
-      // check if the result user id is equal to the userId
+    // test case for check the user password is correct after update and return the user id
+    it('check the user password is correct after update and return the user id', async () => {
+      const result = await userModel.checkUserPassword(user.email, '123newPassword');
+      // check if the result is correct
       expect(result.toString()).to.equal(userId.toString());
     });
+
+    // Test case for update the user password with the userId and the new password through session and in successful transaction
+    it('update the user password with the userId and the new password through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // update the user password in a transaction with the session
+      await userModel.updatePassword(userId, '123newPassword', session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+    });
+
+    // Test case for update the user password with invalid id through session and in failed transaction
+    it('update the user password with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // update the user password with invalid id in a transaction with the session
+        await userModel.updatePassword(invalidId, '123newPassword', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+    });
   });
 
 
-  // Test suite for the addCourseToEnrolledList method in the User Model
-  describe("AddCourseToEnrolledList method", () => {
-    // Test case for add a course to the enrolled list of the user
+  // Test suite for the addCourseToEnrolledList method with all scenarios
+  describe("Test suite for AddCourseToEnrolledList method", () => {
+
+    // before hook create a new user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for add a course to the enrolled list of the user and return the course object data
     it('AddCourseToEnrolledList method add a course to the enrolled list of the user', async () => {
-      // call the addCourseToEnrolledList method with the userId and the course object data
       const result = await userModel.addCourseToEnrolledList(userId, course.courseId, course.paymentId);
-      // check if the result is an array
+      // check if the result is correct
       expect(result).to.be.an('object');
-      // check if the result has the correct courseId and paymentId values
       expect(result.courseId).to.equal(course.courseId);
       expect(result.paymentId).to.equal(course.paymentId);
-      // check if the result has the progress, createdAt, and updatedAt properties
       expect(result).to.have.property('progress');
+      expect(result.progress).to.equal(0);
+      expect(result).to.have.property('quizScore');
+      expect(result.quizScore).to.be.a('array');
       expect(result).to.have.property('createdAt');
       expect(result).to.have.property('updatedAt');
-      // check if the result has the correct progress value
-      expect(result.progress).to.equal(0);
     });
 
-    // Test case for add a course to the enrolled list of the user with invalid id
-    it('AddCourseToEnrolledList method not add a course to the enrolled list of the user with invalid id', async () => {
+    // Test case for add a course to the enrolled list of the user with invalid id and throw an error 'User not found'
+    it('add a course to the enrolled list of the user with invalid id and throw an error "User not found"', async () => {
       try {
-        // call the addCourseToEnrolledList method with an invalid userId and the course object data
-        await userModel.addCourseToEnrolledList('invalidUserId', course);
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.addCourseToEnrolledList(invalidId, course.courseId, course.paymentId);
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
+    });
+
+    // Test case for add a course to the enrolled list of the user through session and in successful transaction
+    it('add a course to the enrolled list of the user through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // create a new course object and add it to the enrolled list
+      const newCourse = { courseId: '60b8d295f8d9f3608c8d9f50', paymentId: '60b8d295f8d9f3608c8d9f85' }
+      await userModel.addCourseToEnrolledList(userId, newCourse.courseId, newCourse.paymentId, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the course is added to the enrolled list
+      const result = await userModel.getUserById(userId);
+      expect(result.enrolled.length).to.equal(2);
+      expect(result.enrolled[0].courseId).to.equal(course.courseId);
+      expect(result.enrolled[1].courseId).to.equal(newCourse.courseId);
+    });
+
+    // Test case for add a course to the enrolled list of the user with invalid id through session and in failed transaction
+    it('add a course to the enrolled list of the user with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // create course object and add it and then add a course with invalid id to the enrolled list
+        const newCourse = { courseId: '60b8d295f8d9f3608c8d9f55', paymentId: '60b8d295f8d9f3608c8d9f60' }
+        await userModel.addCourseToEnrolledList(userId, newCourse.courseId, newCourse.paymentId, session);
+        await userModel.addCourseToEnrolledList(invalidId, course.courseId, course.paymentId, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the course is not added to the enrolled list
+      const result = await userModel.getUserById(userId);
+      expect(result.enrolled.length).to.equal(2);
     });
   });
 
 
-  // Test suite for updateCourseProgress method in the User Model
-  describe("UpdateCourseProgress method", () => {
-    // Test case for update the course progress of the user
-    it('UpdateCourseProgress method update the course progress of the user', async () => {
-      // call the updateCourseProgress method with the userId, courseId, and the progress
+  // Test suite for updateCourseProgress method with all scenarios
+  describe("Test suite for UpdateCourseProgress method", () => {
+
+    // before hook create a new user object and get the user id and add a course to the enrolled list
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+      await userModel.addCourseToEnrolledList(userId, course.courseId, course.paymentId);
+    });
+
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for update the course progress of the user successfully and return the new progress
+    it('update the course progress of the user successfully and return the new progress', async () => {
       const result = await userModel.updateCourseProgress(userId, course.courseId, 10);
-      // check if the result is an number
+      // check if the result is correct
       expect(result).to.be.a('number');
-      // check if the result is 10
       expect(result).to.equal(10);
-      // update the course progress in the course object
-      course.progress = result;
     });
 
-    // Test case for update the course progress of the user with new progress
-    it('UpdateCourseProgress method update the course progress of the user with new progress', async () => {
-      // call the updateCourseProgress method with the userId, courseId, and the new progress
+    // Test case for update the course progress of the user with new progress and return the new progress
+    it('update the course progress of the user with new progress and return the new progress', async () => {
       const result = await userModel.updateCourseProgress(userId, course.courseId, 10);
-      // check if the result is an number
+      // check if the result is correct
       expect(result).to.be.a('number');
-      // check if the result is 20
       expect(result).to.equal(20);
-      // update the course progress in the course object
-      course.progress = result;
     });
 
-    // Test case for update the course progress of the user with invalid id
-    it('UpdateCourseProgress method not update the course progress of the user with invalid id', async () => {
+    // Test case for update the course progress of the user with invalid id and throw an error 'User not found'
+    it('update the course progress of the user with invalid id and throw an error "User not found"', async () => {
       try {
-        // call the updateCourseProgress method with an invalid userId, courseId, and the progress
-        await userModel.updateCourseProgress('invalidUserId', course.courseId, 50);
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.updateCourseProgress(invalidId, course.courseId, 10);
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
+    });
+
+    // Test case for update the course progress of the user through session and in successful transaction
+    it('update the course progress of the user through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // update the course progress in a transaction with the session
+      await userModel.updateCourseProgress(userId, course.courseId, 30, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the course progress is updated
+      const result = await userModel.getUserById(userId);
+      expect(result.enrolled[0].progress).to.equal(50);
+    });
+
+    // Test case for update the course progress of the user with invalid id through session and in failed transaction
+    it('update the course progress of the user with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // update the course progress with invalid id in a transaction with the session
+        await userModel.updateCourseProgress(userId, course.courseId, 10, session);
+        await userModel.updateCourseProgress(invalidId, course.courseId, 10, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the course progress is not updated
+      const result = await userModel.getUserById(userId);
+      expect(result.enrolled[0].progress).to.equal(50);
     });
   });
 
 
-  // Test suite for the addCourseToWishlist method in the User Model
-  describe("AddCourseToWishlist method", () => {
-    // Test case for add a course to the wishlist of the user
-    it('AddCourseToWishlist method add a course to the wishlist of the user', async () => {
-      // call the addCourseToWishlist method with the userId and the courseId
-      const result = await userModel.addCourseToWishlist(userId, course.courseId);
-      // check if the result is string
-      expect(result).to.be.a('string');
-      // check if the result message is 'Course added to wishlist'
-      expect(result).to.equal('Course added to wishlist');
+  // Test suite for the addCourseToWishlistorCreatedList method with all scenarios
+  describe("Test suite for AddCourseToWishlistorCreatedList method", () => {
+
+    // before hook create a new learner and instructor user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+      const result2 = await userModel.createUser(instructor);
+      instructorId = result2._id;
     });
 
-    // Test case for add a course to the wishlist of the user with invalid id
-    it('AddCourseToWishlist method not add a course to the wishlist of the user with invalid id', async () => {
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for add a course to the wishlist of the learner user and return the message 'Course added to wishlist successfully'
+    it('add a course to the wishlist of the learner user and return the message "Course added to wishlist successfully"', async () => {
+      const result = await userModel.addCourseToWishlistorCreatedList(userId, 'wishList', '60b8d295f8d9f3608c8d9f50');
+      // check if the result is correct
+      expect(result).to.be.a('string');
+      expect(result).to.equal('Course added to wishList successfully');
+    });
+
+    // Test case for add a course to the createdList of instructor and return the message 'Course added to createdList successfully'
+    it('add a course to the createdList of instructor and return the message "Course added to createdList successfully"', async () => {
+      const result = await userModel.addCourseToWishlistorCreatedList(instructorId, 'createdList', '60b8d295f8d9f3608c8d9f50');
+      // check if the result is correct
+      expect(result).to.be.a('string');
+      expect(result).to.equal('Course added to createdList successfully');
+    });
+
+    // Test case for add a course to the wishlist with instructor id and throw an error 'User is not a learner'
+    it('add a course to the wishlist with instructor id and throw an error "User is not a learner"', async () => {
       try {
-        // call the addCourseToWishlist method with an invalid userId and the courseId
-        await userModel.addCourseToWishlist('invalidUserId', course.courseId);
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.addCourseToWishlistorCreatedList(instructorId, 'wishList', '60b8d295f8d9f3608c8d9f56');
+      }
+      catch (error) {
+        expect(error.message).to.equal('User is not a learner');
+      }
+    });
+
+    // Test case for add a course to the createdList with learner id and throw an error 'User is not an instructor'
+    it('add a course to the createdList with learner id and throw an error "User is not an instructor"', async () => {
+      try {
+        await userModel.addCourseToWishlistorCreatedList(userId, 'createdList', '60b8d295f8d9f3608c8d9f50');
+      }
+      catch (error) {
+        expect(error.message).to.equal('User is not an instructor');
+      }
+    });
+
+    // Test case for add a course to the wishlist of the user with invalid id and throw an error 'User not found'
+    it('add a course to the wishlist of the user with invalid id and throw an error "User not found"', async () => {
+      try {
+        await userModel.addCourseToWishlistorCreatedList(invalidId, 'wishList', '60b8d295f8d9f3608c8d9f50');
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
+    });
+
+    // Test case for add a course through session and in successful transaction
+    it('add a course through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // add a course to the wishlist of the user in a transaction with the session
+      await userModel.addCourseToWishlistorCreatedList(userId, 'wishList', '60b8d295f8d9f3608c8d9f56', session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the course is added to the wishlist
+      const result = await userModel.getUserById(userId);
+      expect(result.wishList.length).to.equal(2);
+    });
+
+    // Test case for add a course with through session and in failed transaction
+    it('add a course with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // add a course with invalid list type in a transaction with the session
+        await userModel.addCourseToWishlistorCreatedList(userId, 'wishList', '60b8d295f8d9f3608c8d9f56', session);
+        await userModel.addCourseToWishlistorCreatedList(userId, 'createdList', '60b8d295f8d9f3608c8d9f56', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User is not an instructor')
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the course is not added to the wishlist
+      const result = await userModel.getUserById(userId);
+      expect(result.wishList.length).to.equal(2);
     });
   });
 
 
-  // Test suite for the removeCourseFromWishlist method in the User Model
-  describe("RemoveCourseFromWishlist method", () => {
-    // Test case for remove a course from the wishlist of the user
-    it('RemoveCourseFromWishlist method remove a course from the wishlist of the user', async () => {
-      // call the removeCourseFromWishlist method with the userId and the courseId
-      const result = await userModel.removeCourseFromWishlist(userId, course.courseId);
-      // check if the result is string
-      expect(result).to.be.a('string');
-      // check if the result message is 'Course removed from wishlist'
-      expect(result).to.equal('Course removed from list');
+  // Test suite for the removeCourseFromList method with all scenarios
+  describe("Test suite for RemoveCourseFromList method", () => {
+
+    // before hook create a new learner and instructor user object, add a course to the wishlist, createdList and enrolled list
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+      const result2 = await userModel.createUser(instructor);
+      instructorId = result2._id;
+
+      await userModel.addCourseToWishlistorCreatedList(userId, 'wishList', '60b8d295f8d9f3608c8d9f50');
+      await userModel.addCourseToWishlistorCreatedList(instructorId, 'createdList', '60b8d295f8d9f3608c8d9f50');
+      await userModel.addCourseToEnrolledList(userId, '60b8d295f8d9f3608c8d9f50', '60b8d295f8d9f3608c8d9f85');
     });
 
-    // Test case for remove a course from the wishlist removed before
-    it('RemoveCourseFromWishlist method not remove a course from the wishlist removed before', async () => {
-      // call the removeCourseFromWishlist method with the userId and the courseId
-      const result = await userModel.removeCourseFromWishlist(userId, course.courseId);
-      // check if the result is string
-      expect(result).to.be.a('string');
-      // check if the result message is 'Course removed from wishlist'
-      expect(result).to.equal('Course removed from list');
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
     });
 
-    // Test case for remove a course from the wishlist of the user with invalid id
-    it('RemoveCourseFromWishlist method not remove a course from the wishlist of the user with invalid id', async () => {
+    // Test case for remove a course from the wishlist of the learner user and return the message 'Course removed from wishList'
+    it('remove a course from the wishlist of the learner user and return the message "Course removed from wishlist"', async () => {
+      const result = await userModel.removeCourseFromList(userId, 'wishList', '60b8d295f8d9f3608c8d9f50');
+      // check if the result is correct
+      expect(result).to.be.a('string');
+      expect(result).to.equal('Course removed from wishList');
+    });
+
+    // Test case for remove a course from wishlist of the instructor user and return the message 'User is not a learner'
+    it('remove a course from wishlist of the instructor user and return the message "User is not a learner"', async () => {
       try {
-        // call the removeCourseFromWishlist method with an invalid userId and the courseId
-        await userModel.removeCourseFromWishlist('invalidUserId', course.courseId);
-      } catch (error) {
-        // check if the error message is the expected message
+        await userModel.removeCourseFromList(instructorId, 'wishList', '60b8d295f8d9f3608c8d9f50');
+      }
+      catch (error) {
+        expect(error.message).to.equal('User is not a learner');
+      }
+    });
+
+    // Test case for remove a course from createdList of the instructor user and return the message 'Course removed from createdList'
+    it('remove a course from createdList of the instructor user and return the message "Course removed from createdList"', async () => {
+      const result = await userModel.removeCourseFromList(instructorId, 'createdList', '60b8d295f8d9f3608c8d9f50');
+      // check if the result is correct
+      expect(result).to.be.a('string');
+      expect(result).to.equal('Course removed from createdList');
+    });
+
+    // Test case for remove a course from createdList of the learner user and return the message 'User is not an instructor'
+    it('remove a course from createdList of the learner user and return the message "User is not an instructor"', async () => {
+      try {
+        await userModel.removeCourseFromList(userId, 'createdList', '60b8d295f8d9f3608c8d9f50');
+      }
+      catch (error) {
+        expect(error.message).to.equal('User is not an instructor');
+      }
+    });
+
+    // Test case for remove a course from the enrolled list of the learner and return the message 'Course removed from enrolled list'
+    it('remove a course from the enrolled list of the learner and return the message "Course removed from enrolled list"', async () => {
+      const result = await userModel.removeCourseFromList(userId, 'enrolled', '60b8d295f8d9f3608c8d9f50');
+      // check if the result is correct
+      expect(result).to.be.a('string');
+      expect(result).to.equal('Course removed from enrolled');
+    });
+
+    // Test case for remove a course from the enrolled list of the instructor and return the message 'User is not a learner'
+    it('remove a course from the enrolled list of the instructor and return the message "User is not a learner"', async () => {
+      try {
+        await userModel.removeCourseFromList(instructorId, 'enrolled', '60b8d295f8d9f3608c8d9f50');
+      }
+      catch (error) {
+        expect(error.message).to.equal('User is not a learner');
+      }
+    });
+
+    // Test case for remove a course from the wishlist of the user with invalid id and throw an error 'User not found'
+    it('remove a course from the wishlist of the user with invalid id and throw an error "User not found"', async () => {
+      try {
+        await userModel.removeCourseFromList(invalidId, 'wishList', '60b8d295f8d9f3608c8d9f50');
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
+    });
+
+    // Test case for remove a course through session and in successful transaction
+    it('remove a course through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // add 2 course to the wishlist of the user in a transaction with the session and then remove one
+      await userModel.addCourseToWishlistorCreatedList(userId, 'wishList', '60b8d295f8d9f3608c8d9f56', session);
+      await userModel.addCourseToWishlistorCreatedList(userId, 'wishList', '60b8d295f8d9f3608c8d9f57', session);
+      await userModel.removeCourseFromList(userId, 'wishList', '60b8d295f8d9f3608c8d9f56', session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the course is removed from the wishlist
+      const result = await userModel.getUserById(userId);
+      expect(result.wishList.length).to.equal(1);
+    });
+
+    // Test case for remove a course with invalid id through session and in failed transaction
+    it('remove a course with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // remove course in wishlist then remove a course with invalid id in a transaction with the session
+        await userModel.removeCourseFromList(userId, 'wishList', '60b8d295f8d9f3608c8d9f57', session);
+        await userModel.removeCourseFromList(invalidId, 'wishList', '60b8d295f8d9f3608c8d9f57', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the course is not removed from the wishlist
+      const result = await userModel.getUserById(userId);
+      expect(result.wishList.length).to.equal(1);
     });
   });
 
 
-  // Test deleteUserById method in the User Model
+  // Test suite for the deleteUserById method with all scenarios
   describe("DeleteUserById method", () => {
-    // Test case for delete a user by id with invalid id
-    it('DeleteUserById method not delete a user by id with invalid id', async () => {
-      try {
-        // call the deleteUserById method with an invalid userId
-        await userModel.deleteUserById('invalidUserId');
-      } catch (error) {
-        // check if the error message is the expected message
-        expect(error.message).to.equal('User not found');
-      }
+
+    // before hook create a new learner and instructor user object and get the user id
+    before(async () => {
+      const result = await userModel.createUser(user);
+      userId = result._id;
+      const result2 = await userModel.createUser(instructor);
+      instructorId = result2._id;
     });
 
-    // Test case for delete a user by id
-    it('DeleteUserById method delete a user by id', async () => {
-      // call the deleteUserById method with the userId
+    // after hook to clean up users collection after test suite is done
+    after(async () => {
+      await userModel.user.deleteMany({});
+    });
+
+    // Test case for delete a user by id with valid id and return the message 'User deleted successfully'
+    it('delete a user by id with valid id and return the message "User deleted successfully"', async () => {
       const result = await userModel.deleteUserById(userId);
-      // check if the result is string
+      // check if the result is correct
       expect(result).to.be.a('string');
-      // check if the result message is 'User deleted'
       expect(result).to.equal('User deleted successfully');
     });
 
-    // Test case for delete a user by id that deleted before
-    it('DeleteUserById method not delete a user by id that deleted before', async () => {
+    // Test case for delete a user by id with invalid id and throw an error 'User not found'
+    it('delete a user by id with invalid id and throw an error "User not found"', async () => {
       try {
-        // call the deleteUserById method with the userId
         await userModel.deleteUserById(userId);
-      } catch (error) {
-        // check if the error message is the expected message
+      }
+      catch (error) {
         expect(error.message).to.equal('User not found');
       }
     });
+
+    // Test case for delete a user by id through session and in successful transaction
+    it('delete a user by id through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // delete the user in a transaction with the session
+      await userModel.deleteUserById(instructorId, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the user is deleted
+      const result = await userModel.countRoleUsers('instructor');
+      expect(result).to.equal(0);
+    });
+
+    // Test case for delete a user by id with invalid id through session and in failed transaction
+    it('delete a user by id with invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // delete the user with invalid id in a transaction with the session
+        await userModel.deleteUserById(userId, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the user is not deleted
+      const result = await userModel.countRoleUsers('learner');
+      expect(result).to.equal(0);
+    });
   });
-});
+}).timeout(15000);

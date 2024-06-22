@@ -12,6 +12,7 @@ class UserSchema {
       courseId: { type: String, ref: 'courses', required: true, },
       progress: { type: Number, default: 0, },
       paymentId: { type: String, ref: 'payments', default: null, required: true, },
+      quizScore: { type: [Number], default: [], },
     }, { timestamps: true, }); // add timestamps to the schema
 
     // Define the userSchema for the users collection
@@ -29,8 +30,8 @@ class UserSchema {
       address: { type: String, default: null, },
       avatar: { type: String, default: null, },
       enrolled: { type: [this.enrolledSchema], default: [], },
-      wishlist: { type: [String], ref: 'courses', default: [] },
-      courses: { type: [String], ref: 'courses', default: [] },
+      wishList: { type: [String], ref: 'courses', default: [] },
+      createdList: { type: [String], ref: 'courses', default: [] },
     }, { timestamps: true, }); // add timestamps to the schema
 
     // add post hook to the userSchema to calculate the profile completed percentage
@@ -62,7 +63,7 @@ class UserSchema {
       let completed = 0;
       // list of fields to ignore in the calculation
       const ignoreFields = [
-        'enrolled', 'wishlist', 'createdAt', 'updatedAt', 'resetPasswordToken', 'resetPasswordExpires', '__v', '_id', 'courses'
+        'enrolled', 'wishList', 'createdAt', 'updatedAt', 'resetPasswordToken', 'resetPasswordExpires', '__v', '_id', 'createdList'
       ];
       // list of fields without the ignored fields
       const calculatedFields = Object.keys(doc._doc).filter(key => !ignoreFields.includes(key));

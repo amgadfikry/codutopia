@@ -1,48 +1,48 @@
 // import userSchema from schemas/userSchema
 import UserSchema from '../schemas/userSchema.js';
 import bcrypt from 'bcrypt';
-import { error } from 'console';
 import crypto from 'crypto';
 
-// UserModel class with methods used to interact with the users collection in the database
+// UserModel class to interact with the users collection in the database
 class UserModel extends UserSchema {
+
   constructor() {
-    // call the parent class constructor which initializes the user schema and model
     super();
   }
 
   /* createUser method creates a new user in users collection in the database
     Parameters:
       - user: object with user data
+      - session: optional session for the transaction
     Returns:
-      - result: user id of the created user
-      - error: error message if the user already exists, missing required fields or invalid fields in the data object
+      - created object data
+    Errors:
+      - Lesson could not be created
+      - Missing required field
+      - Other errors
   */
-  async createUser(user) {
-    // get list of fields that not in schema if there is any
-    const invalidFields = Object.keys(user).filter(key => !Object.keys(this.user.schema.obj).includes(key));
-    // throw an error if there are invalid fields
-    if (invalidFields.length > 0) {
-      throw new Error(`Fields not in schema: ${invalidFields.join(', ')}`);
-    }
-
+  async createUser(user, session = null) {
     try {
-      // encrypt the password before creating the user
+      // encrypt the password before creating the user and add it to the user object
       const hashedPassword = await bcrypt.hash(user.password, 10);
-      // create a new user object with the hashed password
       const newUser = { ...user, password: hashedPassword };
-      // create the user and return the result
-      const result = await this.user.create(newUser);
-      //return the id of the created user
-      return result._id;
-    } catch (error) {
-      // check if the error is a duplicate key error
+      // create the user and return the object data
+      const result = await this.user.create([newUser], { session });
+      if (!result) {
+        throw new Error(`User could not be created`);
+      }
+      return result[0];
+    }
+    catch (error) {
+      // check if the error is a duplicate key error and throw an error if the user already exists
       if (error.code === 11000) {
-        // throw an error if the user already exists
         throw new Error('User already exists');
-      } else {
-        // throw an error if a required field is missing
+      } // if the error is a validation error, throw an error with the missing field
+      else if (error.name === 'ValidationError') {
         throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
+      }
+      else {
+        throw new Error('User could not be created');
       }
     }
   }
@@ -50,21 +50,27 @@ class UserModel extends UserSchema {
   /* getUserById method gets all users from users collection in the database
     Parameters:
       - id: string or ObjectId of the user
+      - session: optional session for the transaction
     Returns:
-      - result: object with user data that was found
-      - error: error message if the user was not found
+      - user object data
+    Errors:
+      - User not found
   */
-  async getUserById(id) {
+  async getUserById(id, session = null) {
     try {
       // find the user by id
-      const user = await this.user.findById(id);
-      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data
+      const user = await this.user.findById(id, {}, { session });
+      // check if the user was not found
+      if (!user) {
+        throw new Error('User not found');
+      }
+      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data and return the user
       user.password = undefined;
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
-      // return the user data
       return user;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');
     }
@@ -73,21 +79,27 @@ class UserModel extends UserSchema {
   /* getUserByField method gets user by field other than id from users collection in the database
     Parameters:
       - seachObject: object with field and value to search for
+      - session: optional session for the transaction
     Returns:
-      - result: object with user data that was found
-      - error: error message if the user was not found
+      - user object data
+    Errors:
+      - User not found
   */
-  async getUserByField(seachObject) {
+  async getUserByField(seachObject, session = null) {
     try {
       // find the user by field other than id
-      const user = await this.user.findOne(seachObject);
-      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data
+      const user = await this.user.findOne(seachObject, {}, { session });
+      // check if the user was not found
+      if (!user) {
+        throw new Error('User not found');
+      }
+      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data and return the user
       user.password = undefined;
       user.resetPasswordToken = null;
       user.resetPasswordExpires = null;
-      // return the user data
       return user;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');
     }
@@ -96,23 +108,24 @@ class UserModel extends UserSchema {
   /* countUsers method counts the number of users with a specific role in the users collection
     Parameters:
       - role: string value of the role to search for
+      - session: optional session for the transaction
     Returns:
-      - result: number of users in the collection
-      - error: error message if the role is invalid
+      - number of users with the specific role
+    Errors:
+      - Invalid role
   */
-  async countRoleUsers(role) {
-    // check if the role is valid in the list of roles ['learner', 'instructor']
+  async countRoleUsers(role, session = null) {
+    // check if the role is valid in the list of roles ['learner', 'instructor'] throw an error invalid role
     if (!['learner', 'instructor'].includes(role)) {
-      // throw an error if the role is invalid
       throw new Error('Invalid role');
     }
 
     try {
       // count the number of users with the specific role
-      const result = await this.user.countDocuments({ roles: role });
-      // return number of users
+      const result = await this.user.countDocuments({ roles: role }, { session });
       return result;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the count failed
       throw new Error('Invalid role');
     }
@@ -123,32 +136,31 @@ class UserModel extends UserSchema {
     Parameters:
       - id: string or ObjectId of the user
       - user: object with new user data
+      - session: optional session for the transaction
     Returns:
-      - result: object with user data that was updated
-      - error: error message if the user was not found, or invalid fields in the data object
+      - updated user object data
+    Errors:
+      - User not found
   */
-  async updateUserById(id, user) {
-    // get list of fields that not in schema if there is any
-    const invalidFields = Object.keys(user).filter(key => !Object.keys(this.user.schema.obj).includes(key));
-    // throw an error if there are invalid fields
-    if (invalidFields.length > 0) {
-      throw new Error(`Fields not in schema: ${invalidFields.join(', ')}`);
-    }
-
+  async updateUserById(id, user, session = null) {
     try {
-      // update the user by id with the new user data and return the updated user
+      // update the user by id with the new user data
       const result = await this.user.findByIdAndUpdate(
         id,
         user,
-        { new: true }
+        { new: true, session }
       );
-      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data
+      // check if the user was not updated
+      if (!result) {
+        throw new Error('Failed to update user');
+      }
+      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data and return the user
       result.password = undefined;
       result.resetPasswordToken = null;
       result.resetPasswordExpires = null;
-      // return the updated user data
       return result;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the user was not updated
       throw new Error('User not found');
     }
@@ -157,22 +169,28 @@ class UserModel extends UserSchema {
   /* confimUser method updates the confirmed field to true for a user by id in the users collection
     Parameters:
       - id: string or ObjectId of the user
+      - session: optional session for the transaction
     Returns:
-      - result: value of the confirmed field
-      - error: error message if the user was not found
+      - true if the user was confirmed successfully
+    Errors:
+      - User not found
   */
-  async confimUser(id) {
+  async confimUser(id, session = null) {
     try {
       // update the user by id with the confirmed field set to true
       const result = await this.user.findByIdAndUpdate(
         id,
         { confirmed: true },
-        { new: true }
+        { new: true, session }
       );
-      // return the confirmed field value
+      // check if the user was not updated
+      if (!result) {
+        throw new Error('User not found');
+      }
       return result.confirmed;
-    } catch (error) {
-      // throw an error if the user was not updated or not found
+    }
+    catch (error) {
+      // throw an error if the user was not updated
       throw new Error('User not found');
     }
   }
@@ -181,14 +199,16 @@ class UserModel extends UserSchema {
     Parameters:
       - id: string or ObjectId of the user
       - role: string value of the new role either 'learner' or 'instructor'
+      - session: optional session for the transaction
     Returns:
-      - result: array of roles of the user
-      - error: error message if the user was not updated or invalid role
+      - array of roles of the user
+    Errors:
+      - Invalid role
+      - User not found
   */
-  async addNewRole(id, role) {
-    // check if the role is valid
+  async addNewRole(id, role, session = null) {
+    // check if the role is valid in the list of roles ['learner', 'instructor'] else throw an error invalid role 
     if (!['learner', 'instructor'].includes(role)) {
-      // throw an error if the role is invalid
       throw new Error('Invalid role');
     }
 
@@ -197,11 +217,15 @@ class UserModel extends UserSchema {
       const result = await this.user.findByIdAndUpdate(
         id,
         { $addToSet: { roles: role } },
-        { new: true }
+        { new: true, session }
       );
-      // return current roles of the user
+      // check if the user was not updated
+      if (!result) {
+        throw new Error('User not found');
+      }
       return result.roles;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the user was not updated or not found
       throw new Error('User not found');
     }
@@ -211,29 +235,28 @@ class UserModel extends UserSchema {
     Parameters:
       - email: string value of the user email
       - password: string value of the user password
+      - session: optional session for the transaction
     Returns:
-      - result: user id if the password is correct
-      - error: error message if the user was not found or password is incorrect
+      - user id if the password is correct
+    Errors:
+      - User not found
+      - Password is incorrect
   */
-  async checkUserPassword(email, password) {
+  async checkUserPassword(email, password, session = null) {
     try {
-      // find the user by email
-      const user = await this.user.findOne({ email });
-      // if the user was not found
+      // find the user by email and if not found throw an error
+      const user = await this.user.findOne({ email }, {}, { session });
       if (!user) {
-        // throw an error if the user was not found
         throw new Error('User not found');
       }
-      // compare the password with the hashed password
+      // compare the password with the hashed password and if not correct throw an error
       const result = await bcrypt.compare(password, user.password);
-      // check if the password is not correct
       if (!result) {
-        // throw an error if the password is incorrect
         throw new Error('Password is incorrect');
       }
-      // return id of the user
       return user._id;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the user was not found or password is incorrect
       throw new Error(error.message);
     }
@@ -242,13 +265,15 @@ class UserModel extends UserSchema {
   /* resetPassword method resets the user password with create a new token and expiration time
     Parameters:
       - email: string value of the user email
+      - session: optional session for the transaction
     Returns:
-      - result: string value of the reset password token
-      - error: error message if the user was not found
+      - reset password token
+    Errors:
+      - User not found
   */
-  async resetPasswordToken(email) {
+  async resetPasswordToken(email, session = null) {
     try {
-      // generate a random token 
+      // generate a random token and convert it to a string
       const token = crypto.randomBytes(20).toString('hex');
       // set the token expiration time 15 minutes
       const time = Date.now() + 900000;
@@ -256,11 +281,15 @@ class UserModel extends UserSchema {
       const result = await this.user.findOneAndUpdate(
         { email },
         { resetPasswordToken: token, resetPasswordExpires: time },
-        { new: true }
+        { new: true, session }
       );
-      // return the reset password token
+      // check if the user was not found
+      if (!result) {
+        throw new Error('User not found');
+      }
       return result.resetPasswordToken;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');
     }
@@ -269,19 +298,27 @@ class UserModel extends UserSchema {
   /* verifyByToken method verifies the reset password token and expiration time
     Parameters:
       - token: string value of the reset password token
+      - session: optional session for the transaction
     Returns:
-      - result: string value of the user id if the token is valid
-      - error: error message if the token is invalid or expired
+      - user id
+    Errors:
+      - Token is invalid or expired
   */
-  async verifyByToken(token) {
+  async verifyByToken(token, session = null) {
     try {
       // find the user by the reset password token and expiration time is greater than the current time
       const user = await this.user.findOne(
-        { resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } }
+        { resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } },
+        {},
+        { session }
       );
-      // return true if the token is valid
+      // check if the user was not found
+      if (!user) {
+        throw new Error('Token is invalid or expired');
+      }
       return user._id;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the token is invalid or expired
       throw new Error('Token is invalid or expired');
     }
@@ -291,11 +328,13 @@ class UserModel extends UserSchema {
     Parameters:
       - id: string or ObjectId of the user
       - password: string value of the new password
+      - session: optional session for the transaction
     Returns:
-      - result: string value 'Password updated' if the password was updated
-      - error: error message if the user was not found
+      - string value 'Password updated successfully'
+    Errors:
+      - User not found
   */
-  async updatePassword(id, password) {
+  async updatePassword(id, password, session = null) {
     try {
       // encrypt the new password before updating the user
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -303,11 +342,15 @@ class UserModel extends UserSchema {
       const result = await this.user.findByIdAndUpdate(
         id,
         { password: hashedPassword },
-        { new: true }
+        { new: true, session }
       );
-      // return 'Password updated' if the password was updated
-      return 'Password updated';
-    } catch (error) {
+      // check if the user was not found
+      if (!result) {
+        throw new Error('User not found');
+      }
+      return 'Password updated successfully';
+    }
+    catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');
     }
@@ -318,26 +361,32 @@ class UserModel extends UserSchema {
       - id: string or ObjectId of the user
       - courseId: string or ObjectId of the course
       - paymentId: string or ObjectId of the payment
+      - session: optional session for the transaction
     Returns:
-      - result: object with course subdocument that was added to the enrolled list
-      - error: error message if the user was not found or invalid payment
+      - course object data
+    Errors:
+      - User not found
   */
-  async addCourseToEnrolledList(id, courseId, paymentId) {
+  async addCourseToEnrolledList(id, courseId, paymentId, session = null) {
     try {
-      // define the course object with the course id and payment id
+      // define the course object with the course id and payment id to add to the enrolled list
       const course = {
         courseId: courseId.toString(),
         paymentId: paymentId.toString(),
       };
-      // create a new course subdocument with the course object
       const result = await this.user.findByIdAndUpdate(
         id,
         { $addToSet: { enrolled: course } },
-        { new: true }
+        { new: true, session }
       );
-      // return the course subdocument that was added to the enrolled list
-      return result.enrolled[result.enrolled.length - 1];
-    } catch (error) {
+      // check if the user was not found
+      if (!result) {
+        throw new Error('User not found');
+      }
+      const courseData = result.enrolled.find(course => course.courseId === courseId.toString());
+      return courseData;
+    }
+    catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');
     }
@@ -348,11 +397,13 @@ class UserModel extends UserSchema {
       - id: string or ObjectId of the user
       - courseId: string or ObjectId of the course
       - progress: number value to add to the current progress of the course
+      - session: optional session for the transaction
     Returns:
-      - result: number value of the progress of the course
-      - error: error message if the user was not found
+      - current progress of the course
+    Errors:
+      - User not found
   */
-  async updateCourseProgress(id, courseId, progress) {
+  async updateCourseProgress(id, courseId, progress, session = null) {
     try {
       // update the user by id with the added progress to current progress of the course
       const result = await this.user.findOneAndUpdate(
@@ -360,82 +411,160 @@ class UserModel extends UserSchema {
         { $inc: { 'enrolled.$[course].progress': progress } }, // increment the progress of the course
         {
           new: true,
-          arrayFilters: [{ 'course.courseId': courseId.toString() }] // filter the course by courseId
+          session,
+          arrayFilters: [{ 'course.courseId': courseId }] // filter the course by courseId
         }
       );
+      // check if the user was not found
+      if (!result) {
+        throw new Error('User not found');
+      }
       // find the course in the enrolled list of the user by courseId and get the current progress
       const currentProgress = result.enrolled.find(course => course.courseId === courseId.toString()).progress;
-      // return the prgress of the course after the update
       return currentProgress;
-    } catch (error) {
+    }
+    catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');
     }
   }
 
-  /* addCourseToWishlist method adds a course to the wishlist of a user by id
+  /* addCourseToWishlistorCreatedList method adds a course to the wishlist or created list of a user by id
     Parameters:
       - id: string or ObjectId of the user
+      - addedList: string value of the list to add the course to either 'wishlist' or 'createdList'
       - courseId: string or ObjectId of the course
+      - session: optional session for the transaction
     Returns:
-      - result: string value 'Course added to wishlist' if the course was added to the wishlist
-      - error: error message if the user was not found
+      - string value 'Course added to wishlist successfully' or 'Course added to createdList successfully'
+    Errors:
+      - User not found
+      - User is not an instructor
+      - User is not a learner
   */
-  async addCourseToWishlist(id, courseId) {
+  async addCourseToWishlistorCreatedList(id, addedList, courseId, session = null) {
     try {
-      // add the course to the user's wishlist by id
+      // get user roles to check if the user role related to the addedList
+      const user = await this.user.findById(id, {}, { session });
+      // check if the user was not found
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // check if the user role is not instructor and the addedList is createdList
+      if (!user.roles.includes('instructor') && addedList === 'createdList') {
+        throw new Error('User is not an instructor');
+      }
+      // check if the user role is learner and the addedList is wishlist
+      if (!user.roles.includes('learner') && addedList === 'wishList') {
+        throw new Error('User is not a learner');
+      }
+
+      // add the course to the user's list by id
       const result = await this.user.findByIdAndUpdate(
         id,
-        { $addToSet: { wishlist: courseId.toString() } }, // add the courseId to the wishlist array if it is not already there
+        { $addToSet: { [addedList]: courseId.toString() } }, // add the courseId to the addedList array
+        { session }
       );
-      // return success message if the course was added to the wishlist
-      return 'Course added to wishlist';
-    } catch (error) {
-      // throw an error if the user was not found
-      throw new Error('User not found');
+      // check if the user was not found
+      if (!result) {
+        throw new Error('User not found');
+      }
+      return `Course added to ${addedList} successfully`;
+    }
+    catch (error) {
+      if (error.message.includes('User')) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('User not found');
+      }
     }
   }
 
-  /* removeCourseFromList method removes a course from wishlist
+  /* removeCourseFromList method removes a course from any list of a user by id
     Parameters:
       - id: string or ObjectId of the user
+      - listName: string value of the list to remove the course from either 'wishlist' or 'createdList', 'enrolled'
       - courseId: string or ObjectId of the course
+      - session: optional session for the transaction
     Returns:
-      - result: string value 'Course removed from list' if the course was removed from the list
-      - error: error message if the user was not found
+      - string value 'Course removed from list' where list is the listName
+    Errors:
+      - User not found
+      - User is not an instructor
+      - User is not a learner
   */
-  async removeCourseFromWishlist(id, courseId) {
+  async removeCourseFromList(id, listName, courseId, session = null) {
     try {
-      // remove the course from the user's list by id
-      const result = await this.user.findByIdAndUpdate(
-        id,
-        { $pull: { wishlist: courseId.toString() } }, // remove the courseId from the wishlist array
-      );
-      // return success message if the course was removed from the list
-      return 'Course removed from list';
-    } catch (error) {
-      // throw an error if the user was not found
-      throw new Error('User not found');
+      // get user roles to check if the user role related to the listName
+      const user = await this.user.findById(id, {}, { session });
+      // check if the user was not found
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // check if the user role is not instructor and the listName is createdList
+      if (!user.roles.includes('instructor') && listName === 'createdList') {
+        throw new Error('User is not an instructor');
+      }
+      // check if the user role is learner and the listName is wishlist or enrolled
+      if (!user.roles.includes('learner') && (listName === 'wishList' || listName === 'enrolled')) {
+        throw new Error('User is not a learner');
+      }
+
+      // remove the course from the user's list by id if the listName is enrolled
+      if (listName === 'enrolled') {
+        const result = await this.user.findByIdAndUpdate(
+          id,
+          { $pull: { enrolled: { courseId: courseId.toString() } } }, // remove the course from the enrolled list
+          { session }
+        );
+        // check if the user was not found
+        if (!result) {
+          throw new Error('User not found');
+        }
+      }
+      // remove the course from the user's list by id if the listName is wishlist or createdList
+      else {
+        const result = await this.user.findByIdAndUpdate(
+          id,
+          { $pull: { [listName]: courseId.toString() } }, // remove the courseId from the listName array
+          { session }
+        );
+        // check if the user was not found
+        if (!result) {
+          throw new Error('User not found');
+        }
+      }
+
+      return `Course removed from ${listName}`;
+    }
+    catch (error) {
+      if (error.message.includes('User')) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('User not found');
+      }
     }
   }
 
   /* deleteUserById method deletes a user by id from the users collection
     Parameters:
       - id: string or ObjectId of the user
+      - session: optional session for the transaction
     Returns:
       - result: string value 'User deleted successfully' if the user was deleted
       - error: error message if the user was not found
   */
-  async deleteUserById(id) {
+  async deleteUserById(id, session = null) {
     try {
       // delete the user by id
-      const result = await this.user.findByIdAndDelete(id);
-      // return success message if the user was deleted
-      if (result) {
-        return 'User deleted successfully';
+      const result = await this.user.findByIdAndDelete(id, { session });
+      // check if the user was not found
+      if (!result) {
+        throw new Error('User not found');
       }
-      // throw an error if the user was not found
-      throw error;
+      return 'User deleted successfully';
     } catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');

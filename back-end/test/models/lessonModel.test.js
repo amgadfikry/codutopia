@@ -260,6 +260,79 @@ describe("LessonModel", () => {
   });
 
 
+  // Test suite for the addQuizToLesson method with all scenarios
+  describe("Test suite for addQuizToLesson method", () => {
+    // variable to save quizId
+    let quizId;
+
+    // before hook to create a new lesson before all tests start and save the lessonId
+    before(async () => {
+      const result = await lessonModel.createLesson(lesson);
+      lessonId = result._id;
+      // define a new quizId
+      quizId = "6660fee3b58fe3208a9b8b55";
+    });
+
+    // after hook to clean up lessons collection after test suite is done
+    after(async () => {
+      await lessonModel.lesson.deleteMany({});
+    });
+
+    // Test case for adding a quiz to a lesson with valid lessonId and valid quizId and return a message that the quiz is added
+    it("add a quiz to a lesson with valid lessonId and valid quizId and return a message that the quiz is added", async () => {
+      const result = await lessonModel.addQuizToLesson(lessonId, quizId);
+      // check if the result is correct
+      expect(result).to.be.an("string");
+      expect(result).to.equal("Quiz added to the lesson successfully");
+    });
+
+    // Test case for adding a quiz to a lesson with invalid lessonId and valid quizId and throw an error
+    it("add a quiz to a lesson with invalid lessonId and valid quizId", async () => {
+      try {
+        await lessonModel.addQuizToLesson("6660fee3b58fe3208a9b8b55", quizId);
+      }
+      catch (error) {
+        expect(error.message).to.equal("Lesson not found");
+      }
+    });
+
+    // Test case for adding a quiz to a lesson with valid lessonId in a transaction with session with success transaction
+    it("add a quiz to a lesson with valid lessonId in a transaction with session with success transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      // add a quiz to the lesson in the database twice
+      await lessonModel.addQuizToLesson(lessonId, quizId, session);
+      await lessonModel.addQuizToLesson(lessonId, '6660fee3b58fe3208a9b8b66', session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      //check if the quiz is added to the lesson in the database
+      const result = await lessonModel.getLesson(lessonId);
+      expect(result.quiz).to.not.equal(quizId);
+    });
+
+    // Test case for adding a quiz to a lesson with valid lessonId in a transaction with session with failed transaction
+    it("add a quiz to a lesson with valid lessonId in a transaction with session with failed transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // add a quiz to the lesson in the database twice one with invalid lessonId
+        await lessonModel.addQuizToLesson(lessonId, quizId, session);
+        await lessonModel.addQuizToLesson("6660fee3b58fe3208a9b8b55", quizId, session);
+        // commit the transaction and close the session
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal("Lesson not found");
+        // close the session
+        await mongoDB.abortTransaction(session);
+      }
+      //check if the quiz is not added to the lesson in the database
+      const result = await lessonModel.getLesson(lessonId);
+      expect(result.quiz).to.not.equal(quizId);
+    });
+  });
+
+
   // Test suite for the deleteLesson method with all scenarios
   describe("Test suite for deleteLesson method", () => {
 

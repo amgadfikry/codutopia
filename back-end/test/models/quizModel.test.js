@@ -17,7 +17,6 @@ describe('QuizModel', () => {
     // Create a new quiz object
     quiz = {
       title: 'Math Quiz',
-      courseId: '60f6e1b9b58fe3208a9b8b55',
       questionsPerQuiz: 2,
       timeToFinish: 10,
       questions: [

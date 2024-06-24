@@ -12,7 +12,6 @@ describe("LessonModel", () => {
   before(() => {
     // Create a new lesson object
     lesson = {
-      courseId: "60f6e1b9b58fe3208a9b8b55",
       title: "Test lesson",
       description: "Test lesson description",
       content: [
@@ -53,7 +52,6 @@ describe("LessonModel", () => {
       expect(result).to.be.an("object");
       expect(result.title).to.equal(lesson.title);
       expect(result.description).to.equal(lesson.description);
-      expect(result.courseId).to.equal(lesson.courseId);
       expect(result.timeToFinish).to.equal(lesson.timeToFinish);
       // save the lessonId to the lessonId variable
       lessonId = result._id;
@@ -132,7 +130,6 @@ describe("LessonModel", () => {
       expect(result).to.be.an("object");
       expect(result.title).to.equal(lesson.title);
       expect(result.description).to.equal(lesson.description);
-      expect(result.courseId).to.equal(lesson.courseId);
       expect(result.content.length).to.equal(lesson.content.length);
       expect(result.timeToFinish).to.equal(lesson.timeToFinish);
     });
@@ -147,11 +144,11 @@ describe("LessonModel", () => {
       }
     });
 
-    // Test case for getting lessons with valid courseId in a transaction with session with success transaction
-    it("get lessons with valid courseId in a transaction with session with success transaction", async () => {
+    // Test case for getting lessons with valid lessonId in a transaction with session with success transaction
+    it("get lessons with valid lessonId in a transaction with session with success transaction", async () => {
       // Start a new session
       const session = await mongoDB.startSession();
-      // get lessons from the database with valid courseId and create a new lesson with valid fields
+      // get lessons from the database with valid lessonId and create a new lesson with valid fields
       await lessonModel.getLesson(lessonId, session);
       await lessonModel.getLesson(lessonId, session);
       await lessonModel.createLesson(lesson, session);
@@ -162,12 +159,12 @@ describe("LessonModel", () => {
       expect(lessons.length).to.equal(2);
     });
 
-    // Test case for getting lessons with invalid courseId in a transaction with session with failed transaction
-    it("get lessons with invalid courseId in a transaction with session with failed transaction", async () => {
+    // Test case for getting lessons with invalid lessonId in a transaction with session with failed transaction
+    it("get lessons with invalid lessonId in a transaction with session with failed transaction", async () => {
       // Start a new session
       const session = await mongoDB.startSession();
       try {
-        // get lessons from the database with valid courseId, with invalid lessonId and create a new lesson with valid fields
+        // get lessons from the database with valid lessonId, with invalid lessonId and create a new lesson with valid fields
         await lessonModel.getLesson(lessonId, session);
         await lessonModel.getLesson("6660fee3b58fe3208a9b8b55", session);
         await lessonModel.createLesson(lesson, session);

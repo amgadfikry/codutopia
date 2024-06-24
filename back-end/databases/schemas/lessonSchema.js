@@ -15,10 +15,10 @@ class LessonSchema {
 
     // Define the schema of lesson
     this.lessonSchema = new Schema({
-      courseId: { type: String, ref: 'courses', required: true },
       title: { type: String, required: true, },
       description: { type: String, required: true, },
       content: [this.contentSchema], // array of content schema subdocuments
+      quiz: { type: String, ref: 'quizzes', default: null, }, // quiz reference
       timeToFinish: { type: Number, required: true, },
     }, { timestamps: true, }); // add timestamps to the schema
 

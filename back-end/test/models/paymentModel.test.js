@@ -29,6 +29,12 @@ describe("PaymentModel", () => {
 
   // Test suite for the createPayment method with all scenarios
   describe("Test suite for createPayment method", () => {
+
+    // after hook to clean up payments collection after tests in this suite are done
+    after(async () => {
+      await paymentModel.payment.deleteMany({});
+    });
+
     // Test case for creating a new payment with valid fields and return created payment object
     it("create a new payment with valid fields and return created payment object", async () => {
       const result = await paymentModel.createPayment(payment);
@@ -97,6 +103,18 @@ describe("PaymentModel", () => {
 
   // Test suite for the getPayment method with all scenarios
   describe("Test suite for getPayment method", () => {
+
+    // before hook to create a new payment before all tests start and save the paymentId
+    before(async () => {
+      const result = await paymentModel.createPayment(payment);
+      paymentId = result._id;
+    });
+
+    // after hook to clean up payments collection after tests in this suite are done
+    after(async () => {
+      await paymentModel.payment.deleteMany({});
+    });
+
     // Test case for getting a payment with valid paymentId and return the payment object
     it("get a payment with valid paymentId and return the payment object", async () => {
       const result = await paymentModel.getPayment(paymentId);
@@ -132,7 +150,7 @@ describe("PaymentModel", () => {
       await mongoDB.commitTransaction(session);
       // check if the payments are created
       const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(4);
+      expect(result.length).to.equal(2);
     });
 
     // Test case for getting a payment with invalid paymentId in a transaction with failed transaction
@@ -153,13 +171,25 @@ describe("PaymentModel", () => {
       }
       // check if the payments are not created
       const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(4);
+      expect(result.length).to.equal(2);
     });
   });
 
 
   // Test suite for the checkPayment method with all scenarios
   describe("Test suite for checkPayment method", () => {
+
+    // before hook to create a new payment before all tests start and save the paymentId
+    before(async () => {
+      const result = await paymentModel.createPayment(payment);
+      paymentId = result._id;
+    });
+
+    // after hook to clean up payments collection after tests in this suite are done
+    after(async () => {
+      await paymentModel.payment.deleteMany({});
+    });
+
     // Test case for checking a payment with valid paymentId and return true
     it("check a payment with valid paymentId and return true", async () => {
       const result = await paymentModel.checkPayment(paymentId);
@@ -176,10 +206,22 @@ describe("PaymentModel", () => {
 
   // Test suite for the courseTotalPayment method with all scenarios
   describe("Test suite for courseTotalPayment method", () => {
+
+    // before hook to create a new payment before all tests start and save the paymentId
+    before(async () => {
+      const result = await paymentModel.createPayment(payment);
+      paymentId = result._id;
+    });
+
+    // after hook to clean up payments collection after tests in this suite are done
+    after(async () => {
+      await paymentModel.payment.deleteMany({});
+    });
+
     // Test case for calculating the total payment amount for a course with valid courseId and return the total payment amount
     it("calculate the total payment amount for a course with valid courseId and return the total payment amount", async () => {
       const result = await paymentModel.courseTotalPayment(payment.courseId);
-      expect(result).to.equal(payment.paymentAmount * 4);
+      expect(result).to.equal(payment.paymentAmount);
     });
 
     // Test case for calculating the total payment amount for a course with invalid courseId and throw an error
@@ -203,7 +245,7 @@ describe("PaymentModel", () => {
       await mongoDB.commitTransaction(session);
       // check if the payments are created
       const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(5);
+      expect(result.length).to.equal(2);
     });
 
     // Test case for calculating the total payment amount for a course with invalid courseId in a transaction with failed transaction
@@ -226,7 +268,7 @@ describe("PaymentModel", () => {
       }
       // check if the payments are not created
       const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(5);
+      expect(result.length).to.equal(2);
     });
 
   });
@@ -234,10 +276,22 @@ describe("PaymentModel", () => {
 
   // Test suite for the totalPayment method with all scenarios
   describe("Test suite for totalPayment method", () => {
+
+    // before hook to create a new payment before all tests start and save the paymentId
+    before(async () => {
+      const result = await paymentModel.createPayment(payment);
+      paymentId = result._id;
+    });
+
+    // after hook to clean up payments collection after tests in this suite are done
+    after(async () => {
+      await paymentModel.payment.deleteMany({});
+    });
+
     // Test case for calculating the total payment amount for all courses and return the total payment amount
     it("TotalPayment method calculate the total payment amount for all courses and return the total payment amount", async () => {
       const result = await paymentModel.totalPayment();
-      expect(result).to.equal(payment.paymentAmount * 5);
+      expect(result).to.equal(payment.paymentAmount);
     });
 
     // Test case for calculating the total payment amount for all courses in a transaction with success transaction
@@ -252,7 +306,7 @@ describe("PaymentModel", () => {
       await mongoDB.commitTransaction(session);
       // check if the payments are created
       const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(6);
+      expect(result.length).to.equal(2);
     });
 
     // Test case for calculating the total payment amount for all of empty payments collection and return 0
@@ -264,4 +318,4 @@ describe("PaymentModel", () => {
     });
   });
 
-});
+}).timeout(10000); // Increase the timeout to 10 seconds

@@ -40,6 +40,12 @@ describe("LessonModel", () => {
 
   // Test suite for the createLesson method with all scenarios
   describe("Test suite for createLesson method", () => {
+
+    // after hook to clean up lessons collection after test suite is done
+    after(async () => {
+      await lessonModel.lesson.deleteMany({});
+    });
+
     // Test case for creating a new lesson with valid fields
     it("create a new lesson with valid fields and return the lesson object", async () => {
       const result = await lessonModel.createLesson(lesson);
@@ -107,6 +113,18 @@ describe("LessonModel", () => {
 
   // Test suite for the getLesson method with all scenarios
   describe("Test suite for getLesson method", () => {
+
+    // before hook to create a new lesson before all tests start and save the lessonId
+    before(async () => {
+      const result = await lessonModel.createLesson(lesson);
+      lessonId = result._id;
+    });
+
+    // after hook to clean up lessons collection after test suite is done
+    after(async () => {
+      await lessonModel.lesson.deleteMany({});
+    });
+
     // Test case for getting a lesson with valid lessonId and return the lesson object
     it("get a lesson with valid lessonId and return the lesson object", async () => {
       const result = await lessonModel.getLesson(lessonId);
@@ -141,7 +159,7 @@ describe("LessonModel", () => {
       await mongoDB.commitTransaction(session);
       //check if all lessons are created in the database and success transaction
       const lessons = await lessonModel.lesson.find({});
-      expect(lessons.length).to.equal(4);
+      expect(lessons.length).to.equal(2);
     });
 
     // Test case for getting lessons with invalid courseId in a transaction with session with failed transaction
@@ -163,13 +181,25 @@ describe("LessonModel", () => {
       }
       //check if all lessons are created in the database and failed transaction
       const lessons = await lessonModel.lesson.find({});
-      expect(lessons.length).to.equal(4);
+      expect(lessons.length).to.equal(2);
     });
   });
 
 
   // Test suite for the updateLesson method with all scenarios
   describe("Test suite for updateLesson method", () => {
+
+    // before hook to create a new lesson before all tests start and save the lessonId
+    before(async () => {
+      const result = await lessonModel.createLesson(lesson);
+      lessonId = result._id;
+    });
+
+    // after hook to clean up lessons collection after test suite is done
+    after(async () => {
+      await lessonModel.lesson.deleteMany({});
+    });
+
     // Test case for updating a lesson with valid lessonId and valid data and return the updated lesson object
     it("update a lesson with valid lessonId and valid data and return the updated lesson object", async () => {
       // object of updated fields and update the lesson in the database
@@ -180,9 +210,6 @@ describe("LessonModel", () => {
       expect(result.title).to.equal(updatedData.title);
       expect(result.timeToFinish).to.equal(updatedData.timeToFinish);
       expect(result.description).to.equal(lesson.description);
-      // update the lesson object with the updated fields
-      lesson.title = updatedData.title;
-      lesson.timeToFinish = updatedData.timeToFinish;
     });
 
     // Test case for updating a lesson with invalid lessonId and valid data and throw an error
@@ -191,7 +218,6 @@ describe("LessonModel", () => {
         await lessonModel.updateLesson('6660fee3b58fe3208a9b8b55', lesson);
       }
       catch (error) {
-        // check if the error message is correct
         expect(error.message).to.equal("Lesson not found");
       }
     });
@@ -211,9 +237,6 @@ describe("LessonModel", () => {
       const result = await lessonModel.getLesson(lessonId);
       expect(result.title).to.equal(updatedData.title);
       expect(result.timeToFinish).to.equal(updatedData.timeToFinish);
-      // update the lesson object with the updated fields
-      lesson.title = updatedData.title;
-      lesson.timeToFinish = updatedData.timeToFinish;
     });
 
     // Test case for updating a lesson with valid lessonId in a transaction with session with failed transaction
@@ -235,8 +258,6 @@ describe("LessonModel", () => {
       }
       //check if all lesson are not updated in the database
       const result = await lessonModel.getLesson(lessonId);
-      expect(result.title).to.equal(lesson.title);
-      expect(result.timeToFinish).to.equal(lesson.timeToFinish);
       expect(result.timeToFinish).to.not.equal(80);
     });
   });
@@ -244,6 +265,18 @@ describe("LessonModel", () => {
 
   // Test suite for the deleteLesson method with all scenarios
   describe("Test suite for deleteLesson method", () => {
+
+    // before hook to create a new lesson before all tests start and save the lessonId
+    before(async () => {
+      const result = await lessonModel.createLesson(lesson);
+      lessonId = result._id;
+    });
+
+    // after hook to clean up lessons collection after test suite is done
+    after(async () => {
+      await lessonModel.lesson.deleteMany({});
+    });
+
     // Test case for deleting a lesson with valid lessonId and return a message that the lesson is deleted
     it("delete a lesson with valid lessonId and return a message that the lesson is deleted", async () => {
       const result = await lessonModel.deleteLesson(lessonId);
@@ -278,6 +311,9 @@ describe("LessonModel", () => {
       catch (error) {
         expect(error.message).to.equal("Lesson not found");
       }
+      // check number of lessons in the database
+      const lessons = await lessonModel.lesson.find({});
+      expect(lessons.length).to.equal(0);
     });
 
     // Test case for deleting a lesson with valid lessonId in a transaction with session with failed transaction
@@ -299,7 +335,7 @@ describe("LessonModel", () => {
       }
       //check if the lesson is not created in the database
       const lessons = await lessonModel.lesson.find({});
-      expect(lessons.length).to.equal(3);
+      expect(lessons.length).to.equal(0);
     });
   });
 

@@ -97,6 +97,35 @@ class LessonModel extends LessonSchema {
     }
   }
 
+  /* addQuizToLesson method to add a quiz to a lesson in the database
+    Parameters:
+      - lessonId: ID of the lesson to update
+      - quizId: ID of the quiz to add
+      - session: optional session for the transaction
+    Returns:
+      - message that the quiz is added to the lesson
+    Errors:
+      - Lesson not found
+  */
+  async addQuizToLesson(lessonId, quizId, session = null) {
+    try {
+      // Update the lesson in the database
+      const result = await this.lesson.findByIdAndUpdate(
+        lessonId,
+        { quiz: quizId },
+        { new: true, session }
+      );
+      // if the lesson is not found, throw an error
+      if (!result) {
+        throw new Error(`Lesson not found`);
+      }
+      return 'Quiz added to the lesson successfully';
+    }
+    catch (error) {
+      throw new Error('Lesson not found');
+    }
+  }
+
   /* DeleteLesson method to delete a lesson from the database
     Parameters:
       - lessonId: ID of the lesson to delete

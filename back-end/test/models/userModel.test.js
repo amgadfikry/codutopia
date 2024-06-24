@@ -945,8 +945,6 @@ describe("User Model in mongoDB", () => {
       expect(result.paymentId).to.equal(course.paymentId);
       expect(result).to.have.property('progress');
       expect(result.progress).to.equal(0);
-      expect(result).to.have.property('quizScore');
-      expect(result.quizScore).to.be.a('array');
       expect(result).to.have.property('createdAt');
       expect(result).to.have.property('updatedAt');
     });

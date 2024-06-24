@@ -12,7 +12,6 @@ class UserSchema {
       courseId: { type: String, ref: 'courses', required: true, },
       progress: { type: Number, default: 0, },
       paymentId: { type: String, ref: 'payments', default: null, required: true, },
-      quizScore: { type: [Number], default: [], },
     }, { timestamps: true, }); // add timestamps to the schema
 
     // Define the userSchema for the users collection

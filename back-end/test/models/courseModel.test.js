@@ -141,7 +141,7 @@ describe('CourseModel', () => {
       expect(result.tags).to.deep.equal(course.tags);
       expect(result.sumReviews).to.equal(0);
       expect(result.courseAvgRating).to.equal(0);
-      expect(result.students).to.equal(0);
+      expect(result.students).to.eql([]);
     });
 
     // Test case for getting a course by id with invalid courseId and throw an error course not found
@@ -751,5 +751,415 @@ describe('CourseModel', () => {
       expect(result.length).to.equal(0);
     });
   });
+
+
+  // Test suite for the deleteAllCoursesByAuthorId method with all scenarios
+  describe('Test suite for deleteAllCoursesByAuthorId method', () => {
+
+    // before hook to create 2 courses
+    beforeEach(async () => {
+      // create 2 courses with valid fields
+      await courseModel.createCourse(course);
+      await courseModel.createCourse(course);
+    });
+
+    // after hook to clean up courses and lessons collection after test suite done
+    afterEach(async () => {
+      await courseModel.course.deleteMany({});
+    });
+
+    // Test case for deleting all courses by authorId with valid authorId and return success message
+    it('delete all courses by authorId with valid authorId and return success message', async () => {
+      // delete all courses by authorId
+      const result = await courseModel.deleteAllCoursesByAuthorId(course.authorId);
+      // check if the result is correct
+      expect(result).to.equal('Courses deleted successfully');
+      // check if the courses are deleted
+      const result2 = await courseModel.course.find({});
+      expect(result2.length).to.equal(0);
+    });
+
+    // Test case for deleting all courses by authorId not in the courses return success message with no courses deleted
+    it('delete all courses by authorId not in the courses return success message with no courses deleted', async () => {
+      // delete all courses by authorId not in the courses
+      const result = await courseModel.deleteAllCoursesByAuthorId('621f7b9e6f3b7d1d9e9f9d546544');
+      // check if the result is correct
+      expect(result).to.equal('Courses deleted successfully');
+      // check if the courses are not deleted
+      const result2 = await courseModel.course.find({});
+      expect(result2.length).to.equal(2);
+    });
+
+    // Test case for deleting all courses by authorId with valid authorId in a transaction with session with success transaction
+    it('delete all courses by authorId with valid authorId in a transaction with success transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      await courseModel.deleteAllCoursesByAuthorId(course.authorId, session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      // check if the courses are deleted
+      const result = await courseModel.course.find({});
+      expect(result.length).to.equal(0);
+    });
+
+    // Test case for deleting all courses by in a transaction with session with failed transaction
+    it('delete all courses by authorId in a transaction with failed transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // delete all courses by authorId then get course by invalid courseId in session
+        await courseModel.deleteAllCoursesByAuthorId(course.authorId, session);
+        await courseModel.getCourse('621f7b9e6f3b7d1d9e9f9d4b', session);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the courses are not deleted
+      const result = await courseModel.course.find({});
+      expect(result.length).to.equal(2);
+    });
+  });
+
+
+  // Test suite for the addNewStudentToCourse method with all scenarios
+  describe('Test suite for addNewStudentToCourse method', () => {
+    // variable to store student id
+    let studentId;
+
+    // before hook to create course and assign it to courseId
+    before(async () => {
+      // create a new course with valid fields
+      const result = await courseModel.createCourse(course);
+      courseId = result._id;
+      // student id
+      studentId = '621f7b9e6f3b7d1d9e9f9d4b';
+    });
+
+    // after hook to clean up courses and lessons collection after test suite done
+    after(async () => {
+      await courseModel.course.deleteMany({});
+    });
+
+    // Test case for adding a new student to a course with valid courseId and return success message
+    it('add a new student to a course with valid courseId and return success message', async () => {
+      // add a new student to the course
+      const result = await courseModel.addNewStudentToCourse(courseId, studentId);
+      // check if the result is correct
+      expect(result).to.equal('Student added to course successfully');
+      // check if the student is added to the course
+      const course = await courseModel.getCourse(courseId);
+      expect(course.students.length).to.equal(1);
+    });
+
+    // Test case for adding a new student to a course with invalid courseId and throw an error course not found
+    it('add a new student to a course with invalid courseId and throw an error course not found', async () => {
+      try {
+        // add a new student to the course with invalid courseId
+        await courseModel.addNewStudentToCourse('621f7b9e6f3b7d1d9e9f9d4b', studentId);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+      }
+    });
+
+    // Test case for adding a new student to a course with valid courseId in a transaction with session with success transaction
+    it('add a new student to a course with valid courseId in a transaction with success transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      // add a new student to the course in session
+      await courseModel.addNewStudentToCourse(courseId, studentId, session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      // check if the student is added to the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.students.length).to.equal(2);
+    });
+
+    // Test case for adding a new student to a course with invalid courseId in a transaction with session with failed transaction
+    it('add a new student to a course with invalid courseId in a transaction with failed transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // add 2 students one with valid courseId and one with invalid courseId in session
+        await courseModel.addNewStudentToCourse(courseId, studentId, session);
+        await courseModel.addNewStudentToCourse('621f7b9e6f3b7d1d9e9f9d4b', studentId, session);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the student is not added to the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.students.length).to.equal(2);
+    });
+  });
+
+
+  // Test suite for the removeStudentFromCourse method with all scenarios
+  describe('Test suite for removeStudentFromCourse method', () => {
+    // variable to store student id
+    let studentId;
+
+    // before hook to create course and assign it to courseId and add a student to the course before each test case
+    beforeEach(async () => {
+      // create a new course with valid fields
+      const result = await courseModel.createCourse(course);
+      courseId = result._id;
+      // student id
+      studentId = '621f7b9e6f3b7d1d9e9f9d4b';
+      // add a student to the course
+      await courseModel.addNewStudentToCourse(courseId, studentId);
+    });
+
+    // after hook to clean up courses and lessons collection after each test case
+    afterEach(async () => {
+      await courseModel.course.deleteMany({});
+    });
+
+    // Test case for removing a student from a course with valid courseId and return success message
+    it('remove a student from a course with valid courseId and return success message', async () => {
+      // remove a student from the course
+      const result = await courseModel.removeStudentFromCourse(courseId, studentId);
+      // check if the result is correct
+      expect(result).to.equal('Student removed from course successfully');
+      // check if the student is removed from the course
+      const course = await courseModel.getCourse(courseId);
+      expect(course.students.length).to.equal(0);
+    });
+
+    // Test case for removing a student from a course with invalid courseId and throw an error course not found
+    it('remove a student from a course with invalid courseId and throw an error course not found', async () => {
+      try {
+        // remove a student from the course with invalid courseId
+        await courseModel.removeStudentFromCourse('621f7b9e6f3b7d1d9e9f9d4b', studentId);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+      }
+    });
+
+    // Test case for removing a student from a course with valid courseId and studentId not in the students array and return success message
+    it('remove a student from a course with valid courseId and studentId not in array and return success message', async () => {
+      // remove a student from the course
+      const result = await courseModel.removeStudentFromCourse(courseId, '54854321468143213265');
+      // check if the result is correct
+      expect(result).to.equal('Student removed from course successfully');
+      // check if the student is removed from the course
+      const result2 = await courseModel.getCourse(courseId);
+      expect(result2.students.length).to.equal(1);
+    });
+
+    // Test case for removing a student from a course with valid courseId in a transaction with session with success transaction
+    it('remove a student from a course with valid courseId in a transaction with success transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      // remove a student from the course in session
+      await courseModel.removeStudentFromCourse(courseId, studentId, session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      // check if the student is removed from the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.students.length).to.equal(0);
+    });
+
+    // Test case for removing a student from a course with invalid courseId in a transaction with session with failed transaction
+    it('remove a student from a course with invalid courseId in a transaction with failed transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // remove a student with valid courseId and one with invalid courseId in session
+        await courseModel.removeStudentFromCourse(courseId, studentId, session);
+        await courseModel.removeStudentFromCourse('621f7b9e6f3b7d1d9e9f9d4b', studentId, session);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the student is not removed from the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.students.length).to.equal(1);
+    });
+  });
+
+
+  // Test suite for the addReviewToCourse method with all scenarios
+  describe('Test suite for addReviewToCourse method', () => {
+    // variables to store review data
+    let review;
+
+    // before hook to create course and assign it to courseId and review data before each test case
+    beforeEach(async () => {
+      // create a new course with valid fields
+      const result = await courseModel.createCourse(course);
+      courseId = result._id;
+      // review data
+      review = { id: '621f7b9e6f3b7d1d9e9f9d4b', rating: 4 };
+    });
+
+    // after hook to clean up courses and lessons collection after each test case
+    afterEach(async () => {
+      await courseModel.course.deleteMany({});
+    });
+
+    // Test case for adding a review to a course with valid courseId and review data and return success message
+    it('add a review to a course with valid courseId and review data and return success message', async () => {
+      // add a review to the course
+      const result = await courseModel.addReviewToCourse(courseId, review.id, review.rating);
+      // check if the result is correct
+      expect(result).to.equal('Review added to course successfully');
+      // check if the review is added to the course
+      const result2 = await courseModel.getCourse(courseId);
+      expect(result2.reviews.length).to.equal(1);
+      expect(result2.sumReviews).to.equal(4);
+      expect(result2.courseAvgRating).to.equal(4);
+    });
+
+    // Test case for adding a review to a course with invalid courseId and throw an error course not found
+    it('add a review to a course with invalid courseId and throw an error course not found', async () => {
+      try {
+        // add a review to the course with invalid courseId
+        await courseModel.addReviewToCourse('621f7b9e6f3b7d1d9e9f9d4b', review.id, review.rating);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+      }
+    });
+
+    // Test case for adding 2 reviews to a course and check total sum of reviews and courseAvg Rating
+    it('add 2 reviews to a course and check total sum of reviews and courseAvg Rating', async () => {
+      // add a review to the course
+      await courseModel.addReviewToCourse(courseId, review.id, review.rating);
+      await courseModel.addReviewToCourse(courseId, review.id, 5);
+      // check if the review is added to the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.reviews.length).to.equal(2);
+      expect(result.sumReviews).to.equal(9);
+      expect(result.courseAvgRating).to.equal(4.5);
+    });
+
+    // Test case for adding a review to a course with valid courseId in a transaction with session with success transaction
+    it('add a review to a course with valid courseId in a transaction with success transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      // add a review to the course in session
+      await courseModel.addReviewToCourse(courseId, review.id, review.rating, session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      // check if the review is added to the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.reviews.length).to.equal(1);
+      expect(result.sumReviews).to.equal(4);
+      expect(result.courseAvgRating).to.equal(4);
+    });
+
+    // Test case for adding a review to a course with invalid courseId in a transaction with session with failed transaction
+    it('add a review to a course with invalid courseId in a transaction with failed transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // add a review with valid courseId and one with invalid courseId in session
+        await courseModel.addReviewToCourse(courseId, review.id, review.rating, session);
+        await courseModel.addReviewToCourse('621f7b9e6f3b7d1d9e9f9d4b', review.id, review.rating, session);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the review is not added to the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.reviews.length).to.equal(0);
+      expect(result.sumReviews).to.equal(0);
+      expect(result.courseAvgRating).to.equal(0);
+    });
+  });
+
+
+  // Test suite for the removeReviewFromCourse method with all scenarios
+  describe('Test suite for removeReviewFromCourse method', () => {
+    // variables to store review data
+    let review;
+
+    // before hook to create course and assign it to courseId and review data before each test case
+    beforeEach(async () => {
+      // create a new course with valid fields
+      const result = await courseModel.createCourse(course);
+      courseId = result._id;
+      // review data
+      review = { id: '621f7b9e6f3b7d1d9e9f9d4b', rating: 4 };
+      // add a review to the course
+      await courseModel.addReviewToCourse(courseId, review.id, review.rating);
+    });
+
+    // after hook to clean up courses and lessons collection after each test case
+    afterEach(async () => {
+      await courseModel.course.deleteMany({});
+    });
+
+    // Test case for removing a review from a course with valid courseId and return success message
+    it('remove a review from a course with valid courseId and return success message', async () => {
+      // remove a review from the course
+      const result = await courseModel.removeReviewFromCourse(courseId, review.id, review.rating);
+      // check if the result is correct
+      expect(result).to.equal('Review removed from course successfully');
+      // check if the review is removed from the course
+      const result2 = await courseModel.getCourse(courseId);
+      expect(result2.reviews.length).to.equal(0);
+      expect(result2.sumReviews).to.equal(0);
+      expect(result2.courseAvgRating).to.equal(0);
+    });
+
+    // Test case for removing a review from a course with invalid courseId and throw an error course not found
+    it('remove a review from a course with invalid courseId and throw an error course not found', async () => {
+      try {
+        // remove a review from the course with invalid courseId
+        await courseModel.removeReviewFromCourse('621f7b9e6f3b7d1d9e9f9d4b', review.id, review.rating);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+      }
+    });
+
+    // Test case for removing a review from a course with valid courseId and reviewId not in the reviews array and return success message
+    it('remove a review from a course with valid courseId and reviewId not in array and return success message', async () => {
+      try {
+        await courseModel.removeReviewFromCourse(courseId, '54854321468143213265', 5);
+      } catch (error) {
+        expect(error.message).to.equal('Review not found in course');
+      }
+    });
+
+    // Test case for removing a review from a course with valid courseId in a transaction with session with success transaction
+    it('remove a review from a course with valid courseId in a transaction with success transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      // remove a review from the course in session
+      await courseModel.removeReviewFromCourse(courseId, review.id, review.rating, session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      // check if the review is removed from the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.reviews.length).to.equal(0);
+      expect(result.sumReviews).to.equal(0);
+      expect(result.courseAvgRating).to.equal(0);
+    });
+
+    // Test case for removing a review from a course with invalid courseId in a transaction with session with failed transaction
+    it('remove a review from a course with invalid courseId in a transaction with failed transaction', async () => {
+      // start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // remove a review with valid courseId and one with invalid courseId in session
+        await courseModel.removeReviewFromCourse(courseId, review.id, review.rating, session);
+        await courseModel.removeReviewFromCourse('621f7b9e6f3b7d1d9e9f9d4b', review.id, review.rating, session);
+      } catch (error) {
+        expect(error.message).to.equal('Course not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+      // check if the review is not removed from the course
+      const result = await courseModel.getCourse(courseId);
+      expect(result.reviews.length).to.equal(1);
+      expect(result.sumReviews).to.equal(4);
+      expect(result.courseAvgRating).to.equal(4);
+    });
+  });
+
 
 }).timeout(15000); // increase the timeout to 15 seconds

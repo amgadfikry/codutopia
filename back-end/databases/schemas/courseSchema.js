@@ -24,13 +24,19 @@ class CourseSchema {
       reviews: { type: [String], ref: 'reviews', default: [], },
       sumReviews: { type: Number, default: 0, },
       courseAvgRating: { type: Number, default: 0, },
-      students: { type: Number, default: 0, },
+      students: { type: [String], ref: 'users', default: [], },
       image: { type: String, default: null, },
     }, { timestamps: true, }); // add timestamps to the schema
 
-    // Add pre hook to calculate the courseAvgRating before saving the course
-    this.courseSchema.pre('save', function (next) {
-      CourseSchema.calculateAvgCourseRating(this, next);
+    // 
+    this.courseSchema.post('findOneAndUpdate', async function (doc) {
+      const update = this.getUpdate();
+      if ((update.$push && update.$push.reviews) || (update.$pull && update.$pull.reviews)) {
+        if (doc) {
+          const session = this.getOptions().session;
+          await CourseSchema.calculateAvgCourseRating(doc, session);
+        }
+      }
     });
 
     // Create a new model for the courses collection with the course schema
@@ -42,15 +48,15 @@ class CourseSchema {
       - course: course data object
       - next: function to call the next middleware
   */
-  static calculateAvgCourseRating(course, next) {
+  static async calculateAvgCourseRating(doc, session) {
     // check if length of reviews is less than 1 and return avg rating as 0
-    if (course.reviews.length < 1) {
-      course.courseAvgRating = 0;
-      return next();
+    const avg = doc.sumReviews / doc.reviews.length;
+    if (avg) {
+      doc.courseAvgRating = avg;
+    } else {
+      doc.courseAvgRating = 0;
     }
-    // calculate the course average rating by dividing the sum of reviews by the number of reviews
-    course.courseAvgRating = course.sumReviews / course.reviews.length;
-    return next();
+    await doc.save({ session });
   }
 
 }

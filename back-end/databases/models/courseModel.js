@@ -203,7 +203,7 @@ class CourseModel extends CourseSchema {
   async addLessonToCourse(courseId, lessonId, session = null) {
     try {
       // find the course by id and add the lesson to the lessons array
-      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $push: { lessons: toString(lessonId) } }, { session });
+      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $push: { lessons: String(lessonId) } }, { session });
       // check if the course is not found and throw an error
       if (!updatedCourse) {
         throw new Error(`Course not found`);
@@ -229,7 +229,7 @@ class CourseModel extends CourseSchema {
   async removeLessonFromCourse(courseId, lessonId, session = null) {
     try {
       // find the course by id and remove the lesson from the lessons array
-      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $pull: { lessons: toString(lessonId) } }, { session });
+      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $pull: { lessons: String(lessonId) } }, { session });
       // check if the course is not found and throw an error
       if (!updatedCourse) {
         throw new Error(`Course not found`);
@@ -263,6 +263,156 @@ class CourseModel extends CourseSchema {
     }
     catch (error) {
       throw new Error('Course not found');
+    }
+  }
+
+  /* deleteAllCoursesByAuthorId method to remove all courses by author id
+    Parameters:
+      - authorId: string with author id
+      - session: optional session for the transaction
+    Returns:
+      - Message with success 'Courses deleted successfully'
+    Errors:
+      - Failed to delete courses
+  */
+  async deleteAllCoursesByAuthorId(authorId, session = null) {
+    try {
+      // find the course by authorId and remove it
+      await this.course.deleteMany({ authorId }, { session });
+      return 'Courses deleted successfully';
+    }
+    catch (error) {
+      throw new Error('Failed to delete courses');
+    }
+  }
+
+  /* addNewStudentToCourse method to add a new student to a course
+    Parameters:
+      - courseId: string or object id with course id
+      - studentId: string or object id with student id
+      - session: optional session for the transaction
+    Returns:
+      - Message with success 'Student added to course successfully'
+    Errors:
+      - Course not found
+      - Other errors
+  */
+  async addNewStudentToCourse(courseId, studentId, session = null) {
+    try {
+      // find the course by id and add the student to the students array
+      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $push: { students: String(studentId) } }, { session });
+      // check if the course is not found and throw an error
+      if (!updatedCourse) {
+        throw new Error(`Course not found`);
+      }
+      return 'Student added to course successfully';
+    }
+    catch (error) {
+      throw new Error('Course not found');
+    }
+  }
+
+  /* removeStudentFromCourse method to remove a student from a course
+    Parameters:
+      - courseId: string or object id with course id
+      - studentId: string or object id with student id
+      - session: optional session for the transaction
+    Returns:
+      - Message with success 'Student removed from course successfully'
+    Errors:
+      - Course not found
+      - Other errors
+  */
+  async removeStudentFromCourse(courseId, studentId, session = null) {
+    try {
+      // find the course by id and remove the student from the students array
+      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $pull: { students: String(studentId) } }, { session });
+      // check if the course is not found and throw an error
+      if (!updatedCourse) {
+        throw new Error(`Course not found`);
+      }
+      return 'Student removed from course successfully';
+    }
+    catch (error) {
+      throw new Error('Course not found');
+    }
+  }
+
+  /* addReviewToCourse method to add a review to a course
+    Parameters:
+      - courseId: string or object id with course id
+      - reviewId: string or object id with review id
+      - rating: number with review rating
+      - session: optional session for the transaction
+    Returns:
+      - Message with success 'Review added to course successfully'
+    Errors:
+      - Course not found
+      - Other errors
+  */
+  async addReviewToCourse(courseId, reviewId, rating, session = null) {
+    try {
+      // find the course by id and add the review to the reviews array and add the rating to total sum of reviews
+      const updatedCourse = await this.course.findByIdAndUpdate(
+        courseId,
+        {
+          $push: { reviews: String(reviewId) },
+          $inc: { sumReviews: rating }
+        },
+        { session, new: true }
+      );
+      // check if the course is not found and throw an error
+      if (!updatedCourse) {
+        throw new Error(`Course not found`);
+      }
+      return 'Review added to course successfully';
+    }
+    catch (error) {
+      throw new Error('Course not found');
+    }
+  }
+
+  /* removeReviewFromCourse method to remove a review from a course
+    Parameters:
+      - courseId: string or object id with course id
+      - reviewId: string or object id with review id
+      - rating: number with review rating
+      - session: optional session for the transaction
+    Returns:
+      - Message with success 'Review removed from course successfully'
+    Errors:
+      - Course not found
+      - Other errors
+  */
+  async removeReviewFromCourse(courseId, reviewId, rating, session = null) {
+    try {
+      // check if course is found by id
+      const course = await this.course.findOne({ _id: courseId }, {}, { session });
+      if (!course) {
+        throw new Error(`Course not found`);
+      }
+      // check if review is found in the reviews array of the course
+      const reviewIndex = course.reviews.findIndex(review => review.toString() === reviewId);
+      if (reviewIndex === -1) {
+        throw new Error(`Review not found in course`);
+      }
+      // find the course by id and remove the review from the reviews array and remove the rating from total sum of reviews
+      const updatedCourse = await this.course.findByIdAndUpdate(
+        courseId,
+        {
+          $pull: { reviews: String(reviewId) },
+          $inc: { sumReviews: -rating }
+        },
+        { session, new: true }
+      );
+      // check if the course is not found and throw an error
+      if (!updatedCourse) {
+        throw new Error(`Course not found`);
+      }
+      return 'Review removed from course successfully';
+    }
+    catch (error) {
+      throw new Error(error.message);
     }
   }
 }

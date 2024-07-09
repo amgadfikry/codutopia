@@ -28,11 +28,15 @@ class CourseSchema {
       image: { type: String, default: null, },
     }, { timestamps: true, }); // add timestamps to the schema
 
-    // 
+    // post hook to calculate the average rating for the course after saving
     this.courseSchema.post('findOneAndUpdate', async function (doc) {
+      // get the update object which contains the update operation
       const update = this.getUpdate();
+      // check if the update object contains the reviews field either to push or pull a review
       if ((update.$push && update.$push.reviews) || (update.$pull && update.$pull.reviews)) {
         if (doc) {
+          // get the session object from the options passed to the update operation to use it in the save operation
+          // to make sure the update operation is part of the same session
           const session = this.getOptions().session;
           await CourseSchema.calculateAvgCourseRating(doc, session);
         }
@@ -45,17 +49,19 @@ class CourseSchema {
 
   /* calculateAvgCourseRating method to calculate the average rating for the course before saving
     Parameters:
-      - course: course data object
-      - next: function to call the next middleware
+      - doc: the document object that contains the course data
+      - session: the session object to use it in the save operation
   */
   static async calculateAvgCourseRating(doc, session) {
-    // check if length of reviews is less than 1 and return avg rating as 0
+    // calculate the average rating for the course
     const avg = doc.sumReviews / doc.reviews.length;
+    // update the courseAvgRating field with the new average rating value or 0 if there are no reviews
     if (avg) {
       doc.courseAvgRating = avg;
     } else {
       doc.courseAvgRating = 0;
     }
+    // save the updated course document
     await doc.save({ session });
   }
 

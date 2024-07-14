@@ -8,6 +8,7 @@ class QuizSchema {
     // Define schema for the quizzes collection
     this.quizSchema = new Schema({
       title: { type: String, required: true, },
+      lessonId: { type: String, ref: 'lessons', required: true, },
       questions: {
         _id: false, // disable _id for subdocuments
         required: true,

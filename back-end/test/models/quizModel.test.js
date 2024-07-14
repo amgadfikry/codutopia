@@ -7,16 +7,13 @@ describe('QuizModel', () => {
   // Declare variables to be used across all the tests
   let quiz;
   let quizId;
-  let updatedQuestion;
-  let answer;
-  let newQuestion;
-  let newAnswer;
 
   // Before hook to prepare the data before all test start
   before(() => {
     // Create a new quiz object
     quiz = {
       title: 'Math Quiz',
+      lessonId: '60f6e1b9b58fe3208a9b8b55',
       questionsPerQuiz: 2,
       timeToFinish: 10,
       questions: [
@@ -35,19 +32,6 @@ describe('QuizModel', () => {
       ],
       answers: ['2', '4', '6'],
     };
-    // Create a new updated question object and answer
-    updatedQuestion = {
-      id: 2,
-      question: 'What is 8+8?',
-      options: ['1', '2', '3', '16'],
-    };
-    answer = '16';
-    // Create a new question object and answer
-    newQuestion = {
-      question: 'What is 10+10?',
-      options: ['1', '2', '3', '20'],
-    };
-    newAnswer = '20';
   });
 
   // After hook to clean up quizzes after all tests are done
@@ -172,6 +156,77 @@ describe('QuizModel', () => {
       // check if the quizzes are not created
       const result = await quizModel.quiz.find({});
       expect(result.length).to.equal(3);
+    });
+  });
+
+
+  // Test suite for the getQuizForCreator method with all scenarios
+  describe('Test suite for getQuizForCreator method', () => {
+
+    // before hook to create a quiz object before all the tests start and save the quiz id
+    before(async () => {
+      quizId = await quizModel.createQuiz(quiz);
+    });
+
+    // after hook to clean up quizzes collection after all the tests done
+    after(async () => {
+      await quizModel.quiz.deleteMany({});
+    });
+
+    // Test case for retrieving a quiz with valid ID and return the quiz object
+    it('retrieve a quiz with valid ID and return the quiz object', async () => {
+      const result = await quizModel.getQuizForCreator(quizId);
+      // check if the result is correct
+      expect(result).to.be.an('object');
+      expect(result.title).to.equal(quiz.title);
+      expect(result.timeToFinish).to.equal(quiz.timeToFinish);
+      expect(result.answers.length).to.equal(quiz.answers.length);
+      expect(result.questions.length).to.equal(quiz.questions.length);
+    });
+
+    // Test case for retrieving a quiz with invalid ID and throw an error
+    it('retrieve a quiz with invalid ID and throw an error', async () => {
+      try {
+        await quizModel.getQuizForCreator('60f6e1b9b58fe3208a9b8b55');
+      }
+      catch (error) {
+        expect(error.message).to.equal('Quiz not found');
+      }
+    });
+
+    // Test case for retrieving a quiz with valid ID in a transaction with success transaction
+    it('retrieve a quiz with valid ID in a transaction with success transaction', async () => {
+      // start a transaction
+      const session = await mongoDB.startSession();
+      // retrieve twice successfully and create a new quiz object
+      await quizModel.getQuizForCreator(quizId, session);
+      await quizModel.getQuizForCreator(quizId, session);
+      await quizModel.createQuiz(quiz, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the quizzes are created
+      const result = await quizModel.quiz.find({});
+      expect(result.length).to.equal(2);
+    });
+
+    // Test case for retrieving a quiz with invalid ID in a transaction with failed transaction
+    it('retrieve a quiz with invalid ID in a transaction with failed transaction', async () => {
+      // start a transaction
+      const session = await mongoDB.startSession();
+      try {
+        // retrieve twice one with invalid ID and one with valid ID and create a new quiz object
+        await quizModel.getQuizForCreator(quizId, session);
+        await quizModel.getQuizForCreator('60f6e1b9b58fe3208a9b8b55', session);
+        await quizModel.createQuiz(quiz, session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('Quiz not found');
+      }
+      // check if the quizzes are not created
+      const result = await quizModel.quiz.find({});
+      expect(result.length).to.equal(2);
     });
   });
 
@@ -343,275 +398,111 @@ describe('QuizModel', () => {
   });
 
 
-  // Test suite for updateQuestionAndAnswer method with all scenarios
-  describe('Test suite for updateQuestionAndAnswer method', () => {
+  // Test suite for updateQuestionsAndAnswers method with all scenarios
+  describe('Test suite for updateQuestionsAndAnswers method', () => {
+    let updatedQuestion;
+    let answers;
 
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
+    // beforeEach hook to create a quiz object before each test start and save the quiz id
+    beforeEach(async () => {
       quizId = await quizModel.createQuiz(quiz);
+      // create temp updated question object and answer
+      updatedQuestion = [...quiz.questions, { question: 'What is 4+4?', options: ['1', '2', '3', '8'], }];
+      answers = [...quiz.answers, '8'];
     });
 
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
+    // afterEach hook to clean up quizzes collection after each test done
+    afterEach(async () => {
       await quizModel.quiz.deleteMany({});
     });
 
-    // Test case for updating a quiz question and answer with valid ID and return success message
-    it('update a quiz question and answer with valid ID and return success message', async () => {
-      const result = await quizModel.updateQuestionAndAnswer(quizId, updatedQuestion.id, updatedQuestion, answer);
+    // Test case for updating a quiz questions and answers with valid ID and return success message
+    it('update a quiz questions and answers with valid ID and return success message', async () => {
+      const result = await quizModel.updateQuestionsAndAnswers(quizId, updatedQuestion, answers);
       // check if the result correct
       expect(result).to.be.an('string');
-      expect(result).to.equal('Question and answer updated successfully');
+      expect(result).to.equal('Questions and answers updated successfully');
     });
 
-    // Test case for updating a quiz question and answer with invalid quiz ID and throw an error
-    it('update a quiz question and answer with invalid quiz ID and throw an error', async () => {
+    // Test case for updating quiz questions and answers with invalid ID and throw an error
+    it('update a quiz questions and answers with invalid ID and throw an error', async () => {
       try {
-        await quizModel.updateQuestionAndAnswer('60f6e1b9b58fe3208a9b8b55', updatedQuestion.id, updatedQuestion, answer);
+        await quizModel.updateQuestionsAndAnswers('60f6e1b9b58fe3208a9b8b55', updatedQuestion, answers);
       }
       catch (error) {
         expect(error.message).to.equal('Quiz not found');
       }
     });
 
-    // Test case for updating a quiz question and answer with invalid question ID and throw an error
-    it('update a quiz question and answer with invalid question ID and throw an error', async () => {
+    // Test case for updating a quiz questions and answers with answers less than questions and throw an error
+    it('update a quiz questions and answers with answers less than questions and throw an error', async () => {
       try {
-        await quizModel.updateQuestionAndAnswer(quizId, 10, updatedQuestion, answer);
+        // remove one answer from the answers array
+        const tempAnswers = ['2', '4'];
+        await quizModel.updateQuestionsAndAnswers(quizId, updatedQuestion, tempAnswers);
       }
       catch (error) {
-        expect(error.message).to.equal('Question not found');
+        expect(error.message).to.equal('Quiz must have answers for each question');
       }
     });
 
-    // Test case for updating a quiz question and answer with missing question field and throw an error
-    it('update a quiz question and answer with missing question fields and throw an error', async () => {
+    // Test case for updating a quiz questions and answers with question option less than 2 and throw an error
+    it('update a quiz questions and answers with question option less than 2 and throw an error', async () => {
       try {
-        // create temp updated question object with missing question field
-        const tempUpdatedQuestion = { ...updatedQuestion };
-        delete tempUpdatedQuestion.question;
-        await quizModel.updateQuestionAndAnswer(quizId, updatedQuestion.id, tempUpdatedQuestion, answer);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Missing question field');
-      }
-    });
-
-    //  Test case for updating a quiz question and answer with options less than required options and throw an error
-    it('update a quiz question and answer with options less than required options and throw an error', async () => {
-      try {
-        // create temp updated question object with options less than required options
-        const tempUpdatedQuestion = { ...updatedQuestion, options: ['1'] };
-        await quizModel.updateQuestionAndAnswer(quizId, updatedQuestion.id, tempUpdatedQuestion, answer);
+        // edit one question options to be less than 2
+        const tempUpdatedQuestion = [...updatedQuestion, { question: 'What is 5+5?', options: ['1'], }];
+        await quizModel.updateQuestionsAndAnswers(quizId, tempUpdatedQuestion, [...answers, '10']);
       }
       catch (error) {
         expect(error.message).to.equal('Quiz must have at least two options for each question');
       }
     });
 
-    // Test case for updating a quiz question and answer with valid fields in a transaction with success transaction
-    it('update a quiz question and answer with valid fields in a transaction with success transaction', async () => {
+    //  Test case for updating a quiz questions and answers with questions length less than 1 and throw an error
+    it('update a quiz question and answer with options less than required options and throw an error', async () => {
+      try {
+        // create a temp updated question object with questions less than 1
+        const tempUpdatedQuestion = [];
+        await quizModel.updateQuestionsAndAnswers(quizId, tempUpdatedQuestion, answers);
+      }
+      catch (error) {
+        expect(error.message).to.equal('Quiz must have at least one question');
+      }
+    });
+
+    // Test case for updating a quiz questions and answers with valid fields in a transaction with success transaction
+    it('update a quiz questions and answers with valid fields in a transaction with success transaction', async () => {
       // start a transaction
       const session = await mongoDB.startSession();
       // update the quiz twice with valid fields
-      await quizModel.updateQuestionAndAnswer(quizId, updatedQuestion.id, updatedQuestion, answer, session);
+      await quizModel.updateQuestionsAndAnswers(quizId, updatedQuestion, answers, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
       // check if the quiz question and answer is updated
       const result = await quizModel.quiz.findById(quizId);
-      expect(result.questions[2].question).to.equal(updatedQuestion.question);
+      expect(result.questions.length).to.equal(4);
+      expect(result.answers.length).to.equal(4);
     });
 
-    // Test case for updating a quiz question and answer with missing question field in a transaction with failed transaction
-    it('update a quiz question and answer with missing question field in a transaction with failed transaction', async () => {
+    // Test case for updating a quiz questions and answers with invalid ID in a transaction with failed transaction
+    it('update a quiz questions and answers with invalid ID in a transaction with failed transaction', async () => {
       // start a transaction
       const session = await mongoDB.startSession();
       try {
-        // create temp updated question object with missing question field and valid field
-        const tempUpdatedQuestion = { ...updatedQuestion };
-        delete tempUpdatedQuestion.question;
-        await quizModel.updateQuestionAndAnswer(quizId, updatedQuestion.id, tempUpdatedQuestion, answer, session);
-        await quizModel.updateQuestionAndAnswer(quizId, updatedQuestion.id, "What is 8+9?", answer, session);
+        // update the quiz with invalid ID and valid ID
+        await quizModel.updateQuestionsAndAnswers(quizId, updatedQuestion, answers, session);
+        await quizModel.updateQuestionsAndAnswers('60f6e1b9b58fe3208a9b8b55', updatedQuestion, answers, session);
         // commit the transaction
         await mongoDB.commitTransaction(session);
       }
       catch (error) {
-        expect(error.message).to.equal('Missing question field');
+        expect(error.message).to.equal('Quiz not found');
+        await mongoDB.abortTransaction(session);
       }
       // check if the quiz question and answer is not updated
       const result = await quizModel.quiz.findById(quizId);
-      expect(result.questions[2].question).to.equal(updatedQuestion.question);
-    });
-  });
-
-
-  // Test suite for the addQuestionAndAnswer method with all scenarios
-  describe('Test suite for addQuestionAndAnswer method', () => {
-
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
-      quizId = await quizModel.createQuiz(quiz);
-    });
-
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
-    });
-
-    // Test case for adding a new quiz question and answer with valid ID and return success message
-    it('add a new quiz question and answer with valid ID and return success message', async () => {
-      const result = await quizModel.addQuestionAndAnswer(quizId, newQuestion, newAnswer);
-      // check if the result is correct
-      expect(result).to.be.an('string');
-      expect(result).to.equal('Question and answer added successfully');
-    });
-
-    // Test case for adding a new quiz question and answer with invalid ID and throw an error
-    it('add a new quiz question and answer with invalid ID and throw an error', async () => {
-      try {
-        await quizModel.addQuestionAndAnswer('60f6e1b9b58fe3208a9b8b55', newQuestion, newAnswer);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Quiz not found');
-      }
-    });
-
-    // Test case for adding a new quiz question and answer with missing question field and throw an error
-    it('add a new quiz question and answer with missing question field and throw an error', async () => {
-      try {
-        // create temp new question object with missing question field
-        const tempNewQuestion = { ...newQuestion };
-        delete tempNewQuestion.question;
-        await quizModel.addQuestionAndAnswer(quizId, tempNewQuestion, newAnswer);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Missing question field');
-      }
-    });
-
-    // Test case for adding a new quiz question and answer with options less than required options and throw an error
-    it('add a new quiz question and answer with options less than required options and throw an error', async () => {
-      try {
-        // create temp new question object with options less than required options
-        const tempNewQuestion = { ...newQuestion, options: ['1'] };
-        await quizModel.addQuestionAndAnswer(quizId, tempNewQuestion, newAnswer);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Quiz must have at least two options for each question');
-      }
-    });
-
-    // Test case for adding a new quiz question and answer with valid fields in a transaction with success transaction
-    it('add a new quiz question and answer with valid fields in a transaction with success transaction', async () => {
-      // start a transaction
-      const session = await mongoDB.startSession();
-      // add the two new question and answer with valid fields
-      await quizModel.addQuestionAndAnswer(quizId, newQuestion, newAnswer, session);
-      await quizModel.addQuestionAndAnswer(quizId, newQuestion, newAnswer, session);
-      // commit the transaction
-      await mongoDB.commitTransaction(session);
-      // check if the new question and answer is added
-      const result = await quizModel.quiz.findById(quizId);
-      expect(result.questions.length).to.equal(6);
-    });
-
-    // Test case for adding a new quiz question and answer with missing question field in a transaction with failed transaction
-    it('add a new quiz question and answer with missing question field in a transaction with failed transaction', async () => {
-      // start a transaction
-      const session = await mongoDB.startSession();
-      try {
-        // add the two new question and answer with missing question field and valid field
-        const tempNewQuestion = { ...newQuestion };
-        delete tempNewQuestion.question;
-        await quizModel.addQuestionAndAnswer(quizId, tempNewQuestion, newAnswer, session);
-        await quizModel.addQuestionAndAnswer(quizId, newQuestion, newAnswer, session);
-        // commit the transaction
-        await mongoDB.commitTransaction(session);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Missing question field');
-      }
-      // check if the new question and answer is not added
-      const result = await quizModel.quiz.findById(quizId);
-      expect(result.questions.length).to.equal(6);
-    });
-  });
-
-
-  // Test suite for the removeQuestionAndAnswer method with all scenarios
-  describe('Test suite for removeQuestionAndAnswer method', () => {
-
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
-      quizId = await quizModel.createQuiz(quiz);
-    });
-
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
-    });
-
-    // Test case for removing a quiz question and answer with valid ID and return success message
-    it('remove a quiz question and answer with valid ID and return success message', async () => {
-      const result = await quizModel.removeQuestionAndAnswer(quizId, 0);
-      // check if the result is correct
-      expect(result).to.be.an('string');
-      expect(result).to.equal('Question and answer removed successfully');
-      // check if the question is removed
-      const quiz = await quizModel.quiz.findById(quizId);
-      expect(quiz.questions.length).to.equal(2);
-    });
-
-    // Test case for removing a quiz question and answer with invalid quiz ID and throw an error
-    it('remove a quiz question and answer with invalid quiz ID and throw an error', async () => {
-      try {
-        const result = await quizModel.removeQuestionAndAnswer('60f6e1b9b58fe3208a9b8b55', 2);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Quiz not found');
-      }
-    });
-
-    // Test case for removing a quiz question and answer with invalid question ID and throw an error
-    it('remove a quiz question and answer with invalid question ID and throw an error', async () => {
-      try {
-        await quizModel.removeQuestionAndAnswer(quizId, 10);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Question not found');
-      }
-    });
-
-    // Test case for removing a quiz question and answer with valid fields in a transaction with success transaction
-    it('remove a quiz question and answer with valid fields in a transaction with success transaction', async () => {
-      // start a transaction
-      const session = await mongoDB.startSession();
-      // remove the two questions with valid fields
-      await quizModel.removeQuestionAndAnswer(quizId, 0, session);
-      // commit the transaction
-      await mongoDB.commitTransaction(session);
-      // check if the questions are removed
-      const quizData = await quizModel.quiz.findById(quizId)
-      expect(quizData.questions.length).to.equal(1);
-    });
-
-    // Test case for removing a quiz question and answer with invalid question ID in a transaction with failed transaction
-    it('remove a quiz question and answer with invalid question ID in a transaction with failed transaction', async () => {
-      // start a transaction
-      const session = await mongoDB.startSession();
-      try {
-        // remove two questions one with invalid ID and one with valid ID
-        await quizModel.removeQuestionAndAnswer(quizId, 0, session);
-        await quizModel.removeQuestionAndAnswer('60f6e1b9b58fe3208a9b8b55', 0, session);
-        // commit the transaction
-        await mongoDB.commitTransaction(session);
-      }
-      catch (error) {
-        expect(error.message).to.equal('Quiz not found');
-      }
-      // check if the questions are not removed
-      const result = await quizModel.quiz.findById(quizId);
-      expect(result.questions.length).to.equal(1);
+      expect(result.questions.length).to.equal(3);
+      expect(result.answers.length).to.equal(3);
     });
   });
 
@@ -702,13 +593,8 @@ describe('QuizModel', () => {
       // check the correct answers twice with valid answerObject and create a question and answer
       const answerObject = { 0: '2', 1: '4', };
       await quizModel.correctAnswers(quizId, answerObject, session);
-      await quizModel.correctAnswers(quizId, answerObject, session);
-      await quizModel.addQuestionAndAnswer(quizId, newQuestion, newAnswer, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
-      // check if the question and answer is added
-      const result = await quizModel.quiz.findById(quizId);
-      expect(result.questions.length).to.equal(4);
     });
 
     // Test case for checking the correct answers of the quiz with invalid ID in a transaction with failed transaction

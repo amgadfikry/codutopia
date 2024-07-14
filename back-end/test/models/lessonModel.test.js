@@ -333,6 +333,80 @@ describe("LessonModel", () => {
   });
 
 
+  // Test suite for the removeQuizFromLesson method with all scenarios
+  describe("Test suite for removeQuizFromLesson method", () => {
+    // variable to save quizId
+    let quizId;
+
+    // before hook to create a new lesson before each test start and save the lessonId
+    beforeEach(async () => {
+      const result = await lessonModel.createLesson(lesson);
+      lessonId = result._id;
+      // define a new quizId
+      quizId = "6660fee3b58fe3208a9b8b55";
+      // add the quiz to the lesson
+      await lessonModel.addQuizToLesson(lessonId, quizId);
+    });
+
+    // after hook to clean up lessons collection after each test is done
+    afterEach(async () => {
+      await lessonModel.lesson.deleteMany({});
+    });
+
+    // Test case for removing a quiz from a lesson with valid lessonId and return a message that the quiz is removed
+    it("remove a quiz from a lesson with valid lessonId and return a message that the quiz is removed", async () => {
+      const result = await lessonModel.removeQuizFromLesson(lessonId);
+      // check if the result is correct
+      expect(result).to.be.an("string");
+      expect(result).to.equal("Quiz removed from the lesson successfully");
+    });
+
+    // Test case for removing a quiz from a lesson with invalid lessonId and throw an error
+    it("remove a quiz from a lesson with invalid lessonId and throw an error", async () => {
+      try {
+        await lessonModel.removeQuizFromLesson("6660fee3b58fe3208a9b8b55");
+      }
+      catch (error) {
+        expect(error.message).to.equal("Lesson not found");
+      }
+    });
+
+    // Test case for removing a quiz from a lesson with valid lessonId in a transaction with session with success transaction
+    it("remove a quiz from a lesson with valid lessonId in a transaction with session with success transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      // remove the quiz from the lesson in the database
+      await lessonModel.removeQuizFromLesson(lessonId, session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      //check if the quiz is removed from the lesson in the database
+      const result = await lessonModel.getLesson(lessonId);
+      expect(result.quiz).to.equal(null);
+    });
+
+    // Test case for removing a quiz from a lesson with valid lessonId in a transaction with session with failed transaction
+    it("remove a quiz from a lesson with valid lessonId in a transaction with session with failed transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // remove the quiz from the lesson in the database twice
+        await lessonModel.removeQuizFromLesson(lessonId, session);
+        await lessonModel.removeQuizFromLesson('6660fee3b58fe3208a9b8b66', session);
+        // commit the transaction and close the session
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal("Lesson not found");
+        // close the session
+        await mongoDB.abortTransaction(session);
+      }
+      //check if the quiz is not removed from the lesson in the database
+      const result = await lessonModel.getLesson(lessonId);
+      expect(result.quiz).to.equal(quizId);
+    });
+  });
+
+
   // Test suite for the deleteLesson method with all scenarios
   describe("Test suite for deleteLesson method", () => {
 

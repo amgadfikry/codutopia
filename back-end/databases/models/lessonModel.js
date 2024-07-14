@@ -112,7 +112,7 @@ class LessonModel extends LessonSchema {
       // Update the lesson in the database
       const result = await this.lesson.findByIdAndUpdate(
         lessonId,
-        { quiz: quizId },
+        { quiz: String(quizId) },
         { new: true, session }
       );
       // if the lesson is not found, throw an error
@@ -120,6 +120,30 @@ class LessonModel extends LessonSchema {
         throw new Error(`Lesson not found`);
       }
       return 'Quiz added to the lesson successfully';
+    }
+    catch (error) {
+      throw new Error('Lesson not found');
+    }
+  }
+
+  /* removeQuizFromLesson method to remove a quiz from a lesson in the database
+    Parameters:
+      - lessonId: ID of the lesson to update
+      - session: optional session for the transaction
+    Returns:
+      - message that the quiz is removed from the lesson
+    Errors:
+      - Lesson not found
+  */
+  async removeQuizFromLesson(lessonId, session = null) {
+    try {
+      // Update the lesson in the database
+      const result = await this.lesson.findByIdAndUpdate(lessonId, { quiz: null }, { new: true, session });
+      // if the lesson is not found, throw an error
+      if (!result) {
+        throw new Error(`Lesson not found`);
+      }
+      return 'Quiz removed from the lesson successfully';
     }
     catch (error) {
       throw new Error('Lesson not found');

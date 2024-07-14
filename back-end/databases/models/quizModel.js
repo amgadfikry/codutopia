@@ -20,13 +20,13 @@ class QuizModel extends QuizSchema {
       - Other errors
   */
   async createQuiz(quiz, session = null) {
-    // validate answers is same length as questions
-    if (quiz.questions.length > 1 && quiz.answers.length !== quiz.questions.length) {
-      throw new Error('Quiz must have answers for each question');
-    }
-
-    // assign id to each question equal to the index
+    // check if the questionsData is not empty
     if (quiz.questions.length > 0) {
+      // check if the questionsData length not same as answers length throw an error
+      if (quiz.answers.length !== quiz.questions.length) {
+        throw new Error('Quiz must have answers for each question');
+      }
+      // assign id to each question equal to the index to correspond with the answers array
       quiz.questions = quiz.questions.map((question, index) => ({ ...question, id: index }));
     }
 
@@ -49,6 +49,30 @@ class QuizModel extends QuizSchema {
       } else {
         throw error;
       }
+    }
+  }
+
+  /* GetQuizForCreator method to get a quiz from the database for the creator
+    Parameters:
+      - quizId: ID of the quiz to get
+      - session: optional session for the transaction
+    Returns:
+      - the quiz object
+    Errors:
+      - Quiz not found
+  */
+  async getQuizForCreator(quizId, session = null) {
+    try {
+      // Get the quiz from the database
+      const quiz = await this.quiz.findById(quizId, {}, { session });
+      // if the quiz is not found, throw an error
+      if (!quiz) {
+        throw new Error('Quiz not found');
+      }
+      return quiz;
+    }
+    catch (error) {
+      throw new Error('Quiz not found');
     }
   }
 
@@ -142,43 +166,43 @@ class QuizModel extends QuizSchema {
     }
   }
 
-  /* updateQuestionAndAnswer method to update question and answer in a quiz in the database
+  /* updateQuestionsAndAnswers method to update questions and answer fields in the database
     Parameters:
       - quizId: ID of the quiz to update
-      - questionId: ID of the question to update
-      - questionData: object with the new question data
-      - answer: string value of the new answer
+      - questionsData: object with the new question data
+      - answers list of the new answers
       - session: optional session for the transaction
     Returns:
-      - message of the updated question and answer is successful
+      - message of the questions and answers updated successfully
     Errors:
       - Quiz not found
-      - Question not found
       - Missing question field
       - Quiz must have 2 options for each question
+      - Must have answers for each question
   */
-  async updateQuestionAndAnswer(quizId, questionId, questionData, answer, session = null) {
-    // check if questionId is valid or quiz not found
-    const quiz = await this.quiz.findById(quizId, {}, { session });
-    if (!quiz) {
-      throw new Error('Quiz not found');
-    }
-    if (quiz.questions.length <= questionId) {
-      throw new Error('Question not found');
+  async updateQuestionsAndAnswers(quizId, questionsData, answers, session = null) {
+    // check if the questionsData is not empty
+    if (questionsData.length > 0) {
+      // check if the questionsData length not same as answers length throw an error
+      if (answers.length !== questionsData.length) {
+        throw new Error('Quiz must have answers for each question');
+      }
+      // assign id to each question equal to the index to correspond with the answers array
+      questionsData = questionsData.map((question, index) => ({ ...question, id: index }));
     }
 
     try {
       // Update the quiz with the specific ID
       const result = await this.quiz.findByIdAndUpdate(
         quizId,
-        { 'questions.$[question]': questionData, [`answers.${questionId}`]: answer },
-        {
-          runValidators: true,
-          arrayFilters: [{ 'question.id': questionId }],
-          session,
-        },
+        { questions: questionsData, answers },
+        { runValidators: true, session },
       );
-      return 'Question and answer updated successfully';
+      // if the quiz is not found, throw an error
+      if (!result) {
+        throw new Error('Quiz not found');
+      }
+      return 'Questions and answers updated successfully';
     }
     catch (error) {
       if (error.message.includes('Quiz must have')) {
@@ -189,91 +213,6 @@ class QuizModel extends QuizSchema {
       } else {
         throw new Error('Quiz not found');
       }
-    }
-  }
-
-  /* addQuestionAndAnswer method to add question and answer in a quiz in the database
-    Parameters:
-      - quizId: ID of the quiz to update
-      - questionData: object with the new question data
-      - answer: string value of the new answer
-      - session: optional session for the transaction
-    Returns:
-      - message of the added question and answer is successful
-    Errors:
-      - Quiz not found
-      - Quiz must have 2 options for each question
-      - Missing question field
-  */
-  async addQuestionAndAnswer(quizId, questionData, answer, session = null) {
-    try {
-      // update questionData with id equal to the length of questions array
-      const quiz = await this.quiz.findById(quizId, {}, { session });
-      // check if the quiz is not found
-      if (!quiz) {
-        throw new Error('Quiz not found');
-      }
-      questionData.id = quiz.questions.length;
-      // Update the quiz with the specific ID
-      await this.quiz.findByIdAndUpdate(
-        quizId,
-        { $push: { questions: questionData, answers: answer } },
-        { runValidators: true, session },
-      );
-      return 'Question and answer added successfully';
-    }
-    catch (error) {
-      if (error.message.includes('Quiz must have')) {
-        throw new Error(error.message.split(': ')[2]);
-      } else if (error.name === 'ValidationError') {
-        // If the error is a validation error, throw an error with the missing field
-        throw new Error(`Missing question field`);
-      } else {
-        throw new Error('Quiz not found');
-      }
-    }
-  }
-
-  /* removeQuestionAndAnswer method to remove question and answer in a quiz in the database
-    Parameters:
-      - quizId: ID of the quiz to update
-      - questionId: ID of the question to remove
-      - session: optional session for the transaction
-    Returns:
-      - message of the removed question and answer is successful
-    Errors:
-      - Quiz not found
-      - Question not found
-  */
-  async removeQuestionAndAnswer(quizId, questionId, session = null) {
-    // Get the answers from the quiz document
-    const quiz = await this.quiz.findById(quizId, {}, { session });
-    // check if the quiz is not found
-    if (!quiz) {
-      throw new Error('Quiz not found');
-    }
-    // check if questionId is valid
-    if (quiz.questions.length <= questionId) {
-      throw new Error('Question not found');
-    }
-
-    try {
-      // remove answer with index equal to questionId
-      quiz.answers.splice(questionId, 1);
-      // remove question with id equal to questionId
-      quiz.questions = quiz.questions.filter(question => question.id !== questionId);
-      // update the id of the questions
-      quiz.questions = quiz.questions.map((question, index) => ({ ...question, id: index }));
-      // Update the quiz with the specific ID to remove the question and answer
-      await this.quiz.findByIdAndUpdate(
-        quizId,
-        { questions: quiz.questions, answers: quiz.answers },
-        { runValidators: true, session },
-      );
-      return 'Question and answer removed successfully';
-    }
-    catch (error) {
-      throw new Error('Quiz not found');
     }
   }
 

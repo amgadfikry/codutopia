@@ -91,6 +91,30 @@ class PaymentModel extends PaymentSchema {
     }
   }
 
+  /* getAllPaymentsByUser method to get all payments for a specific user
+    Parameters:
+      - userId: string value that represents the user id
+      - session: optional session for the transaction
+    Returns:
+      - array of payment objects data
+    Errors:
+      - User have no payments yet
+  */
+  async getAllPaymentsByUser(userId, session = null) {
+    try {
+      // Get all payments for the user
+      const payments = await this.payment.find({ userId: userId }, {}, { session });
+      // if the user does not have payments, throw an error
+      if (payments.length === 0) {
+        throw new Error(`User have no payments yet`);
+      }
+      return payments;
+    }
+    catch (error) {
+      throw new Error(`User have no payments yet`);
+    }
+  }
+
   /* CourseTotalPayment method calculate the total payment amount for specific course
     Parameters:
       - courseId: string value that represents the course id
@@ -98,7 +122,7 @@ class PaymentModel extends PaymentSchema {
     Returns:
       - the total payment amount for the course
     Errors:
-      - Course not found
+      - Course have no payments yet
   */
   async courseTotalPayment(courseId, session = null) {
     try {
@@ -109,13 +133,40 @@ class PaymentModel extends PaymentSchema {
       ]).session(session);
       // if the course does not exist, throw an error
       if (totalPayment.length === 0) {
-        throw new Error(`Course not found`);
+        throw new Error(`Course have no payments yet`);
       }
       return totalPayment[0].total;
     }
     catch (error) {
       // throw an error if the course does not exist
-      throw new Error(`Course not found`);
+      throw new Error(`Course have no payments yet`);
+    }
+  }
+
+  /* getTotalPaymentForInstuctor method calculate the total payment amount for specific instructor
+    Parameters:
+      - coursesIds: array of string values that represents the course ids
+      - session: optional session for the transaction
+    Returns:
+      - the total payment amount for the instructor courses
+    Errors:
+      - Courses have no payments yet
+  */
+  async getTotalPaymentForInstuctor(coursesIds, session = null) {
+    try {
+      // Get the total payment amount for the instructor
+      const totalPayment = await this.payment.aggregate([
+        { $match: { courseId: { $in: coursesIds } } },
+        { $group: { _id: null, total: { $sum: "$paymentAmount" } } }
+      ]).session(session);
+      // if the instructor does not exist, throw an error
+      if (totalPayment.length === 0) {
+        throw new Error('Courses have no payments yet');
+      }
+      return totalPayment[0].total;
+    }
+    catch (error) {
+      throw new Error('Courses have no payments yet');
     }
   }
 

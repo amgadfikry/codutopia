@@ -181,12 +181,16 @@ describe("ReviewModel", () => {
       await reviewModel.review.deleteMany({});
     });
 
-    // Test case for removing a review with valid reviewId and return 'Review removed successfully'
-    it('Remove a review with valid reviewId and return "Review removed successfully"', async () => {
+    // Test case for removing a review with valid reviewId and return deleted review object
+    it('Remove a review with valid reviewId and return deleted review object', async () => {
       // Remove the review from the database
       const result = await reviewModel.removeReview(reviewId);
       // Check if the result is correct
-      expect(result).to.equal('Review removed successfully');
+      expect(result).to.be.an('object');
+      expect(result.userId).to.equal(review.userId);
+      expect(result.rating).to.equal(review.rating);
+      expect(result.comment).to.equal(review.comment);
+      expect(result.courseId).to.equal(review.courseId);
     });
 
     // Test case for removing a review with invalid reviewId and throw an error 'Review not found'
@@ -258,13 +262,13 @@ describe("ReviewModel", () => {
       expect(reviews[1].userId).to.equal(review.userId);
     });
 
-    // Test case for getting all reviews with invalid userId and throw an error 'User has no reviews'
-    it('Get all reviews with invalid userId and throw an error "User has no reviews"', async () => {
+    // Test case for getting all reviews with invalid userId and throw an error 'User did not created any reviews yet'
+    it('Get all reviews with invalid userId and throw an error "User did not created any reviews yet"', async () => {
       // Try to get all reviews from the database with invalid userId
       try {
         await reviewModel.getAllReviewsByUserId('60f6e1b9b58fe3208a9b8b57');
       } catch (error) {
-        expect(error.message).to.equal('User not found');
+        expect(error.message).to.equal('User did not created any reviews yet');
       }
     });
 
@@ -288,7 +292,7 @@ describe("ReviewModel", () => {
         // commit the transaction
         await mongoDB.commitTransaction(session);
       } catch (error) {
-        expect(error.message).to.equal('User not found');
+        expect(error.message).to.equal('User did not created any reviews yet');
         await mongoDB.abortTransaction(session);
       }
     });

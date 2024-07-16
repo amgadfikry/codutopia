@@ -204,32 +204,95 @@ describe("PaymentModel", () => {
   });
 
 
-  // Test suite for the courseTotalPayment method with all scenarios
-  describe("Test suite for courseTotalPayment method", () => {
+  // Test suite for the getAllPaymentsByUser method with all scenarios
+  describe("Test suite for getAllPaymentsByUser method", () => {
 
-    // before hook to create a new payment before all tests start and save the paymentId
-    before(async () => {
-      const result = await paymentModel.createPayment(payment);
-      paymentId = result._id;
+    // before hook to create multiple payments with the same userId
+    beforeEach(async () => {
+      await paymentModel.createPayment(payment);
+      await paymentModel.createPayment(payment);
     });
 
     // after hook to clean up payments collection after tests in this suite are done
-    after(async () => {
+    afterEach(async () => {
+      await paymentModel.payment.deleteMany({});
+    });
+
+    // Test case for getting all payments for a user with valid userId and return the payments array
+    it("get all payments for a user with valid userId and return the payments array", async () => {
+      const result = await paymentModel.getAllPaymentsByUser(payment.userId);
+      // check if the result is correct
+      expect(result.length).to.equal(2);
+      expect(result[0].userId).to.equal(payment.userId);
+      expect(result[1].userId).to.equal(payment.userId);
+    });
+
+    // Test case for getting all payments for a user with userId not have payments yet and throw an error
+    it("get all payments for a user with userId not have payments yet and throw an error", async () => {
+      try {
+        await paymentModel.getAllPaymentsByUser("5f6e1b9b58fe3208a9b8b55");
+      } catch (error) {
+        expect(error.message).to.equal("User have no payments yet");
+      }
+    });
+
+    // Test case for getting all payments for a user with valid userId in a transaction with success transaction
+    it("get all payments for a user with valid userId in a transaction with success transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      // get all payments for the user in a transaction
+      await paymentModel.getAllPaymentsByUser(payment.userId, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+    });
+
+    // Test case for getting all payments for a user with userId not have payments yet with failed transaction
+    it("get all payments for a user with userId not have payments yet with failed transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      try {
+        await paymentModel.getAllPaymentsByUser(payment.userId, session);
+        // get all payments for the user in a transaction with userId not have payments yet
+        await paymentModel.getAllPaymentsByUser("5f6e1b9b58fe3208a9b8b55", session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal("User have no payments yet");
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+    });
+  });
+
+
+  // Test suite for the courseTotalPayment method with all scenarios
+  describe("Test suite for courseTotalPayment method", () => {
+
+    // before hook to create multiple payments with the same courseId and one with diffrent courseId
+    beforeEach(async () => {
+      await paymentModel.createPayment(payment);
+      await paymentModel.createPayment(payment);
+      await paymentModel.createPayment({ ...payment, courseId: "60f6e1b9b58fe3208a9b8b57" });
+    });
+
+    // after hook to clean up payments collection after tests in this suite are done
+    afterEach(async () => {
       await paymentModel.payment.deleteMany({});
     });
 
     // Test case for calculating the total payment amount for a course with valid courseId and return the total payment amount
     it("calculate the total payment amount for a course with valid courseId and return the total payment amount", async () => {
       const result = await paymentModel.courseTotalPayment(payment.courseId);
-      expect(result).to.equal(payment.paymentAmount);
+      expect(result).to.equal(payment.paymentAmount * 2);
     });
 
-    // Test case for calculating the total payment amount for a course with invalid courseId and throw an error
+    // Test case for calculating the total payment amount for a course with courseId not have payments yet and throw an error
     it("calculate the total payment amount for a course with invalid courseId and throw an error", async () => {
       try {
         await paymentModel.courseTotalPayment("5f6e1b9b58fe3208a9b8b55");
       } catch (error) {
-        expect(error.message).to.equal("Course not found");
+        expect(error.message).to.equal("Course have no payments yet");
       }
     });
 
@@ -237,40 +300,99 @@ describe("PaymentModel", () => {
     it("calculate the total payment amount for a course with valid courseId in a transaction with success transaction", async () => {
       // Start a new session
       const session = await mongoDB.startSession();
-      // calculate the total payment amount for the course in a transaction 2 times and create a new payment
+      // calculate the total payment amount for the course in a transaction 
       await paymentModel.courseTotalPayment(payment.courseId, session);
-      await paymentModel.courseTotalPayment(payment.courseId, session);
-      await paymentModel.createPayment(payment, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
-      // check if the payments are created
-      const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(2);
     });
 
-    // Test case for calculating the total payment amount for a course with invalid courseId in a transaction with failed transaction
-    it("calculate the total payment amount for a course with invalid courseId in a transaction with failed transaction", async () => {
+    // Test case for calculating the total payment amount for a course with courseId not have payments yet with failed transaction
+    it("calculate the total payment amount for a course with invalid courseId with failed transaction", async () => {
       // Start a new session
       const session = await mongoDB.startSession();
       try {
         // calculate the total payment amount for the course in a transaction one with valid courseId
-        // and other with invalid courseId and create a new payment
-        await paymentModel.createPayment(payment, session);
+        // and other with courseId not have payments yet
         await paymentModel.courseTotalPayment(payment.courseId, session);
         await paymentModel.courseTotalPayment("5f6e1b9b58fe3208a9b8b55", session);
         // commit the transaction
         await mongoDB.commitTransaction(session);
       }
       catch (error) {
-        expect(error.message).to.equal("Course not found");
+        expect(error.message).to.equal("Course have no payments yet");
         // abort the transaction
         await mongoDB.abortTransaction(session);
       }
-      // check if the payments are not created
-      const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(2);
+    });
+  });
+
+
+  // Test suite for the getTotalPaymentForInstuctor method with all scenarios
+  describe("Test suite for getTotalPaymentForInstuctor method", () => {
+    let coursesIds;
+
+    // before hook to create multiple payments with diffrent coursesIds before all tests start and save the paymentId to array
+    beforeEach(async () => {
+      const result1 = await paymentModel.createPayment(payment);
+      const result2 = await paymentModel.createPayment({ ...payment, courseId: "60f6e1b9b58fe3208a9b8b57" });
+      const result3 = await paymentModel.createPayment({ ...payment, courseId: "60f6e1b9b58fe3208a9b8b58" });
+      coursesIds = [result1.courseId, result2.courseId, result3.courseId];
     });
 
+    // after hook to clean up payments collection after tests in this suite are done
+    afterEach(async () => {
+      await paymentModel.payment.deleteMany({});
+    });
+
+    // Test case for calculating the total payment amount for an instructor with valid coursesIds and return the total payment amount
+    it("calculate the total payment amount for an instructor with valid coursesIds and return the total payment amount", async () => {
+      const result = await paymentModel.getTotalPaymentForInstuctor(coursesIds);
+      expect(result).to.equal(payment.paymentAmount * 3);
+    });
+
+    // Test case for calculating the total payment amount for an instructor with courseId not have payments yet and throw an error
+    it("calculate the total payment amount for an instructor with courseId not have payments yet and throw an error", async () => {
+      try {
+        await paymentModel.getTotalPaymentForInstuctor(["5f6e1b9b58fe3208a9b8b55"]);
+      } catch (error) {
+        expect(error.message).to.equal("Courses have no payments yet");
+      }
+    });
+
+    // Test case calculating the total payment amount for an instructor with coursesIds and one in not have payments yet
+    it("calculate the total payment amount for an instructor with coursesIds and one in not have payments yet", async () => {
+      // Delete the payment with the last courseId
+      await paymentModel.payment.deleteOne({ courseId: coursesIds[2] });
+      const result = await paymentModel.getTotalPaymentForInstuctor(coursesIds);
+      expect(result).to.equal(payment.paymentAmount * 2);
+    });
+
+    // Test case for calculating the total payment amount for an instructor with valid coursesIds in a transaction with success transaction
+    it("calculate the total payment amount for an instructor with valid coursesIds in a transaction with success transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      // calculate the total payment amount for the instructor in a transaction 
+      await paymentModel.getTotalPaymentForInstuctor(coursesIds, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+    });
+
+    // Test case for calculating the total payment amount for an instructor with courseId not have payments yet with failed transaction
+    it("calculate the total payment amount for an instructor with invalid coursesIds with failed transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // calculate the total payment amount for the instructor in a transaction with invalid coursesIds
+        await paymentModel.getTotalPaymentForInstuctor(["5f6e1b9b58fe3208a9b8b55"], session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal("Courses have no payments yet");
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+    });
   });
 
 

@@ -72,7 +72,7 @@ class ReviewModel extends ReviewSchema {
       - reviewId: string with the review id
       - session: optional session for the transaction
     Returns:
-      - Message 'Review removed successfully'
+      - deleted review object data
     Errors:
       - Review not found
       - Other errors
@@ -85,7 +85,7 @@ class ReviewModel extends ReviewSchema {
       if (!review) {
         throw new Error(`Review not found`);
       }
-      return 'Review removed successfully';
+      return review;
     } catch (error) {
       throw new Error('Review not found');
     }
@@ -98,7 +98,7 @@ class ReviewModel extends ReviewSchema {
     Returns:
       - Array of review objects data
     Errors:
-      - Reviews not found
+      - User did not created any reviews yet
       - Other errors
   */
   async getAllReviewsByUserId(userId, session = null) {
@@ -107,11 +107,11 @@ class ReviewModel extends ReviewSchema {
       const reviews = await this.review.find({ userId }, {}, { session });
       // if the reviews are not found, throw an error
       if (reviews.length === 0) {
-        throw new Error(`User has no reviews`);
+        throw new Error(`User did not created any reviews yet`);
       }
       return reviews;
     } catch (error) {
-      throw new Error('User not found');
+      throw new Error('User did not created any reviews yet');
     }
   }
 
@@ -122,7 +122,7 @@ class ReviewModel extends ReviewSchema {
     Returns:
       - Array of review objects data
     Errors:
-      - Reviews not found
+      - Course has no reviews
       - Other errors
   */
   async getAllReviewsByCourseId(courseId, session = null) {

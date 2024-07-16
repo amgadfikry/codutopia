@@ -386,16 +386,6 @@ class CourseModel extends CourseSchema {
   */
   async removeReviewFromCourse(courseId, reviewId, rating, session = null) {
     try {
-      // check if course is found by id
-      const course = await this.course.findOne({ _id: courseId }, {}, { session });
-      if (!course) {
-        throw new Error(`Course not found`);
-      }
-      // check if review is found in the reviews array of the course
-      const reviewIndex = course.reviews.findIndex(review => review.toString() === reviewId);
-      if (reviewIndex === -1) {
-        throw new Error(`Review not found in course`);
-      }
       // find the course by id and remove the review from the reviews array and remove the rating from total sum of reviews
       const updatedCourse = await this.course.findByIdAndUpdate(
         courseId,
@@ -412,7 +402,7 @@ class CourseModel extends CourseSchema {
       return 'Review removed from course successfully';
     }
     catch (error) {
-      throw new Error(error.message);
+      throw new Error('Course not found');
     }
   }
 }

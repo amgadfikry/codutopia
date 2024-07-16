@@ -43,8 +43,11 @@ describe("Review Service", () => {
       // Call the createReview function and store the result
       const result = await reviewService.createReview(reviewData, 'session');
       // Verify stubs are called with correct arguments
+      expect(mongoDB.startSession.calledOnce).to.be.true;
       expect(reviewModel.createReview.calledOnceWith(reviewData, 'session')).to.be.true;
       expect(courseModel.addReviewToCourse.calledOnceWith(reviewData.courseId, reviewData._id, reviewData.rating, 'session')).to.be.true;
+      expect(mongoDB.commitTransaction.calledOnceWith('session')).to.be.true;
+      expect(mongoDB.abortTransaction.called).to.be.false;
       // Check that the result is equal to the success message
       expect(result).to.equal('Review created and added to the course successfully');
     });
@@ -59,8 +62,11 @@ describe("Review Service", () => {
         await reviewService.createReview(reviewData, 'session');
       } catch (error) {
         // Verify stubs are called with correct arguments
+        expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(reviewModel.createReview.calledOnceWith(reviewData, 'session')).to.be.true;
         expect(courseModel.addReviewToCourse.calledOnceWith(reviewData.courseId, reviewData._id, reviewData.rating, 'session')).to.be.true;
+        expect(mongoDB.commitTransaction.called).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check that the error message is thrown
         expect(error.message).to.equal('Course not found');
       }
@@ -76,8 +82,11 @@ describe("Review Service", () => {
         await reviewService.createReview(reviewData, 'session');
       } catch (error) {
         // Verify stubs are called with correct arguments
+        expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(reviewModel.createReview.calledOnceWith(reviewData, 'session')).to.be.true;
         expect(courseModel.addReviewToCourse.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.called).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check that the error message is thrown
         expect(error.message).to.equal('Review could not be created');
       }
@@ -93,8 +102,11 @@ describe("Review Service", () => {
         await reviewService.createReview(reviewData, 'session');
       } catch (error) {
         // Verify stubs are called with correct arguments
+        expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(reviewModel.createReview.calledOnceWith(reviewData, 'session')).to.be.true;
         expect(courseModel.addReviewToCourse.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.called).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check that the error message is thrown
         expect(error.message).to.equal('Review could not be created');
       }
@@ -257,8 +269,11 @@ describe("Review Service", () => {
       // Call the removeReview function and store the result
       const result = await reviewService.removeReview(reviewId, 'session');
       // Verify stub is called with correct arguments
+      expect(mongoDB.startSession.calledOnce).to.be.true;
       expect(reviewModel.removeReview.calledOnceWith(reviewId, 'session')).to.be.true;
       expect(courseModel.removeReviewFromCourse.calledOnceWith(reviewData.courseId, reviewId, reviewData.rating, 'session')).to.be.true;
+      expect(mongoDB.commitTransaction.calledOnceWith('session')).to.be.true;
+      expect(mongoDB.abortTransaction.called).to.be.false;
       // Check that the result is equal to the review object data
       expect(result).to.be.equal('Review removed from the course and deleted successfully')
     });
@@ -273,8 +288,11 @@ describe("Review Service", () => {
         await reviewService.removeReview(reviewId, 'session');
       } catch (error) {
         // Verify stub is called with correct arguments
+        expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(reviewModel.removeReview.calledOnceWith(reviewId, 'session')).to.be.true;
         expect(courseModel.removeReviewFromCourse.calledOnceWith(reviewData.courseId, reviewId, reviewData.rating, 'session')).to.be.true;
+        expect(mongoDB.commitTransaction.called).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check that the error message is thrown
         expect(error.message).to.equal('Course not found');
       }
@@ -290,8 +308,11 @@ describe("Review Service", () => {
         await reviewService.removeReview(reviewId, 'session');
       } catch (error) {
         // Verify stub is called with correct arguments
+        expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(reviewModel.removeReview.calledOnceWith(reviewId, 'session')).to.be.true;
         expect(courseModel.removeReviewFromCourse.called).to.be.false;
+        expect(mongoDB.commitTransaction.called).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check that the error message is thrown
         expect(error.message).to.equal('Review not found');
       }
@@ -307,8 +328,11 @@ describe("Review Service", () => {
         await reviewService.removeReview(reviewId, 'session');
       } catch (error) {
         // Verify stub is called with correct arguments
+        expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(reviewModel.removeReview.calledOnceWith(reviewId, 'session')).to.be.true;
         expect(courseModel.removeReviewFromCourse.called).to.be.false;
+        expect(mongoDB.commitTransaction.called).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check that the error message is thrown
         expect(error.message).to.equal('Review not found');
       }

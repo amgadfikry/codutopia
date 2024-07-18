@@ -35,7 +35,7 @@ class LessonModel extends LessonSchema {
       if (error.name === 'ValidationError') {
         throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
       } else {
-        throw error;
+        throw new Error(error.message);
       }
     }
   }

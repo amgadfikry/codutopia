@@ -13,6 +13,7 @@ describe("LessonModel", () => {
     // Create a new lesson object
     lesson = {
       title: "Test lesson",
+      courseId: "6660fee3b58fe3208a9b8b55",
       description: "Test lesson description",
       content: [
         {
@@ -51,6 +52,7 @@ describe("LessonModel", () => {
       // check results is correct
       expect(result).to.be.an("object");
       expect(result.title).to.equal(lesson.title);
+      expect(result.courseId).to.equal(lesson.courseId);
       expect(result.description).to.equal(lesson.description);
       expect(result.timeToFinish).to.equal(lesson.timeToFinish);
       // save the lessonId to the lessonId variable
@@ -129,6 +131,7 @@ describe("LessonModel", () => {
       // check if the result is correct
       expect(result).to.be.an("object");
       expect(result.title).to.equal(lesson.title);
+      expect(result.courseId).to.equal(lesson.courseId);
       expect(result.description).to.equal(lesson.description);
       expect(result.content.length).to.equal(lesson.content.length);
       expect(result.timeToFinish).to.equal(lesson.timeToFinish);

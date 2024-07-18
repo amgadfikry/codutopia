@@ -50,30 +50,6 @@ class OracleStorage {
     }
   }
 
-  /* GetAllBucket method retrieves all buckets from the Object Storage service.
-    Returns:
-      - list of names of the buckets in the object storage service
-      - error: If the operation fails
-  */
-  async getAllBucket() {
-    try {
-      // Create Object containing the namespace and compartment ID.
-      const getAllBucketDetails = {
-        namespaceName: this.namespace,
-        compartmentId: this.compartmentId,
-      };
-      // Call the listBuckets operation with the getAllBucketDetails object.
-      const result = await this.objectStorageClient.listBuckets(getAllBucketDetails);
-      // return list of names of the buckets in the object storage service
-      const bucketsList = result.items.map((bucket) => bucket.name);
-      return bucketsList;
-    }
-    catch (error) {
-      // if an error occurs, return the error message.
-      throw new Error('Failed to get buckets from the object storage service');
-    }
-  }
-
   /* DeleteBucket method deletes a bucket from the Object Storage service.
     Parameters:
       - bucketName: The name of the bucket to delete.
@@ -133,79 +109,40 @@ class OracleStorage {
     }
   }
 
-  /*Existing methods check if an object exists or not
-  Parameters:
-    - objName: The name of the object to check.
-    - bucketName: The name of the bucket to search for the object.
-  Returns:
-    - return: message that the object exists
-    - error: If the object is not found
-*/
-  async exists(bucketName, objName) {
-    try {
-      // Create an object containing the namespace, bucket name, and object name.
-      const objectDetails = {
-        namespaceName: 'axtryshpute3',
-        bucketName: bucketName,
-        objectName: objName,
-      };
-      // Call the headObject operation with the objectDetails object to get the metadata of the object.
-      const result = await this.objectStorageClient.headObject(objectDetails);
-      // return correct message that the object exists
-      return 'Object exists';
-    } catch (error) {
-      // if an error occurs, throw an error message that the object is not found.
-      throw new Error('Object not found');
-    }
-  }
-
-  /* getObj method retrieves an object from the Object Storage service.
+  /* createPreAuthRequest method creates a pre-authenticated request for an object in the Object Storage service.
     Parameters:
-      - bucketName: The name of the bucket to retrieve the object from.
-      - objName: The name of the object to retrieve.
+      - bucketName: The name of the bucket containing the object.
+      - objectName: The name of the object to create the pre-authenticated request for.
     Returns:
-      - return: The result of the getObject operation, which contains the metadata and data of the retrieved object.
-      - error: If the operation fails to get the object
+      - return: The full path of the object and expiration time of the pre-authenticated request
+    Error:
+      - Failed to create pre-authenticated request
   */
-  async getObj(bucketName, objName) {
+  async createPreAuthRequest(bucketName, objectName) {
     try {
-      // Create an object containing the namespace, bucket name, and object name.
-      const getObjectDetails = {
-        namespaceName: 'axtryshpute3',
-        bucketName: bucketName,
-        objectName: objName,
+      // create time expire 365 days from now
+      const timeExpires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      // create pre-authenticated request details object
+      const parDetails = {
+        name: `par_${objectName}_${Date.now()}`,
+        accessType: 'ObjectRead',
+        timeExpires: timeExpires,
+        objectName: objectName,
       };
-      // Call the getObject operation with the getObjectDetails object to get the object data.
-      const result = await this.objectStorageClient.getObject(getObjectDetails);
-      // return the result of the getObject operation.
-      return result;
+      // create pre-authenticated request with the details object
+      const response = await this.objectStorageClient.createPreauthenticatedRequest({
+        namespaceName: this.namespace,
+        bucketName: bucketName,
+        createPreauthenticatedRequestDetails: parDetails
+      });
+      // return the full path of the object and expiration time of the pre-authenticated request
+      return {
+        url: response.preauthenticatedRequest.accessUri,
+        expires: response.preauthenticatedRequest.timeExpires
+      }
     } catch (error) {
-      // if an error occurs, throw the error message.
-      throw new Error('Failed to get object');
-    }
-  }
-
-  /* GetAllObj method retrieves all objects from bucket in the Object Storage service.
-    Parameters:
-      - bucketName: The name of the bucket to retrieve the object from.
-    Returns:
-      - return: list of objects in the bucket
-      - error: If the operation fails to get the objects
-  */
-  async getAllObj(bucketName) {
-    try {
-      // Create an object containing the namespace and bucket name.
-      const listObjectsDetails = {
-        namespaceName: 'axtryshpute3',
-        bucketName: bucketName,
-      };
-      // Call the listObjects operation with the listObjectsDetails object to get the list of objects.
-      const result = await this.objectStorageClient.listObjects(listObjectsDetails);
-      // return list of objects in the bucket
-      return result.listObjects.objects;
-    } catch (err) {
-      // if an error occurs, throw an error message that the operation failed.
-      throw new Error('Failed to get objects');
+      // if an error occurs, throw an error message that the creation failed.
+      throw new Error('Failed to create pre-authenticated request');
     }
   }
 
@@ -232,6 +169,112 @@ class OracleStorage {
     } catch (error) {
       // if an error occurs, throw an error message that the deletion failed.
       throw new Error('Failed to delete object');
+    }
+  }
+
+  /***********************************************************/
+
+  // @deprecated method
+  /* GetAllBucket method retrieves all buckets from the Object Storage service.
+    Returns:
+      - list of names of the buckets in the object storage service
+      - error: If the operation fails
+  */
+  async getAllBucket() {
+    try {
+      // Create Object containing the namespace and compartment ID.
+      const getAllBucketDetails = {
+        namespaceName: this.namespace,
+        compartmentId: this.compartmentId,
+      };
+      // Call the listBuckets operation with the getAllBucketDetails object.
+      const result = await this.objectStorageClient.listBuckets(getAllBucketDetails);
+      // return list of names of the buckets in the object storage service
+      const bucketsList = result.items.map((bucket) => bucket.name);
+      return bucketsList;
+    }
+    catch (error) {
+      // if an error occurs, return the error message.
+      throw new Error('Failed to get buckets from the object storage service');
+    }
+  }
+
+  // @deprecated method
+  /* GetAllObj method retrieves all objects from bucket in the Object Storage service.
+  Parameters:
+    - bucketName: The name of the bucket to retrieve the object from.
+  Returns:
+    - return: list of objects in the bucket
+    - error: If the operation fails to get the objects
+*/
+  async getAllObj(bucketName) {
+    try {
+      // Create an object containing the namespace and bucket name.
+      const listObjectsDetails = {
+        namespaceName: 'axtryshpute3',
+        bucketName: bucketName,
+      };
+      // Call the listObjects operation with the listObjectsDetails object to get the list of objects.
+      const result = await this.objectStorageClient.listObjects(listObjectsDetails);
+      // return list of objects in the bucket
+      return result.listObjects.objects;
+    } catch (err) {
+      // if an error occurs, throw an error message that the operation failed.
+      throw new Error('Failed to get objects');
+    }
+  }
+
+  // @deprecated method
+  /* getObj method retrieves an object from the Object Storage service.
+  Parameters:
+    - bucketName: The name of the bucket to retrieve the object from.
+    - objName: The name of the object to retrieve.
+  Returns:
+    - return: The result of the getObject operation, which contains the metadata and data of the retrieved object.
+    - error: If the operation fails to get the object
+*/
+  async getObj(bucketName, objName) {
+    try {
+      // Create an object containing the namespace, bucket name, and object name.
+      const getObjectDetails = {
+        namespaceName: 'axtryshpute3',
+        bucketName: bucketName,
+        objectName: objName,
+      };
+      // Call the getObject operation with the getObjectDetails object to get the object data.
+      const result = await this.objectStorageClient.getObject(getObjectDetails);
+      // return the result of the getObject operation.
+      return result;
+    } catch (error) {
+      // if an error occurs, throw the error message.
+      throw new Error('Failed to get object');
+    }
+  }
+
+  // @deprecated method
+  /*Existing methods check if an object exists or not
+Parameters:
+  - objName: The name of the object to check.
+  - bucketName: The name of the bucket to search for the object.
+Returns:
+  - return: message that the object exists
+  - error: If the object is not found
+*/
+  async exists(bucketName, objName) {
+    try {
+      // Create an object containing the namespace, bucket name, and object name.
+      const objectDetails = {
+        namespaceName: 'axtryshpute3',
+        bucketName: bucketName,
+        objectName: objName,
+      };
+      // Call the headObject operation with the objectDetails object to get the metadata of the object.
+      const result = await this.objectStorageClient.headObject(objectDetails);
+      // return correct message that the object exists
+      return 'Object exists';
+    } catch (error) {
+      // if an error occurs, throw an error message that the object is not found.
+      throw new Error('Object not found');
     }
   }
 }

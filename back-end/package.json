@@ -8,8 +8,8 @@
         "start-watch": "nodemon --watch . --exec 'node ./server/app.js'",
         "start": "node ./server/app.js",
         "generate-key": "node ./secretKey.js",
-        "test": "mocha --require @babel/register test/**/*.test.js --verbose",
-        "test-watch": "nodemon --watch ./test --exec 'mocha --require @babel/register test/**/*.test.js --verbose'",
+        "test": "mocha --require @babel/register test/**/**/*.test.js --verbose",
+        "test-watch": "nodemon --watch ./test --exec 'mocha --require @babel/register \"test/**/*.test.js\" --verbose'",
         "dev": "npm-run-all --parallel start-watch test-watch"
     },
     "author": "",

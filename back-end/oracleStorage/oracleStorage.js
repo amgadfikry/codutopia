@@ -114,43 +114,6 @@ class OracleStorage {
     }
   }
 
-  /* createPreAuthRequest method creates a pre-authenticated request for an object in the Object Storage service.
-    Parameters:
-      - bucketName: The name of the bucket containing the object.
-      - objectName: The name of the object to create the pre-authenticated request for.
-    Returns:
-      - return: The full path of the object and expiration time of the pre-authenticated request
-    Error:
-      - Failed to create pre-authenticated request
-  */
-  async createPreAuthRequest(bucketName, objectName) {
-    try {
-      // create time expire 365 days from now
-      const timeExpires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      // create pre-authenticated request details object
-      const parDetails = {
-        name: `par_${objectName}_${Date.now()}`,
-        accessType: 'ObjectRead',
-        timeExpires: timeExpires,
-        objectName: objectName,
-      };
-      // create pre-authenticated request with the details object
-      const response = await this.objectStorageClient.createPreauthenticatedRequest({
-        namespaceName: this.namespace,
-        bucketName: bucketName,
-        createPreauthenticatedRequestDetails: parDetails
-      });
-      // return the full path of the object and expiration time of the pre-authenticated request
-      return {
-        url: response.preauthenticatedRequest.fullpath,
-        expires: response.preauthenticatedRequest.timeExpires
-      }
-    } catch (error) {
-      // if an error occurs, throw an error message that the creation failed.
-      throw new Error('Failed to create pre-authenticated request');
-    }
-  }
-
   /* GetAllObj method retrieves all objects from bucket in the Object Storage service.
   Parameters:
     - bucketName: The name of the bucket to retrieve the object from.
@@ -205,6 +168,43 @@ class OracleStorage {
   }
 
   /***********************************************************/
+  // @deprecated methods
+  /* createPreAuthRequest method creates a pre-authenticated request for an object in the Object Storage service.
+  Parameters:
+    - bucketName: The name of the bucket containing the object.
+    - objectName: The name of the object to create the pre-authenticated request for.
+  Returns:
+    - return: The full path of the object and expiration time of the pre-authenticated request
+  Error:
+    - Failed to create pre-authenticated request
+*/
+  async createPreAuthRequest(bucketName, objectName) {
+    try {
+      // create time expire 365 days from now
+      const timeExpires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      // create pre-authenticated request details object
+      const parDetails = {
+        name: `par_${objectName}_${Date.now()}`,
+        accessType: 'ObjectRead',
+        timeExpires: timeExpires,
+        objectName: objectName,
+      };
+      // create pre-authenticated request with the details object
+      const response = await this.objectStorageClient.createPreauthenticatedRequest({
+        namespaceName: this.namespace,
+        bucketName: bucketName,
+        createPreauthenticatedRequestDetails: parDetails
+      });
+      // return the full path of the object and expiration time of the pre-authenticated request
+      return {
+        url: response.preauthenticatedRequest.fullpath,
+        expires: response.preauthenticatedRequest.timeExpires
+      }
+    } catch (error) {
+      // if an error occurs, throw an error message that the creation failed.
+      throw new Error('Failed to create pre-authenticated request');
+    }
+  }
 
   // @deprecated method
   /* GetAllBucket method retrieves all buckets from the Object Storage service.

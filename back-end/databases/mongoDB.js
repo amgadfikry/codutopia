@@ -5,6 +5,7 @@ import QuizModel from './models/quizModel.js';
 import PaymentModel from './models/paymentModel.js';
 import CourseModel from './models/courseModel.js';
 import ReviewModel from './models/reviewModel.js';
+import LessonContentModel from './models/lessonContentModel.js';
 
 // MongoDB class represents the connection to the database and the methods to interact with database
 class MongoDB {
@@ -66,9 +67,10 @@ const quizModel = new QuizModel();
 const paymentModel = new PaymentModel();
 const courseModel = new CourseModel();
 const reviewModel = new ReviewModel();
+const lessonContentModel = new LessonContentModel();
 
 
 export default mongoDB;
 export {
-  userModel, lessonModel, quizModel, paymentModel, courseModel, reviewModel
+  userModel, lessonModel, quizModel, paymentModel, courseModel, reviewModel, lessonContentModel
 }

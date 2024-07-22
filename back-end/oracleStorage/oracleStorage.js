@@ -114,6 +114,19 @@ class OracleStorage {
     }
   }
 
+  /* createUrl method creates url for an object in the Object Storage service.
+    Parameters:
+      - bucketName: The name of the bucket containing the object.
+      - objName: The name of the object to create the url for.
+    Returns:
+      - return: The full path of the object
+  */
+  createUrl(bucketName, objName) {
+    // return the full path of the object
+    const region = 'me-jeddah-1';
+    return `https://${this.namespace}.objectstorage.${region}.oci.customer-oci.com/n/${this.namespace}/b/${bucketName}/o/${objName}`
+  }
+
   /* GetAllObj method retrieves all objects from bucket in the Object Storage service.
   Parameters:
     - bucketName: The name of the bucket to retrieve the object from.

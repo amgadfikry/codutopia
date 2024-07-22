@@ -161,19 +161,19 @@ class LessonContentModel extends LessonContentSchema {
       - lessonContentId: ID of the lesson content to delete
       - session: optional session for the transaction
     Returns:
-      - Message of Lesson content deleted successfully
+      - deleted object data
     Errors:
       - Failed to delete or not found lesson content
   */
   async deleteLessonContent(lessonContentId, session = null) {
     try {
-      // Delete the lesson content from the database
+      // Delete the lesson content from the database and return deleted object
       const result = await this.lessonContent.findByIdAndDelete(lessonContentId, { session });
       // if the lesson content could not be deleted, throw an error
       if (!result) {
         throw new Error(`Failed to delete or not found lesson content`);
       }
-      return 'Lesson content deleted successfully';
+      return result;
     }
     catch (error) {
       throw new Error('Failed to delete or not found lesson content');

@@ -409,12 +409,15 @@ describe("LessonContentModel", () => {
       await lessonContentModel.lessonContent.deleteMany({});
     });
 
-    // Test case for deleting a lesson content with valid ID and return message Lesson content deleted successfully
-    it("delete a lesson content with valid ID and return message Lesson content deleted successfully", async () => {
+    // Test case for deleting a lesson content with valid ID and return lesson content object
+    it("delete a lesson content with valid ID and return lesson content object", async () => {
       // Delete the lesson content
       const result = await lessonContentModel.deleteLessonContent(lessonContentId);
       // Check if the result is correct
-      expect(result).to.equal("Lesson content deleted successfully");
+      expect(result).to.be.an("object");
+      expect(result).to.have.property("lessonId", lessonContentData.lessonId);
+      expect(result).to.have.property("title", lessonContentData.title);
+      expect(result).to.have.property("type", lessonContentData.type);
     });
 
     // Test case for deleting a lesson content with invalid ID and throw an error Could not found lessonContent

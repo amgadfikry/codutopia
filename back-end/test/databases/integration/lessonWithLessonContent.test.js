@@ -23,6 +23,7 @@ describe("lesson lessonContent integration tests", () => {
       lesson = {
         title: "Test lesson",
         courseId: "6660fee3b58fe3208a9b8b55",
+        sectionId: "6660fee3b58fe3208a9b8b55",
         description: "Test lesson description",
         timeToFinish: 20,
       };

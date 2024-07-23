@@ -5,6 +5,13 @@ const Schema = mongoose.Schema;
 class CourseSchema {
 
   constructor() {
+    // Define schema for subdocument of sections in the courses collection
+    this.sectionSchema = new Schema({
+      title: { type: String, required: true, },
+      description: { type: String, default: '', },
+      lessons: { type: [String], ref: 'lessons', default: [], },
+    });
+
     // Define schema for the courses collection
     this.courseSchema = new Schema({
       title: { type: String, required: true, },
@@ -18,7 +25,7 @@ class CourseSchema {
         },
       },
       authorId: { type: String, ref: 'users', required: true, },
-      lessons: { type: [String], ref: 'lessons', default: [], },
+      sections: { type: [this.sectionSchema], default: [], },
       price: { type: Number, default: 0, },
       discount: { type: Number, default: 0, },
       reviews: { type: [String], ref: 'reviews', default: [], },

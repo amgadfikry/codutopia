@@ -213,7 +213,7 @@ class LessonModel extends LessonSchema {
       - lessonId: ID of the lesson to delete
       - session: optional session for the transaction
     Returns:
-      - message that the lesson is deleted
+      - lesson deleted object data
     Errors:
       - Lesson not found
   */
@@ -225,12 +225,60 @@ class LessonModel extends LessonSchema {
       if (!result) {
         throw new Error(`Lesson not found or could not be deleted`);
       }
-      return "Lesson deleted successfully";
+      return result;
     }
     catch (error) {
       throw new Error('Lesson not found or could not be deleted');
     }
   }
+
+  /* deleteAllLessonsBySectionId method to delete all lessons from the database by section ID
+    Parameters:
+      - sectionId: ID of the section to delete the lessons
+      - session: optional session for the transaction
+    Returns:
+      - message that the lessons are deleted
+    Errors:
+      - Lessons not found or could not be deleted
+  */
+  async deleteAllLessonsBySectionId(sectionId, session = null) {
+    try {
+      // Delete all lessons from the database
+      const result = await this.lesson.deleteMany({ sectionId }, { session });
+      // if the lessons are not found, throw an error
+      if (result.deletedCount === 0) {
+        throw new Error(`Lessons not found or could not be deleted`);
+      }
+      return "Lessons deleted successfully";
+    }
+    catch (error) {
+      throw new Error('Lessons not found or could not be deleted');
+    }
+  }
+
+  /* deleteAllLessonsByCourseId method to delete all lessons from the database by course ID
+    Parameters:
+      - courseId: ID of the course to delete the lessons
+      - session: optional session for the transaction
+    Returns:
+      - message that the lessons are deleted
+    Errors:
+      - Lessons not found or could not be deleted
+  */
+  async deleteAllLessonsByCourseId(courseId, session = null) {
+    try {
+      // Delete all lessons from the database
+      const result = await this.lesson.deleteMany({ courseId }, { session });
+      // if the lessons are not found, throw an error
+      if (result.deletedCount === 0) {
+        throw new Error(`Lessons not found or could not be deleted`);
+      }
+      return "Lessons deleted successfully";
+    } catch (error) {
+      throw new Error('Lessons not found or could not be deleted');
+    }
+  }
+
 }
 
 

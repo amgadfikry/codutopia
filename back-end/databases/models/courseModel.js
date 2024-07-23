@@ -167,8 +167,21 @@ class CourseModel extends CourseSchema {
   */
   async updateCourse(courseId, courseData, session = null) {
     try {
+      // create object of course metadata to use it in the update operation
+      const courseMetadata = {
+        title: courseData.title,
+        description: courseData.description,
+        tags: courseData.tags,
+        price: courseData.price,
+        discount: courseData.discount,
+        image: courseData.image
+      };
       // find the course by id and update it
-      const updatedCourse = await this.course.findByIdAndUpdate(courseId, courseData, { new: true, session, runValidators: true });
+      const updatedCourse = await this.course.findByIdAndUpdate(
+        courseId,
+        courseMetadata,
+        { new: true, session, runValidators: true }
+      );
       // check if the course is not found and throw an error
       if (!updatedCourse) {
         throw new Error(`Course not found`);
@@ -184,60 +197,220 @@ class CourseModel extends CourseSchema {
         throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
       }
       else {
-        throw error;
+        throw new Error(error.message);
       }
     }
   }
 
-  /* addLessonToCourse method to add a lesson to a course
+  /* addSectionToCourse method to add a section to a course
+    Parameters:
+      - courseId: string or object id with course id
+      - sectionData: object with section data
+      - session: optional session for the transaction
+    Returns:
+      - created section object
+    Errors:
+      - Course not found
+      - Other errors
+  */
+  async addSectionToCourse(courseId, sectionData, session = null) {
+    try {
+      // find the course by id and add a new section to the sections array
+      const updatedCourse = await this.course.findByIdAndUpdate(
+        courseId,
+        { $addToSet: { sections: sectionData } },
+        { session, runValidators: true, new: true }
+      );
+      // check if the course is not found and throw an error
+      if (!updatedCourse) {
+        throw new Error(`Course not found`);
+      }
+      return updatedCourse.sections.pop();
+    }
+    catch (error) {
+      if (error.name === 'ValidationError') {
+        throw new Error(`Missing title field`);
+      }
+      throw new Error('Course not found');
+    }
+  }
+
+  /* getSectionWithLessonsData method to get a section with lessons data details
+    Parameters:
+      - courseId: string or object id with course id
+      - sectionId: string or object id with section id
+    Returns:
+      - section data object with lessons data
+    Errors:
+      - Course or section not found
+      - Other errors
+  */
+  async getSectionWithLessonsData(courseId, sectionId, session = null) {
+    try {
+      // find the course by id and section field and get the section data with lessons data
+      const course = await this.course.findOne(
+        { _id: courseId, 'sections._id': sectionId },
+        { 'sections.$': 1 },
+        { session }
+      ).populate('sections.lessons');
+      // check if the course is not found and throw an error
+      if (!course) {
+        throw new Error(`Course or section not found`);
+      }
+      return course.sections[0];
+    }
+    catch (error) {
+      throw new Error('Course or section not found');
+    }
+  }
+
+  /* getAllSectionsWithLessonsData method to get all sections with lessons data details
+    Parameters:
+      - courseId: string or object id with course id
+    Returns:
+      - array of section data objects with lessons data
+    Errors:
+      - Course not found
+      - Other errors
+  */
+  async getAllSectionsWithLessonsData(courseId, session = null) {
+    try {
+      // find the course by id and get all sections data with lessons data
+      const course = await this.course.findById(courseId, {}, { session }).populate('sections.lessons');
+      // check if the course is not found and throw an error
+      if (!course) {
+        throw new Error(`Course not found`);
+      }
+      return course.sections;
+    }
+    catch (error) {
+      throw new Error('Course not found');
+    }
+  }
+
+  /* updateSection method to update a section data in a course
+    Parameters:
+      - courseId: string or object id with course id
+      - sectionId: string or object id with section id
+      - sectionData: object with section data
+      - session: optional session for the transaction
+    Returns:
+      - Message with success 'Section updated successfully'
+    Errors:
+      - Course or section not found
+      - Other errors
+  */
+  async updateSection(courseId, sectionId, sectionData, session = null) {
+    try {
+      // find the course by id and section field and update the section data title and description and lessons remain the same
+      const updatedCourse = await this.course.findOneAndUpdate(
+        { _id: courseId, 'sections._id': sectionId },
+        { $set: { 'sections.$.title': sectionData.title, 'sections.$.description': sectionData.description } },
+        { session, runValidators: true }
+      );
+      // check if the course is not found and throw an error
+      if (!updatedCourse) {
+        throw new Error(`Course or section not found`);
+      }
+      return 'Section updated successfully';
+    }
+    catch (error) {
+      if (error.name === 'ValidationError') {
+        throw new Error(`Missing title field`);
+      }
+      throw new Error('Course or section not found');
+    }
+  }
+
+  /* removeSectionFromCourse method to remove a section from a course
+    Parameters:
+      - courseId: string or object id with course id
+      - sectionId: string or object id with section id
+      - session: optional session for the transaction
+    Returns:
+      - deleted section object
+    Errors:
+      - Course or section not found
+      - Other errors
+  */
+  async removeSectionFromCourse(courseId, sectionId, session = null) {
+    try {
+      // find the course by id and remove the section from the sections array
+      const updatedCourse = await this.course.findByIdAndUpdate(
+        courseId,
+        { $pull: { sections: { _id: sectionId } } },
+        { session }
+      );
+      // check if the course is not found and throw an error
+      if (!updatedCourse) {
+        throw new Error(`Course or section not found`);
+      }
+      // return deleted section object
+      return updatedCourse.sections.filter(section => String(section._id) === String(sectionId))[0];
+    }
+    catch (error) {
+      throw new Error('Course or section not found');
+    }
+  }
+
+  /* addLessonToSection method to add a lesson to a course
     Parameters:
       - courseId: string or object id with course id
       - lessonId: string or object id with lesson id
+      - sectionId: string or object id with section id
       - session: optional session for the transaction
     Returns:
       - Message with success 'Lesson added to course successfully'
     Errors:
-      - Course not found
+      - Course not found or section not found
       - Other errors
   */
-  async addLessonToCourse(courseId, lessonId, session = null) {
+  async addLessonToSection(courseId, sectionId, lessonId, session = null) {
     try {
-      // find the course by id and add the lesson to the lessons array
-      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $push: { lessons: String(lessonId) } }, { session });
+      // find the course by id and section field and add the lesson to the lessons array
+      const updatedCourse = await this.course.findOneAndUpdate(
+        { _id: courseId, 'sections._id': sectionId },
+        { $addToSet: { 'sections.$.lessons': String(lessonId) } },
+        { session }
+      );
       // check if the course is not found and throw an error
       if (!updatedCourse) {
-        throw new Error(`Course not found`);
+        throw new Error(`Course not found or section not found`);
       }
       return 'Lesson added to course successfully';
     }
     catch (error) {
-      throw new Error('Course not found');
+      throw new Error('Course not found or section not found');
     }
   }
 
-  /* removeLessonFromCourse method to remove a lesson from a course
+  /* removeLessonFromSection method to remove a lesson from a course
     Parameters:
       - courseId: string or object id with course id
       - lessonId: string or object id with lesson id
+      - sectionId: string or object id with section id
       - session: optional session for the transaction
     Returns:
       - Message with success 'Lesson removed from course successfully'
     Errors:
-      - Course not found
+      - Course not found or section not found
       - Other errors
   */
-  async removeLessonFromCourse(courseId, lessonId, session = null) {
+  async removeLessonFromSection(courseId, sectionId, lessonId, session = null) {
     try {
-      // find the course by id and remove the lesson from the lessons array
-      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $pull: { lessons: String(lessonId) } }, { session });
-      // check if the course is not found and throw an error
+      // Find the course by id and section subdocument, then remove the lesson from the lessons array
+      const updatedCourse = await this.course.findOneAndUpdate(
+        { _id: courseId, 'sections._id': sectionId },
+        { $pull: { 'sections.$.lessons': String(lessonId) } },
+        { session, new: true }
+      );
+      // Check if the course is not found and throw an error
       if (!updatedCourse) {
-        throw new Error(`Course not found`);
+        throw new Error(`Course not found or section not found`);
       }
       return 'Lesson removed from course successfully';
-    }
-    catch (error) {
-      throw new Error('Course not found');
+    } catch (error) {
+      throw new Error('Course not found or section not found');
     }
   }
 
@@ -246,7 +419,7 @@ class CourseModel extends CourseSchema {
       - courseId: string with course id
       - session: optional session for the transaction
     Returns:
-      - Message with success 'Course deleted successfully'
+      - deleted object
     Errors:
       - Course not found
       - Other errors
@@ -259,7 +432,7 @@ class CourseModel extends CourseSchema {
       if (!deletedCourse) {
         throw new Error(`Course not found`);
       }
-      return 'Course deleted successfully';
+      return deletedCourse;
     }
     catch (error) {
       throw new Error('Course not found');
@@ -271,18 +444,25 @@ class CourseModel extends CourseSchema {
       - authorId: string with author id
       - session: optional session for the transaction
     Returns:
-      - Message with success 'Courses deleted successfully'
+      - message with success 'All courses deleted successfully'
     Errors:
       - Failed to delete courses
+      - User has no courses
   */
   async deleteAllCoursesByAuthorId(authorId, session = null) {
     try {
       // find the course by authorId and remove it
-      await this.course.deleteMany({ authorId }, { session });
-      return 'Courses deleted successfully';
+      const deletedCourses = await this.course.deleteMany({ authorId }, { session });
+      if (deletedCourses.deletedCount === 0) {
+        throw new Error(`User has no courses`);
+      }
+      return 'All courses deleted successfully';
     }
     catch (error) {
-      throw new Error('Failed to delete courses');
+      if (error.message === 'User has no courses') {
+        throw new Error(error.message);
+      }
+      throw new Error(`Failed to delete courses`);
     }
   }
 
@@ -300,7 +480,11 @@ class CourseModel extends CourseSchema {
   async addNewStudentToCourse(courseId, studentId, session = null) {
     try {
       // find the course by id and add the student to the students array
-      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $push: { students: String(studentId) } }, { session });
+      const updatedCourse = await this.course.findByIdAndUpdate(
+        courseId,
+        { $push: { students: String(studentId) } },
+        { session }
+      );
       // check if the course is not found and throw an error
       if (!updatedCourse) {
         throw new Error(`Course not found`);
@@ -326,7 +510,11 @@ class CourseModel extends CourseSchema {
   async removeStudentFromCourse(courseId, studentId, session = null) {
     try {
       // find the course by id and remove the student from the students array
-      const updatedCourse = await this.course.findByIdAndUpdate(courseId, { $pull: { students: String(studentId) } }, { session });
+      const updatedCourse = await this.course.findByIdAndUpdate(
+        courseId,
+        { $pull: { students: String(studentId) } },
+        { session }
+      );
       // check if the course is not found and throw an error
       if (!updatedCourse) {
         throw new Error(`Course not found`);

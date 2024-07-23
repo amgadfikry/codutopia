@@ -38,7 +38,7 @@ describe('Unittest of OracleStorage', () => {
       const result = await oracleStorage.createBucket(bucketName);
       // Check if result is correct message
       expect(result).to.equal('Bucket created successfully');
-    });
+    }).timeout(30000);
 
     // Test case to create a new bucket in the object storage service with the same name and throw error
     it('create a new bucket in the object storage service with the same name and throw error', async () => {

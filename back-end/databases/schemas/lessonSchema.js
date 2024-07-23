@@ -9,6 +9,7 @@ class LessonSchema {
     this.lessonSchema = new Schema({
       title: { type: String, required: true, },
       courseId: { type: String, ref: 'courses', required: true, }, // course reference
+      sectionId: { type: String, required: true, },
       description: { type: String, required: true, },
       content: { type: [String], ref: 'lessonContents', default: [], }, // lesson content reference
       quiz: { type: String, ref: 'quizzes', default: null, }, // quiz reference

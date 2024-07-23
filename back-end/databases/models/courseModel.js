@@ -469,7 +469,6 @@ class CourseModel extends CourseSchema {
   /* addNewStudentToCourse method to add a new student to a course
     Parameters:
       - courseId: string or object id with course id
-      - studentId: string or object id with student id
       - session: optional session for the transaction
     Returns:
       - Message with success 'Student added to course successfully'
@@ -477,12 +476,12 @@ class CourseModel extends CourseSchema {
       - Course not found
       - Other errors
   */
-  async addNewStudentToCourse(courseId, studentId, session = null) {
+  async addNewStudentToCourse(courseId, session = null) {
     try {
-      // find the course by id and add the student to the students array
+      // find the course by id and increase the students count by 1
       const updatedCourse = await this.course.findByIdAndUpdate(
         courseId,
-        { $push: { students: String(studentId) } },
+        { $inc: { students: 1 } },
         { session }
       );
       // check if the course is not found and throw an error
@@ -499,7 +498,6 @@ class CourseModel extends CourseSchema {
   /* removeStudentFromCourse method to remove a student from a course
     Parameters:
       - courseId: string or object id with course id
-      - studentId: string or object id with student id
       - session: optional session for the transaction
     Returns:
       - Message with success 'Student removed from course successfully'
@@ -507,12 +505,12 @@ class CourseModel extends CourseSchema {
       - Course not found
       - Other errors
   */
-  async removeStudentFromCourse(courseId, studentId, session = null) {
+  async removeStudentFromCourse(courseId, session = null) {
     try {
-      // find the course by id and remove the student from the students array
+      // find the course by id and decrease the students count by 1
       const updatedCourse = await this.course.findByIdAndUpdate(
         courseId,
-        { $pull: { students: String(studentId) } },
+        { $inc: { students: -1 } },
         { session }
       );
       // check if the course is not found and throw an error

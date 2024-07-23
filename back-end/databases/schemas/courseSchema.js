@@ -31,7 +31,7 @@ class CourseSchema {
       reviews: { type: [String], ref: 'reviews', default: [], },
       sumReviews: { type: Number, default: 0, },
       courseAvgRating: { type: Number, default: 0, },
-      students: { type: [String], ref: 'users', default: [], },
+      students: { type: Number, default: 0, },
       image: { type: String, default: null, },
     }, { timestamps: true, }); // add timestamps to the schema
 

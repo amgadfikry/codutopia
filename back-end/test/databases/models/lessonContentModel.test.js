@@ -6,8 +6,8 @@ describe("LessonContentModel", () => {
   // Declare variables to be used across all the tests
   let lessonContentData;
 
-  // Before hook to prepare the data before all test start
-  before(async () => {
+  // BeforeEach hook to prepare the data before each test
+  beforeEach(async () => {
     // Create a new lesson content
     lessonContentData = {
       lessonId: "5f9d88d9c3b5e4a2e4f036e8",
@@ -17,8 +17,8 @@ describe("LessonContentModel", () => {
     };
   });
 
-  // After hook to clean up lessonContents collection after all tests are done
-  after(async () => {
+  // AfterEach hook to clean up lessonContents collection after each test
+  afterEach(async () => {
     // Delete the lessons from the database
     await lessonContentModel.lessonContent.deleteMany({});
   });
@@ -26,11 +26,6 @@ describe("LessonContentModel", () => {
 
   // Test suite for the createLessonContent method with all scenarios
   describe("Test suite for createLessonContent method", () => {
-
-    // afterEach hook to clean up the lessonContents collection after each test
-    afterEach(async () => {
-      await lessonContentModel.lessonContent.deleteMany({});
-    });
 
     // Test case for creating a new lesson with valid fields and return created lesson content
     it("create a new lesson content with valid fields and return created lesson content", async () => {
@@ -110,11 +105,6 @@ describe("LessonContentModel", () => {
       lessonContentId = result._id;
     });
 
-    // afterEach hook to clean up the lessonContents collection after each test
-    afterEach(async () => {
-      await lessonContentModel.lessonContent.deleteMany({});
-    });
-
     // Test case for getting a lesson content with valid ID and return the lesson content
     it("get a lesson content with valid ID and return the lesson content", async () => {
       // Get the lesson content
@@ -182,11 +172,6 @@ describe("LessonContentModel", () => {
       lessonContentIds.push(result2._id);
     });
 
-    // afterEach hook to clean up the lessonContents collection after each test
-    afterEach(async () => {
-      await lessonContentModel.lessonContent.deleteMany({});
-    });
-
     // Test case for getting a list of lesson content with valid IDs and return the list of lesson content
     it("get a list of lesson content with valid IDs and return the list of lesson content", async () => {
       // Get the list of lesson content
@@ -250,11 +235,6 @@ describe("LessonContentModel", () => {
       lessonId = lessonContentData.lessonId;
     });
 
-    // afterEach hook to clean up the lessonContents collection after each test
-    afterEach(async () => {
-      await lessonContentModel.lessonContent.deleteMany({});
-    });
-
     // Test case for getting a list of lesson content with valid lesson ID and return the list of lesson content
     it("get a list of lesson content with valid lesson ID and return the list of lesson content", async () => {
       // Get the list of lesson content
@@ -314,11 +294,6 @@ describe("LessonContentModel", () => {
       // Create a new lesson content
       const result = await lessonContentModel.createLessonContent(lessonContentData);
       lessonContentId = result._id;
-    });
-
-    // afterEach hook to clean up the lessonContents collection after each test
-    afterEach(async () => {
-      await lessonContentModel.lessonContent.deleteMany({});
     });
 
     // Test case for updating a lesson content with valid ID and data and return updated lesson content
@@ -404,11 +379,6 @@ describe("LessonContentModel", () => {
       lessonContentId = result._id;
     });
 
-    // afterEach hook to clean up the lessonContents collection after each test
-    afterEach(async () => {
-      await lessonContentModel.lessonContent.deleteMany({});
-    });
-
     // Test case for deleting a lesson content with valid ID and return lesson content object
     it("delete a lesson content with valid ID and return lesson content object", async () => {
       // Delete the lesson content
@@ -473,11 +443,6 @@ describe("LessonContentModel", () => {
       lessonId = lessonContentData.lessonId;
     });
 
-    // afterEach hook to clean up the lessonContents collection after each test
-    afterEach(async () => {
-      await lessonContentModel.lessonContent.deleteMany({});
-    });
-
     // Test case for deleting a list of lesson content with valid lesson ID and return message Lesson contents deleted successfully
     it("delete a list of lesson content with valid lesson ID and return message Lesson contents deleted successfully", async () => {
       // Delete the list of lesson content
@@ -528,6 +493,81 @@ describe("LessonContentModel", () => {
       // Check if the lesson content is not deleted
       const result = await lessonContentModel.lessonContent.find({});
       expect(result.length).to.equal(2);
+    });
+  });
+
+
+  // Test suite for the deleteLessonContentByLessonsIdsList method with all scenarios
+  describe("Test suite for deleteLessonContentByLessonsIdsList method", () => {
+    // declare lessonIds to be used across all the tests
+    let lessonIds = [];
+
+    // BeforeEach hook to create a two new lesson content before each test
+    beforeEach(async () => {
+      await lessonContentModel.createLessonContent(lessonContentData);
+      lessonIds.push(lessonContentData.lessonId);
+      // create a new lesson content with different lessonId
+      lessonContentData.lessonId = "5f9d88d9c3b5e4a2e4f036l8";
+      await lessonContentModel.createLessonContent(lessonContentData);
+      lessonIds.push(lessonContentData.lessonId);
+    });
+
+    // Test case for deleting a list of lesson content with valid lesson IDs and return message Lesson contents deleted successfully
+    it("delete a list of lesson content with valid lesson IDs and return message Lesson contents deleted successfully", async () => {
+      // Delete the list of lesson content
+      const result = await lessonContentModel.deleteLessonContentByLessonsIdsList(lessonIds);
+      // Check if the result is correct
+      expect(result).to.equal("Lesson contents deleted successfully");
+      // Check if the lesson content is deleted
+      const result2 = await lessonContentModel.lessonContent.find({});
+      expect(result2.length).to.equal(0);
+    });
+
+    // Test case for deleting a list of lesson content with invalid lesson IDs and throw an error 
+    it("delete a list of lesson content with invalid lesson IDs and throw an error", async () => {
+      try {
+        // Delete the list of lesson content with invalid lesson IDs
+        await lessonContentModel.deleteLessonContentByLessonsIdsList(["5f9d88d9c3b5e4a2e4f036l8"]);
+      } catch (error) {
+        // Check if the error is correct
+        expect(error.message).to.equal("Failed to delete or not found lesson content");
+        // Check if the lesson content is not deleted
+        const result = await lessonContentModel.lessonContent.find({});
+        expect(result.length).to.equal(2);
+      }
+    });
+
+    // Test case for deleting a list of lesson content with valid lesson IDs in transaction with session key and success
+    it("delete a list of lesson content with valid lesson IDs in transaction with session key and success", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      // Delete the list of lesson content with valid lesson IDs
+      await lessonContentModel.deleteLessonContentByLessonsIdsList(lessonIds, session);
+      // Commit the transaction
+      await mongoDB.commitTransaction(session);
+      // Check if the lesson content is deleted
+      const result = await lessonContentModel.lessonContent.find({});
+      expect(result.length).to.equal(0);
+    });
+
+    // Test case for deleting a list of lesson content with invalid lesson IDs in transaction with session key and failed
+    it("delete a list of lesson content with invalid lesson IDs in transaction with session key and failed", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      try {
+        // Delete the list of lesson content with invalid lesson IDs
+        await lessonContentModel.deleteLessonContentByLessonsIdsList(["5f9d88d9c3b5e4a2e4f036l8"], session);
+        // Commit the transaction
+        await mongoDB.commitTransaction(session);
+      } catch (error) {
+        // Check if the error is correct
+        expect(error.message).to.equal("Failed to delete or not found lesson content");
+        // Abort the transaction
+        await mongoDB.abortTransaction(session);
+        // Check if the lesson content is not deleted
+        const result = await lessonContentModel.lessonContent.find({});
+        expect(result.length).to.equal(2);
+      }
     });
   });
 

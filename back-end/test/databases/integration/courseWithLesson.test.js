@@ -32,13 +32,14 @@ describe("courseLesson integration tests", () => {
       // create new course and assign the courseId
       const result = await courseModel.createCourse(course);
       courseId = result._id;
-      // create lesson and add lesson to the section
-      lessonData = { title: 'Test lesson', description: 'This is a test lesson', courseId, timeToFinish: 10 };
-      const lesson = await lessonModel.createLesson(lessonData);
       // create section and assign the sectionId
-      sectionData = { title: 'Test section', description: 'This is a test section', lessons: [lesson._id] };
+      sectionData = { title: 'Test section', description: 'This is a test section' };
       const createSection = await courseModel.addSectionToCourse(courseId, sectionData);
       sectionId = createSection._id;
+      // create lesson and add lesson to the section
+      lessonData = { title: 'Test lesson', description: 'This is a test lesson', courseId, timeToFinish: 10, sectionId };
+      const lesson = await lessonModel.createLesson(lessonData);
+      await courseModel.addLessonToSection(courseId, sectionId, lesson._id);
     });
 
     // Test case for getting a section with lessons data by courseId and sectionId and return section data
@@ -122,16 +123,17 @@ describe("courseLesson integration tests", () => {
       // create new course and assign the courseId
       const result = await courseModel.createCourse(course);
       courseId = result._id;
+      // create section and assign the sectionId
+      sectionData = { title: 'Test section', description: 'This is a test section' };
+      const sectionId1 = await courseModel.addSectionToCourse(courseId, sectionData);
+      const sectionId2 = await courseModel.addSectionToCourse(courseId, sectionData);
       // create lesson and add lesson to the section
-      lessonData1 = { title: 'Test lesson', description: 'This is a test lesson', courseId, timeToFinish: 10 };
-      lessonData2 = { title: 'Test lesson 2', description: 'This is a test lesson 2', courseId, timeToFinish: 20 };
+      lessonData1 = { title: 'Test lesson', description: 'This is a test lesson', courseId, timeToFinish: 10, sectionId: sectionId1._id };
+      lessonData2 = { title: 'Test lesson 2', description: 'This is a test lesson 2', courseId, timeToFinish: 20, sectionId: sectionId2._id };
       const lesson1 = await lessonModel.createLesson(lessonData1);
       const lesson2 = await lessonModel.createLesson(lessonData2);
-      // create section and assign the sectionId
-      sectionData = { title: 'Test section', description: 'This is a test section', lessons: [lesson1._id] };
-      await courseModel.addSectionToCourse(courseId, sectionData);
-      sectionData.lessons = [lesson2._id];
-      await courseModel.addSectionToCourse(courseId, sectionData);
+      await courseModel.addLessonToSection(courseId, sectionId1._id, lesson1._id);
+      await courseModel.addLessonToSection(courseId, sectionId2._id, lesson2._id);
     });
 
     // Test case for getting all sections with lessons data by courseId and return all sections data

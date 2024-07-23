@@ -204,6 +204,29 @@ class LessonContentModel extends LessonContentSchema {
     }
   }
 
+  /* deleteLessonContentByLessonsIdsList method to delete a list of lesson contents from the database by lesson IDs
+    Parameters:
+      - lessonsIds: list of lesson IDs to delete the lesson contents
+      - session: optional session for the transaction
+    Returns:
+      - Message of Lesson contents deleted successfully
+    Errors:
+      - Failed to delete or not found lesson content
+  */
+  async deleteLessonContentByLessonsIdsList(lessonsIds, session = null) {
+    try {
+      // Delete the lesson content from the database
+      const result = await this.lessonContent.deleteMany({ lessonId: { $in: lessonsIds } }, { session });
+      // if the lesson content could not be deleted, throw an error
+      if (result.deletedCount === 0) {
+        throw new Error(`Failed to delete or not found lesson content`);
+      }
+      return 'Lesson contents deleted successfully';
+    }
+    catch (error) {
+      throw new Error('Failed to delete or not found lesson content');
+    }
+  }
 }
 
 export default LessonContentModel;

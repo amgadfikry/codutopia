@@ -471,7 +471,7 @@ class CourseModel extends CourseSchema {
       - courseId: string or object id with course id
       - session: optional session for the transaction
     Returns:
-      - Message with success 'Student added to course successfully'
+      - Number of current students in the course
     Errors:
       - Course not found
       - Other errors
@@ -482,13 +482,13 @@ class CourseModel extends CourseSchema {
       const updatedCourse = await this.course.findByIdAndUpdate(
         courseId,
         { $inc: { students: 1 } },
-        { session }
+        { session, new: true }
       );
       // check if the course is not found and throw an error
       if (!updatedCourse) {
         throw new Error(`Course not found`);
       }
-      return 'Student added to course successfully';
+      return updatedCourse.students;
     }
     catch (error) {
       throw new Error('Course not found');
@@ -500,7 +500,7 @@ class CourseModel extends CourseSchema {
       - courseId: string or object id with course id
       - session: optional session for the transaction
     Returns:
-      - Message with success 'Student removed from course successfully'
+      - number of current students in the course
     Errors:
       - Course not found
       - Other errors
@@ -511,13 +511,13 @@ class CourseModel extends CourseSchema {
       const updatedCourse = await this.course.findByIdAndUpdate(
         courseId,
         { $inc: { students: -1 } },
-        { session }
+        { session, new: true }
       );
       // check if the course is not found and throw an error
       if (!updatedCourse) {
         throw new Error(`Course not found`);
       }
-      return 'Student removed from course successfully';
+      return updatedCourse.students;
     }
     catch (error) {
       throw new Error('Course not found');

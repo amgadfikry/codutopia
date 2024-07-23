@@ -154,7 +154,7 @@ describe('Unittest of OracleStorage', () => {
       // Check if the result is correct message
       expect(result).to.equal('Bucket deleted successfully');
 
-    }).timeout(15000);
+    }).timeout(30000);
 
     // Test case delete a bucket not found in the object storage service and throw error
     it('delete a bucket not found in the object storage service and throw error', async () => {

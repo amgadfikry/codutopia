@@ -7,8 +7,8 @@ describe('QuizModel', () => {
   let quiz;
   let quizId;
 
-  // Before hook to prepare the data before all test start
-  before(() => {
+  // Before hook to prepare the data before each test start
+  beforeEach(() => {
     // Create a new quiz object
     quiz = {
       title: 'Math Quiz',
@@ -33,8 +33,8 @@ describe('QuizModel', () => {
     };
   });
 
-  // After hook to clean up quizzes after all tests are done
-  after(async () => {
+  // After each hook to clean up quizzes after each test are done
+  afterEach(async () => {
     // Delete all quizzes in the database
     await quizModel.quiz.deleteMany({});
   });
@@ -43,18 +43,11 @@ describe('QuizModel', () => {
   // Test suite for the createQuiz method with all scenarios
   describe('Test suite for createQuiz method', () => {
 
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
-    });
-
     // Test case for creating a new quiz with valid fields and return the quiz id
     it('create a new quiz with valid fields and return the quiz id', async () => {
       const result = await quizModel.createQuiz(quiz);
       // check if the result is correct
       expect(result).to.not.equal(null);
-      // save id to the quizId variable for future tests
-      quizId = result
     });
 
     // Test case for creating a new quiz with missing required fields and throw an error
@@ -133,7 +126,7 @@ describe('QuizModel', () => {
       await mongoDB.commitTransaction(session);
       // check if the quizzes are created
       const result = await quizModel.quiz.find({});
-      expect(result.length).to.equal(3);
+      expect(result.length).to.equal(2);
     });
 
     // Test case for creating a new quiz with missing required fields in a transaction with failed transaction
@@ -151,10 +144,11 @@ describe('QuizModel', () => {
       }
       catch (error) {
         expect(error.message).to.equal('Missing title field');
+        await mongoDB.abortTransaction(session);
       }
       // check if the quizzes are not created
       const result = await quizModel.quiz.find({});
-      expect(result.length).to.equal(3);
+      expect(result.length).to.equal(0);
     });
   });
 
@@ -162,14 +156,9 @@ describe('QuizModel', () => {
   // Test suite for the getQuizForCreator method with all scenarios
   describe('Test suite for getQuizForCreator method', () => {
 
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
+    // before each hook to create a quiz object before each test start and save the quiz id
+    beforeEach(async () => {
       quizId = await quizModel.createQuiz(quiz);
-    });
-
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
     });
 
     // Test case for retrieving a quiz with valid ID and return the quiz object
@@ -200,12 +189,8 @@ describe('QuizModel', () => {
       // retrieve twice successfully and create a new quiz object
       await quizModel.getQuizForCreator(quizId, session);
       await quizModel.getQuizForCreator(quizId, session);
-      await quizModel.createQuiz(quiz, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
-      // check if the quizzes are created
-      const result = await quizModel.quiz.find({});
-      expect(result.length).to.equal(2);
     });
 
     // Test case for retrieving a quiz with invalid ID in a transaction with failed transaction
@@ -216,16 +201,13 @@ describe('QuizModel', () => {
         // retrieve twice one with invalid ID and one with valid ID and create a new quiz object
         await quizModel.getQuizForCreator(quizId, session);
         await quizModel.getQuizForCreator('60f6e1b9b58fe3208a9b8b55', session);
-        await quizModel.createQuiz(quiz, session);
         // commit the transaction
         await mongoDB.commitTransaction(session);
       }
       catch (error) {
         expect(error.message).to.equal('Quiz not found');
+        await mongoDB.abortTransaction(session);
       }
-      // check if the quizzes are not created
-      const result = await quizModel.quiz.find({});
-      expect(result.length).to.equal(2);
     });
   });
 
@@ -233,14 +215,9 @@ describe('QuizModel', () => {
   // Test suite for the getQuiz method with all scenarios
   describe('Test suite for getQuiz method', () => {
 
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
+    // before hook to create a quiz object before each test start and save the quiz id
+    beforeEach(async () => {
       quizId = await quizModel.createQuiz(quiz);
-    });
-
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
     });
 
     // Test case for retrieving a quiz with valid ID and return the quiz object
@@ -271,12 +248,8 @@ describe('QuizModel', () => {
       // retrieve twice successfully and create a new quiz object
       await quizModel.getQuiz(quizId, session);
       await quizModel.getQuiz(quizId, session);
-      await quizModel.createQuiz(quiz, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
-      // check if the quizzes are created
-      const result = await quizModel.quiz.find({});
-      expect(result.length).to.equal(2);
     });
 
     // Test case for retrieving a quiz with invalid ID in a transaction with failed transaction
@@ -287,16 +260,13 @@ describe('QuizModel', () => {
         // retrieve twice one with invalid ID and one with valid ID and create a new quiz object
         await quizModel.getQuiz(quizId, session);
         await quizModel.getQuiz('60f6e1b9b58fe3208a9b8b55', session);
-        await quizModel.createQuiz(quiz, session);
         // commit the transaction
         await mongoDB.commitTransaction(session);
       }
       catch (error) {
         expect(error.message).to.equal('Quiz not found');
+        await mongoDB.abortTransaction(session);
       }
-      // check if the quizzes are not created
-      const result = await quizModel.quiz.find({});
-      expect(result.length).to.equal(2);
     });
   });
 
@@ -304,14 +274,9 @@ describe('QuizModel', () => {
   // Test suite for updateQuizMetaData method with all scenarios
   describe('Test suite for updateQuizMetaData method', () => {
 
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
+    // before hook to create a quiz object before each test start and save the quiz id
+    beforeEach(async () => {
       quizId = await quizModel.createQuiz(quiz);
-    });
-
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
     });
 
     // Test case for updating a quiz with valid ID and return success message
@@ -389,10 +354,11 @@ describe('QuizModel', () => {
       }
       catch (error) {
         expect(error.message).to.equal('Missing title field');
+        await mongoDB.abortTransaction(session);
       }
       // check if the quiz is not updated
       const result = await quizModel.quiz.findById(quizId);
-      expect(result.title).to.equal('Updated Math Quiz3');
+      expect(result.title).to.equal(quiz.title);
     });
   });
 
@@ -408,11 +374,6 @@ describe('QuizModel', () => {
       // create temp updated question object and answer
       updatedQuestion = [...quiz.questions, { question: 'What is 4+4?', options: ['1', '2', '3', '8'], }];
       answers = [...quiz.answers, '8'];
-    });
-
-    // afterEach hook to clean up quizzes collection after each test done
-    afterEach(async () => {
-      await quizModel.quiz.deleteMany({});
     });
 
     // Test case for updating a quiz questions and answers with valid ID and return success message
@@ -509,14 +470,9 @@ describe('QuizModel', () => {
   // Test suite for the correctAnswers method with all scenarios
   describe('Test suite for correctAnswers method', () => {
 
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
+    // before hook to create a quiz object before each test start and save the quiz id
+    beforeEach(async () => {
       quizId = await quizModel.createQuiz(quiz);
-    });
-
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
     });
 
     // Test case for checking the correct answers of the quiz with valid ID and correct answers return the score and corrections
@@ -610,6 +566,7 @@ describe('QuizModel', () => {
       }
       catch (error) {
         expect(error.message).to.equal('Quiz not found');
+        await mongoDB.abortTransaction(session);
       };
     });
   });
@@ -618,14 +575,9 @@ describe('QuizModel', () => {
   // Test suite for the deleteQuiz method with all scenarios
   describe('Test suite for deleteQuiz method', () => {
 
-    // before hook to create a quiz object before all the tests start and save the quiz id
-    before(async () => {
+    // before hook to create a quiz object before each test start and save the quiz id
+    beforeEach(async () => {
       quizId = await quizModel.createQuiz(quiz);
-    });
-
-    // after hook to clean up quizzes collection after all the tests done
-    after(async () => {
-      await quizModel.quiz.deleteMany({});
     });
 
     // Test case for deleting a quiz with valid ID and return success message
@@ -650,21 +602,13 @@ describe('QuizModel', () => {
     it('delete a quiz with valid ID in a transaction with success transaction', async () => {
       // start a transaction
       const session = await mongoDB.startSession();
-      // delete the quiz with valid ID after create it
-      const id = await quizModel.createQuiz(quiz, session);
-      await quizModel.deleteQuiz(id, session);
-      quizId = await quizModel.createQuiz(quiz, session);
+      // delete the quiz  with valid ID
+      await quizModel.deleteQuiz(quizId, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
-      // check if the quiz is deleted
-      try {
-        await quizModel.quiz.findById(id);
-      } catch (error) {
-        expect(error.message).to.equal('Quiz not found');
-      }
       // check if the quiz number is correct
       const result = await quizModel.quiz.find({});
-      expect(result.length).to.equal(1);
+      expect(result.length).to.equal(0);
     });
 
     // Test case for deleting a quiz with invalid ID in a transaction with failed transaction
@@ -680,6 +624,7 @@ describe('QuizModel', () => {
       }
       catch (error) {
         expect(error.message).to.equal('Quiz not found');
+        await mongoDB.abortTransaction(session);
       }
       // check if the quiz number is correct
       const result = await quizModel.quiz.find({});

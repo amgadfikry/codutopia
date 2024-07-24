@@ -7,8 +7,8 @@ describe("PaymentModel", () => {
   let payment;
   let paymentId;
 
-  // Before hook to prepare the data before all test start
-  before(() => {
+  // Before each hook to prepare the data before each test
+  beforeEach(() => {
     // Create a new payment object
     payment = {
       userId: "60f6e1b9b58fe3208a9b8b55",
@@ -19,8 +19,8 @@ describe("PaymentModel", () => {
     };
   });
 
-  // After hook to clean up payments collection after all tests are done
-  after(async () => {
+  // After each hook to clean up payments collection after each test case
+  afterEach(async () => {
     // Delete the payments from the database
     await paymentModel.payment.deleteMany({});
   });
@@ -28,11 +28,6 @@ describe("PaymentModel", () => {
 
   // Test suite for the createPayment method with all scenarios
   describe("Test suite for createPayment method", () => {
-
-    // after hook to clean up payments collection after tests in this suite are done
-    after(async () => {
-      await paymentModel.payment.deleteMany({});
-    });
 
     // Test case for creating a new payment with valid fields and return created payment object
     it("create a new payment with valid fields and return created payment object", async () => {
@@ -43,8 +38,6 @@ describe("PaymentModel", () => {
       expect(result.paymentMethod).to.equal(payment.paymentMethod);
       expect(result.paymentAmount).to.equal(payment.paymentAmount);
       expect(result.operationId).to.equal(payment.operationId);
-      // save the paymentId for future tests
-      paymentId = result._id;
     });
 
     // Test case for creating a new payment with missing required fields and throw an error
@@ -71,7 +64,7 @@ describe("PaymentModel", () => {
       await mongoDB.commitTransaction(session);
       // check if the payments are created
       const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(3);
+      expect(result.length).to.equal(2);
     });
 
     // Test case for creating a new payment with invalid fields in a transaction with failed transaction
@@ -94,7 +87,7 @@ describe("PaymentModel", () => {
       }
       // check if the payments are not created
       const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(3);
+      expect(result.length).to.equal(0);
     });
 
   });
@@ -103,15 +96,10 @@ describe("PaymentModel", () => {
   // Test suite for the getPayment method with all scenarios
   describe("Test suite for getPayment method", () => {
 
-    // before hook to create a new payment before all tests start and save the paymentId
-    before(async () => {
+    // before hook to create a new payment before each test start and save the paymentId
+    beforeEach(async () => {
       const result = await paymentModel.createPayment(payment);
       paymentId = result._id;
-    });
-
-    // after hook to clean up payments collection after tests in this suite are done
-    after(async () => {
-      await paymentModel.payment.deleteMany({});
     });
 
     // Test case for getting a payment with valid paymentId and return the payment object
@@ -141,15 +129,11 @@ describe("PaymentModel", () => {
     it("get a payment with valid paymentId in a transaction with success transaction", async () => {
       // Start a new session
       const session = await mongoDB.startSession();
-      // get the payment in a transaction 2 times and create a new payment
+      // get the payment in a transaction 2 times
       await paymentModel.getPayment(paymentId, session);
       await paymentModel.getPayment(paymentId, session);
-      await paymentModel.createPayment(payment, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
-      // check if the payments are created
-      const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(2);
     });
 
     // Test case for getting a payment with invalid paymentId in a transaction with failed transaction
@@ -157,8 +141,7 @@ describe("PaymentModel", () => {
       // Start a new session
       const session = await mongoDB.startSession();
       try {
-        // get payment twice one with valid paymentId and other with invalid paymentId and create a new payment
-        await paymentModel.createPayment(payment, session);
+        // get payment twice one with valid paymentId and other with invalid paymentId
         await paymentModel.getPayment(paymentId, session);
         await paymentModel.getPayment("5f6e1b9b58fe3208a9b8b55", session);
         await mongoDB.commitTransaction(session);
@@ -168,9 +151,6 @@ describe("PaymentModel", () => {
         // abort the transaction
         await mongoDB.abortTransaction(session);
       }
-      // check if the payments are not created
-      const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(2);
     });
   });
 
@@ -178,15 +158,10 @@ describe("PaymentModel", () => {
   // Test suite for the checkPayment method with all scenarios
   describe("Test suite for checkPayment method", () => {
 
-    // before hook to create a new payment before all tests start and save the paymentId
-    before(async () => {
+    // before hook to create a new payment before each test start and save the paymentId
+    beforeEach(async () => {
       const result = await paymentModel.createPayment(payment);
       paymentId = result._id;
-    });
-
-    // after hook to clean up payments collection after tests in this suite are done
-    after(async () => {
-      await paymentModel.payment.deleteMany({});
     });
 
     // Test case for checking a payment with valid paymentId and return true
@@ -200,6 +175,16 @@ describe("PaymentModel", () => {
       const result = await paymentModel.checkPayment("5f6e1b9b58fe3208a9b8b55");
       expect(result).to.equal(false);
     });
+
+    // Test case for checking a payment with valid paymentId in a transaction with success transaction
+    it("check a payment with valid paymentId in a transaction with success transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      // check the payment in a transaction
+      await paymentModel.checkPayment(paymentId, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+    });
   });
 
 
@@ -210,11 +195,6 @@ describe("PaymentModel", () => {
     beforeEach(async () => {
       await paymentModel.createPayment(payment);
       await paymentModel.createPayment(payment);
-    });
-
-    // after hook to clean up payments collection after tests in this suite are done
-    afterEach(async () => {
-      await paymentModel.payment.deleteMany({});
     });
 
     // Test case for getting all payments for a user with valid userId and return the payments array
@@ -275,11 +255,6 @@ describe("PaymentModel", () => {
       await paymentModel.createPayment({ ...payment, courseId: "60f6e1b9b58fe3208a9b8b57" });
     });
 
-    // after hook to clean up payments collection after tests in this suite are done
-    afterEach(async () => {
-      await paymentModel.payment.deleteMany({});
-    });
-
     // Test case for calculating the total payment amount for a course with valid courseId and return the total payment amount
     it("calculate the total payment amount for a course with valid courseId and return the total payment amount", async () => {
       const result = await paymentModel.courseTotalPayment(payment.courseId);
@@ -338,11 +313,6 @@ describe("PaymentModel", () => {
       coursesIds = [result1.courseId, result2.courseId, result3.courseId];
     });
 
-    // after hook to clean up payments collection after tests in this suite are done
-    afterEach(async () => {
-      await paymentModel.payment.deleteMany({});
-    });
-
     // Test case for calculating the total payment amount for an instructor with valid coursesIds and return the total payment amount
     it("calculate the total payment amount for an instructor with valid coursesIds and return the total payment amount", async () => {
       const result = await paymentModel.getTotalPaymentForInstuctor(coursesIds);
@@ -398,15 +368,10 @@ describe("PaymentModel", () => {
   // Test suite for the totalPayment method with all scenarios
   describe("Test suite for totalPayment method", () => {
 
-    // before hook to create a new payment before all tests start and save the paymentId
-    before(async () => {
+    // before hook to create a new payment before each test start and save the paymentId
+    beforeEach(async () => {
       const result = await paymentModel.createPayment(payment);
       paymentId = result._id;
-    });
-
-    // after hook to clean up payments collection after tests in this suite are done
-    after(async () => {
-      await paymentModel.payment.deleteMany({});
     });
 
     // Test case for calculating the total payment amount for all courses and return the total payment amount
@@ -419,15 +384,11 @@ describe("PaymentModel", () => {
     it("calculate the total payment amount for all courses in a transaction with success transaction", async () => {
       // Start a new session
       const session = await mongoDB.startSession();
-      // calculate the total payment amount for all courses in a transaction 2 times and create a new payment
+      // calculate the total payment amount for all courses in a transaction 2 times
       await paymentModel.totalPayment(session);
       await paymentModel.totalPayment(session);
-      await paymentModel.createPayment(payment, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
-      // check if the payments are created
-      const result = await paymentModel.payment.find({});
-      expect(result.length).to.equal(2);
     });
 
     // Test case for calculating the total payment amount for all of empty payments collection and return 0

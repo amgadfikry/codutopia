@@ -7,8 +7,8 @@ describe("ReviewModel", () => {
   let review;
   let reviewId;
 
-  // Before hook to prepare the data before all test start
-  before(async () => {
+  // Before each hook to prepare the data before each test case
+  beforeEach(async () => {
     // Create a new review object
     review = {
       userId: '60f6e1b9b58fe3208a9b8b55',
@@ -18,8 +18,8 @@ describe("ReviewModel", () => {
     };
   });
 
-  // After hook to clean up reviews collection after all tests are done
-  after(async () => {
+  // After each hook to clean up reviews collection after each test
+  afterEach(async () => {
     // Delete the review from the database
     await reviewModel.review.deleteMany({});
   });
@@ -27,11 +27,6 @@ describe("ReviewModel", () => {
 
   // Test suite for the createReview method with all scenarios
   describe("Test suite for createReview method", () => {
-
-    // after hook to clean up reviews collection after each test
-    afterEach(async () => {
-      await reviewModel.review.deleteMany({});
-    });
 
     // Test case for creating a new review with valid fields and return created review
     it('Create a new review with valid fields and return created review', async () => {
@@ -111,11 +106,6 @@ describe("ReviewModel", () => {
       reviewId = newReview._id;
     });
 
-    // after hook to clean up reviews collection after each test
-    afterEach(async () => {
-      await reviewModel.review.deleteMany({});
-    });
-
     // Test case for getting a review with valid reviewId and return the review object
     it('Get a review with valid reviewId and return the review object', async () => {
       // Get the review from the database
@@ -173,11 +163,6 @@ describe("ReviewModel", () => {
       // Create a new review in the database
       const newReview = await reviewModel.createReview(review);
       reviewId = newReview._id;
-    });
-
-    // after hook to clean up reviews collection after each test
-    afterEach(async () => {
-      await reviewModel.review.deleteMany({});
     });
 
     // Test case for removing a review with valid reviewId and return deleted review object
@@ -245,11 +230,6 @@ describe("ReviewModel", () => {
       await reviewModel.createReview(review2);
     });
 
-    // after hook to clean up reviews collection after each test
-    afterEach(async () => {
-      await reviewModel.review.deleteMany({});
-    });
-
     // Test case for getting all reviews with valid userId and return an array of review objects
     it('Get all reviews with valid userId and return an array of review objects', async () => {
       // Get all reviews from the database
@@ -310,11 +290,6 @@ describe("ReviewModel", () => {
       await reviewModel.createReview(review2);
     });
 
-    // after hook to clean up reviews collection after each test
-    afterEach(async () => {
-      await reviewModel.review.deleteMany({});
-    });
-
     // Test case for getting all reviews with valid courseId and return an array of review objects
     it('Get all reviews with valid courseId and return an array of review objects', async () => {
       // Get all reviews from the database
@@ -373,11 +348,6 @@ describe("ReviewModel", () => {
       // Create a new review review object with different courseId
       const review2 = { ...review, courseId: '60f6e1b9b58fe3208a9b8b57' };
       await reviewModel.createReview(review2);
-    });
-
-    // after hook to clean up reviews collection after each test
-    afterEach(async () => {
-      await reviewModel.review.deleteMany({});
     });
 
     // Test case for removing all reviews with valid userId and return 'Reviews removed successfully'
@@ -450,11 +420,6 @@ describe("ReviewModel", () => {
       await reviewModel.createReview(review2);
     });
 
-    // after hook to clean up reviews collection after each test
-    afterEach(async () => {
-      await reviewModel.review.deleteMany({});
-    });
-
     // Test case for removing all reviews with valid courseId and return 'Reviews removed successfully'
     it('Remove all reviews with valid courseId and return "Reviews removed successfully"', async () => {
       // Remove all reviews from the database
@@ -511,6 +476,5 @@ describe("ReviewModel", () => {
       expect(newReview.length).to.equal(2);
     });
   });
-
 
 }).timeout(15000); // Set timeout for the test to 5 seconds

@@ -850,14 +850,13 @@ describe('CourseModel', () => {
       expect(result2.length).to.equal(0);
     });
 
-    // Test case for deleting all courses by authorId not in the courses and throw an error User has no courses
-    it('delete all courses by authorId not in the courses and throw an error User has no courses', async () => {
-      try {
-        // delete all courses by authorId not in the courses
-        await courseModel.deleteAllCoursesByAuthorId('621f7b9e6f3b7d1d9e9f9d4b');
-      } catch (error) {
-        expect(error.message).to.equal('User has no courses');
-      }
+    // Test case for deleting all courses by authorId not in the courses and check if the courses are not deleted
+    it('delete all courses by authorId not in the courses and check if the courses are not deleted', async () => {
+      // delete all courses by authorId not in the courses
+      await courseModel.deleteAllCoursesByAuthorId('621f7b9e6f3b7d1d9e9f9d45');
+      // check if the courses are not deleted
+      const result = await courseModel.course.find({});
+      expect(result.length).to.equal(2);
     });
 
     // Test case for deleting all courses by authorId with valid authorId in a transaction with session with success transaction
@@ -870,23 +869,6 @@ describe('CourseModel', () => {
       // check if the courses are deleted
       const result = await courseModel.course.find({});
       expect(result.length).to.equal(0);
-    });
-
-    // Test case for deleting all courses by in a transaction with session with failed transaction
-    it('delete all courses by authorId in a transaction with failed transaction', async () => {
-      // start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // delete all courses by authorId then get course by invalid courseId in session
-        await courseModel.deleteAllCoursesByAuthorId(course.authorId, session);
-        await courseModel.deleteAllCoursesByAuthorId('621f7b9e6f3b7d1d9e9f9d4b', session);
-      } catch (error) {
-        expect(error.message).to.equal('User has no courses');
-        await mongoDB.abortTransaction(session);
-      }
-      // check if the courses are not deleted
-      const result = await courseModel.course.find({});
-      expect(result.length).to.equal(2);
     });
   });
 

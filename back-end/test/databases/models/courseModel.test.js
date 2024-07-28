@@ -104,131 +104,6 @@ describe('CourseModel', () => {
   });
 
 
-  // Test suite for the getCourse method with all scenarios
-  describe('Test suite for getCourse method', () => {
-    // variable to courseId
-    let courseId;
-
-    // before hook to create a new course with valid fields and assign the courseId
-    beforeEach(async () => {
-      // create a new course with valid fields for testing getCourseByName method
-      const result = await courseModel.createCourse(course);
-      courseId = result._id;
-    });
-
-    // Test case for getting a course by id with valid courseId and return the course data
-    it('get a course by id with valid courseId and return the course data', async () => {
-      const result = await courseModel.getCourse(courseId);
-      // check if the result is correct
-      expect(result.title).to.equal(course.title);
-      expect(result.description).to.equal(course.description);
-      expect(result.authorId).to.equal(course.authorId);
-      expect(result.price).to.equal(course.price);
-      expect(result.discount).to.equal(course.discount);
-      expect(result.image).to.equal(course.image);
-      expect(result.tags).to.deep.equal(course.tags);
-      expect(result.sumReviews).to.equal(0);
-      expect(result.courseAvgRating).to.equal(0);
-      expect(result.students).to.equal(0);
-      expect(result.sections).to.eql([]);
-    });
-
-    // Test case for getting a course by id with invalid courseId and throw an error course not found
-    it('get a course by id with invalid courseId and throw an error course not found', async () => {
-      try {
-        // get a course with invalid courseId
-        await courseModel.getCourse('621f7b9e6f3b7d1d9e9f9d4b');
-      } catch (error) {
-        expect(error.message).to.equal('Course not found');
-      }
-    });
-
-    // Test case for getting a course by id in a transaction with session with success transaction
-    it('get a course by id in a transaction with success transaction', async () => {
-      // start a new session
-      const session = await mongoDB.startSession();
-      // get the course by id in session
-      await courseModel.getCourse(courseId, session);
-      // commit the transaction and close the session
-      await mongoDB.commitTransaction(session);
-    });
-
-    // Test case for getting a course by id in a transaction with session with failed transaction
-    it('get a course by id in a transaction with failed transaction', async () => {
-      // start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // get the course by id in session
-        await courseModel.getCourse('621f7b9e6f3b7d1d9e9f9d4b', session);
-        await mongoDB.commitTransaction(session);
-      } catch (error) {
-        expect(error.message).to.equal('Course not found');
-        // abort the transaction
-        await mongoDB.abortTransaction(session);
-      }
-    });
-  });
-
-
-  // Test suite for the getAllCoursesPagination method with all scenarios
-  describe('Test suite for getAllCoursesPagination method', () => {
-
-    // before hook to create 3 new courses with valid fields
-    beforeEach(async () => {
-      // create 3 courses with valid fields
-      for (let i = 0; i < 3; i++) {
-        const result = await courseModel.createCourse(course);
-      }
-    });
-
-    // Test case for getting all courses with pagination and return list of courses
-    it('get all courses with pagination and return list of courses', async () => {
-      // get first 2 courses with pagination (page 1 and limit 2)
-      const result = await courseModel.getAllCoursesPagination(1, 2);
-      // check if the result is correct
-      expect(result.length).to.equal(2);
-      // get second page of courses with pagination (page 2 and limit 2)
-      const result2 = await courseModel.getAllCoursesPagination(2, 2);
-      // check if the result is correct
-      expect(result2.length).to.equal(1);
-    });
-
-    // Test case for getting all courses with pagination and return empty list
-    it('get all courses with pagination and return empty list', async () => {
-      // get third page of courses with pagination (page 3 and limit 2)
-      const result = await courseModel.getAllCoursesPagination(3, 2);
-      // check if the result is correct
-      expect(result.length).to.equal(0);
-    });
-
-    // Test case for getting all courses with pagination in a transaction with session with success transaction
-    it('get all courses with pagination in a transaction with success transaction', async () => {
-      // start a new session
-      const session = await mongoDB.startSession();
-      // get all courses with pagination in session and get course of them
-      await courseModel.getAllCoursesPagination(1, 2, session);
-      // commit the transaction and close the session
-      await mongoDB.commitTransaction(session);
-    });
-
-    // Test case for getting all courses with pagination in a transaction with session with failed transaction
-    it('get all courses with pagination in a transaction with failed transaction', async () => {
-      // start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // get all courses with pagination in session and get course by invalid courseId
-        await courseModel.getAllCoursesPagination(1, 2, session);
-        await courseModel.getCourse('621f7b9e6f3b7d1d9e9f9d4b', session);
-        await mongoDB.commitTransaction(session);
-      } catch (error) {
-        expect(error.message).to.equal('Course not found');
-        // abort the transaction
-        await mongoDB.abortTransaction(session);
-      }
-    });
-  });
-
-
   // Test suite for the getCoursesByListOfIds method with all scenarios
   describe('Test suite for getCoursesByListOfIds method', () => {
     // variable to list of courseIds
@@ -276,22 +151,6 @@ describe('CourseModel', () => {
       // commit the transaction and close the session
       await mongoDB.commitTransaction(session);
     });
-
-    // Test case for getting courses by list of ids in a transaction with session with failed transaction
-    it('get courses by list of ids in a transaction with failed transaction', async () => {
-      // start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // get the courses by list of ids in session and get course by invalid courseId
-        await courseModel.getCoursesByListOfIds(coursesIds, session);
-        await courseModel.getCourse('621f7b9e6f3b7d1d9e9f9d4b', session);
-        await mongoDB.commitTransaction(session);
-      } catch (error) {
-        expect(error.message).to.equal('Course not found');
-        // abort the transaction
-        await mongoDB.abortTransaction(session);
-      }
-    });
   });
 
 
@@ -313,11 +172,22 @@ describe('CourseModel', () => {
       }
     });
 
+    // Test case for filtering courses by empty query and return all courses sorted by created date
+    it('filter courses by empty query and return all courses sorted by created date', async () => {
+      // filter the courses by empty query
+      const result = await courseModel.filterCourses();
+      // check if the result is correct
+      expect(result.length).to.equal(3);
+      expect(result[0].title).to.equal('Test course3');
+      expect(result[1].title).to.equal('Test course2');
+      expect(result[2].title).to.equal('Test course1');
+    });
+
     // Test case for filtering courses by query by name and sort by name in ascending order and return list of courses
     it('filter courses by query by name and sort by name in ascending order and return list of courses', async () => {
       // filter the courses by query title and sort by title in ascending order
-      const query = { title: 'Test' };
-      const result = await courseModel.filterCourses(query, [], 'title', 1);
+      const query = { title: 'Test', sortedField: 'title', order: 'asc' };
+      const result = await courseModel.filterCourses(query);
       // check if the result is correct
       expect(result.length).to.equal(3);
       expect(result[0].title).to.equal('Test course1');
@@ -328,8 +198,8 @@ describe('CourseModel', () => {
     // Test case for filtering courses by query by price and sort by price in descending order and return list of courses
     it('filter courses by query by price and sort by price in descending order and return list of courses', async () => {
       // filter the courses by query price and sort by price in descending order
-      const query = { price: 100 };
-      const result = await courseModel.filterCourses(query, [], 'price', -1);
+      const query = { price: 100, sortedField: 'price', order: 'desc' };
+      const result = await courseModel.filterCourses(query);
       // check if the result is correct
       expect(result.length).to.equal(2);
       expect(result[0].title).to.equal('Test course2');
@@ -340,17 +210,19 @@ describe('CourseModel', () => {
     it('filter courses by query by tags and sort by createdAt in descending order and return list of courses', async () => {
       // filter the courses by query tags and sort by createdAt in descending order
       const query = { tags: ['test'] };
-      const result = await courseModel.filterCourses(query, ['tag1'], 'createdAt', -1);
+      const result = await courseModel.filterCourses(query)
       // check if the result is correct
-      expect(result.length).to.equal(1);
-      expect(result[0].title).to.equal('Test course1');
+      expect(result.length).to.equal(3);
+      expect(result[0].title).to.equal('Test course3');
+      expect(result[1].title).to.equal('Test course2');
+      expect(result[2].title).to.equal('Test course1');
     });
 
     // Test case for filtering courses by query by name, price, tags with default sort and return list of courses
     it('filter courses by query by name, price, tags with default sort and return list of courses', async () => {
       // filter the courses by query name, price, tags with default sort
-      const query = { title: 'Test course', price: 100 };
-      const result = await courseModel.filterCourses(query, ['tag2']);
+      const query = { title: 'Test course', price: 100, tags: ['tag2'] };
+      const result = await courseModel.filterCourses(query);
       // check if the result is correct
       expect(result.length).to.equal(1);
       expect(result[0].title).to.equal('Test course2');
@@ -361,35 +233,45 @@ describe('CourseModel', () => {
     // Test case for filtering courses by query by name, price, tags with invalid tag and return empty list
     it('filter courses by query by name, price, tags with invalid tag and return empty list', async () => {
       // filter the courses by query name, price, tags with invalid tag
-      const query = { title: 'Test course', price: 100 };
-      const result = await courseModel.filterCourses(query, ['tag4']);
+      const query = { title: 'Test course', price: 100, tags: ['tag4'] };
+      const result = await courseModel.filterCourses(query);
       // check if the result is correct
       expect(result.length).to.equal(0);
     });
 
-    // Test case for filtering courses by query by name, price, tags with empty query and return all courses sorted by created date
-    it('filter courses by query by name, price, tags with empty query and return all courses sorted by created date', async () => {
-      // filter the courses by empty query
-      const result = await courseModel.filterCourses({});
-      // check if the result is correct
-      expect(result.length).to.equal(3);
-      expect(result[0].title).to.equal('Test course3');
-      expect(result[1].title).to.equal('Test course2');
-      expect(result[2].title).to.equal('Test course1');
-    });
-
     // Test case for filtering courses by query by name, price, tags with empty query with pagination and return list of courses
     it('filter courses by query by name, price, tags with empty query with pagination and return list of courses', async () => {
+      const query = { page: 1, limit: 2 };
       // filter the courses by empty query with pagination
-      const result = await courseModel.filterCourses({}, [], 'createdAt', -1, 1, 2);
+      const result = await courseModel.filterCourses(query);
       // check if the result is correct
       expect(result.length).to.equal(2);
       expect(result[0].title).to.equal('Test course3');
       expect(result[1].title).to.equal('Test course2');
-      const result2 = await courseModel.filterCourses({}, [], 'createdAt', -1, 2, 2);
+      const query2 = { page: 2, limit: 2 };
+      const result2 = await courseModel.filterCourses(query2);
       // check if the result is correct
       expect(result2.length).to.equal(1);
       expect(result2[0].title).to.equal('Test course1');
+    });
+
+    // Test case for filtering courses by query by name, price, tags, sortedField, order, page, and limit
+    it('filter courses by query by name, price, tags, sortedField, order, page, and limit', async () => {
+      const query = { title: 'test', price: 100, tags: ['test'], sortedField: 'price', order: 'asc', page: 1, limit: 1 };
+      // filter the courses by query name, price, tags, sortedField, order, page, and limit
+      const result = await courseModel.filterCourses(query);
+      // check if the result is correct
+      expect(result.length).to.equal(1);
+      expect(result[0].title).to.equal('Test course1');
+      expect(result[0].price).to.equal(50);
+      expect(result[0].tags).to.deep.equal(['test', 'tag1', 'course']);
+      const query2 = { title: 'test', price: 100, tags: ['test'], sortedField: 'price', order: 'asc', page: 2, limit: 1 };
+      const result2 = await courseModel.filterCourses(query2);
+      // check if the result is correct
+      expect(result2.length).to.equal(1);
+      expect(result2[0].title).to.equal('Test course2');
+      expect(result2[0].price).to.equal(100);
+      expect(result2[0].tags).to.deep.equal(['test', 'tag2', 'course']);
     });
 
     // Test case for filtering courses by query by name with empty query in a transaction with session with success transaction
@@ -397,24 +279,9 @@ describe('CourseModel', () => {
       // start a new session
       const session = await mongoDB.startSession();
       // filter the courses by empty query in session
-      await courseModel.filterCourses({}, [], 'createdAt', -1, 1, 2, session);
+      await courseModel.filterCourses({}, session);
       // commit the transaction and close the session
       await mongoDB.commitTransaction(session);
-    });
-
-    // Test case for filtering courses by query by name with empty query in a transaction with session with failed transaction
-    it('filter courses by query by name with empty query in a transaction with failed transaction', async () => {
-      // start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // filter the courses by empty query in session and get course by invalid courseId
-        await courseModel.filterCourses({}, [], 'createdAt', -1, 1, 2, session);
-        await courseModel.getCourse('621f7b9e6f3b7d1d9e9f9d4b', session);
-      } catch (error) {
-        expect(error.message).to.equal('Course not found');
-        // abort the transaction
-        await mongoDB.abortTransaction(session);
-      }
     });
   });
 
@@ -496,7 +363,7 @@ describe('CourseModel', () => {
         await mongoDB.abortTransaction(session);
       }
       // check if the course is not updated
-      const result = await courseModel.getCourse(courseId);
+      const result = await courseModel.course.findById(courseId);
       expect(result.title).to.equal(course.title);
       expect(result.price).to.equal(course.price);
     });

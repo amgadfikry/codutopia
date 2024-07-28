@@ -239,6 +239,53 @@ describe("LessonModel", () => {
   });
 
 
+  // Test suite for the getAllLessonsIdsByCourseId method with all scenarios
+  describe("Test suite for getAllLessonsIdsByCourseId method", () => {
+    // variable to save lessonId
+    let lessonId1;
+    let lessonId2;
+
+    // before hook to create a new lesson before each test case
+    beforeEach(async () => {
+      const result1 = await lessonModel.createLesson(lesson);
+      lessonId1 = result1._id;
+      const result2 = await lessonModel.createLesson(lesson);
+      lessonId2 = result2._id;
+    });
+
+    // Test case for getting all lessons by courseId with valid courseId and return an array of lessons
+    it("get all lessons by courseId with valid courseId and return an array of lessons", async () => {
+      const result = await lessonModel.getAllLessonsIdsByCourseId(lesson.courseId);
+      // check if the result is correct
+      expect(result).to.be.an("array");
+      expect(result.length).to.equal(2);
+      expect(String(result[0])).to.equal(String(lessonId1));
+      expect(String(result[1])).to.equal(String(lessonId2));
+    });
+
+    // Test case for getting all lessons by courseId with invalid courseId and return an empty array
+    it("get all lessons by courseId with invalid courseId and return an empty array", async () => {
+      const result = await lessonModel.getAllLessonsIdsByCourseId("6660fee3b58fe3208a9b8b95");
+      // check if the result is correct
+      expect(result).to.be.an("array");
+      expect(result.length).to.equal(0);
+    });
+
+    // Test case for getting all lessons by courseId with valid courseId in a transaction with session with success transaction
+    it("get all lessons by courseId with valid courseId in a transaction with session with success transaction", async () => {
+      // Start a new session
+      const session = await mongoDB.startSession();
+      // get all lessons by courseId in the transaction
+      const result = await lessonModel.getAllLessonsIdsByCourseId(lesson.courseId, session);
+      // commit the transaction and close the session
+      await mongoDB.commitTransaction(session);
+      //check if all lessons are returned from the database
+      expect(result).to.be.an("array");
+      expect(result.length).to.equal(2);
+    });
+  });
+
+
   // Test suite for the updateLesson method with all scenarios
   describe("Test suite for updateLesson method", () => {
     // variable to save lessonId
@@ -539,7 +586,7 @@ describe("LessonModel", () => {
 
     // before hook to create a new lesson before each test start and save the lessonId
     beforeEach(async () => {
-      const result = await lessonModel.createLesson(lesson);
+      await lessonModel.createLesson(lesson);
     });
 
     // Test case for deleting all lessons by sectionId with valid sectionId and return a message that the lessons are deleted
@@ -554,14 +601,9 @@ describe("LessonModel", () => {
       expect(lessons.length).to.equal(0);
     });
 
-    // Test case for deleting all lessons by sectionId with invalid sectionId and throw an error
-    it("delete all lessons by sectionId with invalid sectionId and throw an error", async () => {
-      try {
-        await lessonModel.deleteAllLessonsBySectionId("6660fee3b58fe3208a9b8b95");
-      }
-      catch (error) {
-        expect(error.message).to.equal("Lessons not found or could not be deleted");
-      }
+    // Test case for deleting all lessons by sectionId with invalid sectionId and check number of lessons in the database
+    it("delete all lessons by sectionId with invalid sectionId and check number of lessons in the database", async () => {
+      await lessonModel.deleteAllLessonsBySectionId("6660fee3b58fe3208a9b8b95");
       // check number of lessons in the database
       const lessons = await lessonModel.lesson.find({});
       expect(lessons.length).to.equal(1);
@@ -578,27 +620,6 @@ describe("LessonModel", () => {
       //check if all lessons are deleted from the database
       const lessons = await lessonModel.lesson.find({});
       expect(lessons.length).to.equal(0);
-    });
-
-    // Test case for deleting all lessons by sectionId with valid sectionId in a transaction with session with failed transaction
-    it("delete all lessons by sectionId with valid sectionId in a transaction with session with failed transaction", async () => {
-      // Start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // delete all lessons by sectionId in the transaction twice
-        await lessonModel.deleteAllLessonsBySectionId('6660fee3b58fe3208a9b8b85', session);
-        await lessonModel.deleteAllLessonsBySectionId(lesson.sectionId, session);
-        // commit the transaction and close the session
-        await mongoDB.commitTransaction(session);
-      }
-      catch (error) {
-        expect(error.message).to.equal("Lessons not found or could not be deleted");
-        // close the session
-        await mongoDB.abortTransaction(session);
-      }
-      //check if all lessons are not deleted from the database
-      const lessons = await lessonModel.lesson.find({});
-      expect(lessons.length).to.equal(1);
     });
   });
 
@@ -623,14 +644,9 @@ describe("LessonModel", () => {
       expect(lessons.length).to.equal(0);
     });
 
-    // Test case for deleting all lessons by courseId with invalid courseId and throw an error
-    it("delete all lessons by courseId with invalid courseId and throw an error", async () => {
-      try {
-        await lessonModel.deleteAllLessonsByCourseId("6660fee3b58fe3208a9b8b95");
-      }
-      catch (error) {
-        expect(error.message).to.equal("Lessons not found or could not be deleted");
-      }
+    // Test case for deleting all lessons by courseId with invalid courseId and check number of lessons in the database
+    it("delete all lessons by courseId with invalid courseId and check number of lessons in the database", async () => {
+      await lessonModel.deleteAllLessonsByCourseId("6660fee3b58fe3208a9b8b95");
       // check number of lessons in the database
       const lessons = await lessonModel.lesson.find({});
       expect(lessons.length).to.equal(1);
@@ -647,27 +663,6 @@ describe("LessonModel", () => {
       //check if all lessons are deleted from the database
       const lessons = await lessonModel.lesson.find({});
       expect(lessons.length).to.equal(0);
-    });
-
-    // Test case for deleting all lessons by courseId with valid courseId in a transaction with session with failed transaction
-    it("delete all lessons by courseId with valid courseId in a transaction with session with failed transaction", async () => {
-      // Start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // delete all lessons by courseId in the transaction twice
-        await lessonModel.deleteAllLessonsByCourseId('6660fee3b58fe3208a9b8b85', session);
-        await lessonModel.deleteAllLessonsByCourseId(lesson.courseId, session);
-        // commit the transaction and close the session
-        await mongoDB.commitTransaction(session);
-      }
-      catch (error) {
-        expect(error.message).to.equal("Lessons not found or could not be deleted");
-        // close the session
-        await mongoDB.abortTransaction(session);
-      }
-      //check if all lessons are not deleted from the database
-      const lessons = await lessonModel.lesson.find({});
-      expect(lessons.length).to.equal(1);
     });
   });
 

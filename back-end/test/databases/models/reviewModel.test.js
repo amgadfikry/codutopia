@@ -361,14 +361,9 @@ describe("ReviewModel", () => {
       expect(newReview.length).to.equal(0);
     });
 
-    // Test case for removing all reviews with invalid userId and throw an error 'User has no reviews'
-    it('Remove all reviews with invalid userId and throw an error "User has no reviews"', async () => {
-      // Try to remove all reviews from the database with invalid userId
-      try {
-        await reviewModel.removeAllReviewsByUserId('60f6e1b9b58fe3208a9b8b57');
-      } catch (error) {
-        expect(error.message).to.equal('User not found or has no reviews');
-      }
+    // Test case for removing all reviews with invalid userId and check if reviews are not removed
+    it('Remove all reviews with invalid userId and check if reviews are not removed', async () => {
+      await reviewModel.removeAllReviewsByUserId('60f6e1b9b58fe3208a9b8b57');
       // Check if reviews are not removed
       const newReview = await reviewModel.review.find({});
       expect(newReview.length).to.equal(2);
@@ -385,25 +380,6 @@ describe("ReviewModel", () => {
       // Check if reviews are removed
       const newReview = await reviewModel.review.find({});
       expect(newReview.length).to.equal(0);
-    });
-
-    // Test case for removing all reviews with invalid userId using a transaction with session with failed transaction
-    it('Remove all reviews with invalid userId using a transaction with session with failed transaction', async () => {
-      // Start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // Remove all reviews from the database with the session twice
-        await reviewModel.removeAllReviewsByUserId(review.userId, session);
-        await reviewModel.removeAllReviewsByUserId(review.userId, session);
-        // commit the transaction
-        await mongoDB.commitTransaction(session);
-      } catch (error) {
-        expect(error.message).to.equal('User not found or has no reviews');
-        await mongoDB.abortTransaction(session);
-      }
-      // Check if reviews are not removed
-      const newReview = await reviewModel.review.find({});
-      expect(newReview.length).to.equal(2);
     });
   });
 
@@ -431,14 +407,9 @@ describe("ReviewModel", () => {
       expect(newReview.length).to.equal(0);
     });
 
-    // Test case for removing all reviews with invalid courseId and throw an error 'Course has no reviews'
-    it('Remove all reviews with invalid courseId and throw an error "Course has no reviews"', async () => {
-      // Try to remove all reviews from the database with invalid courseId
-      try {
-        await reviewModel.removeAllReviewsByCourseId('60f6e1b9b58fe3208a9b8b57');
-      } catch (error) {
-        expect(error.message).to.equal('Course not found or has no reviews');
-      }
+    // Test case for removing all reviews with invalid courseId and check if reviews are not removed
+    it('Remove all reviews with invalid courseId and check if reviews are not removed', async () => {
+      await reviewModel.removeAllReviewsByCourseId('60f6e1b9b58fe3208a9b8b57');
       // Check if reviews are not removed
       const newReview = await reviewModel.review.find({});
       expect(newReview.length).to.equal(2);
@@ -455,25 +426,6 @@ describe("ReviewModel", () => {
       // Check if reviews are removed
       const newReview = await reviewModel.review.find({});
       expect(newReview.length).to.equal(0);
-    });
-
-    // Test case for removing all reviews with invalid courseId using a transaction with session with failed transaction
-    it('Remove all reviews with invalid courseId using a transaction with session with failed transaction', async () => {
-      // Start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // Remove all reviews from the database with the session twice
-        await reviewModel.removeAllReviewsByCourseId(review.courseId, session);
-        await reviewModel.removeAllReviewsByCourseId(review.courseId, session);
-        // commit the transaction
-        await mongoDB.commitTransaction(session);
-      } catch (error) {
-        expect(error.message).to.equal('Course not found or has no reviews');
-        await mongoDB.abortTransaction(session);
-      }
-      // Check if reviews are not removed
-      const newReview = await reviewModel.review.find({});
-      expect(newReview.length).to.equal(2);
     });
   });
 

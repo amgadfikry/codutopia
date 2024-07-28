@@ -280,6 +280,26 @@ class QuizModel extends QuizSchema {
       throw new Error('Quiz not found');
     }
   }
+
+  /* deleteAllQuizzezByLessonId method to delete all quizzes by lesson ID
+    Parameters:
+      - lessonId: ID of the lesson to delete quizzes
+      - session: optional session for the transaction
+    Returns:
+      - message of the deleted quizzes is successful
+    Errors:
+      - Quiz not found
+  */
+  async deleteAllQuizzezByLessonIdList(lessonIds, session = null) {
+    try {
+      // Delete all quizzes with the specific lesson ID
+      const result = await this.quiz.deleteMany({ lessonId: { $in: lessonIds } }, { session });
+      return 'Quizzes deleted successfully';
+    } catch (error) {
+      // throw an error if the quiz could not be deleted
+      throw new Error('Quizzes not found');
+    }
+  }
 }
 
 // Export the QuizModel class

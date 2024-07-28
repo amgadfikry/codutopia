@@ -51,11 +51,6 @@ describe("Quiz Service", () => {
   // Test suite for createNewQuiz function
   describe("createNewQuiz function", () => {
 
-    // After each test, restore the sinon stubs
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case for create new quiz with valid data and add it to the lesson and return success message
     it("create a new quiz with valid data and add it to the lesson and return success message", async () => {
       // Mock the createQuiz function return the quizId, and addQuizToLesson function to return a message
@@ -120,11 +115,6 @@ describe("Quiz Service", () => {
   // Test suite for getQuizForLearner function
   describe("getQuizForLearner function", () => {
 
-    // After each test, restore the sinon stubs
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case for get a quiz with valid quizId and return the quiz document data
     it("get a quiz with valid quizId and return the quiz document data", async () => {
       // Mock the getQuiz function to return the quiz data
@@ -158,11 +148,6 @@ describe("Quiz Service", () => {
   // Test suite for getQuizForInstructor function
   describe("getQuizForInstructor function", () => {
 
-    // After each test, restore the sinon stubs
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case for get a quiz with valid quizId and return the quiz document data
     it("get a quiz with valid quizId and return the quiz document data", async () => {
       // Mock the getQuizForCreator function to return the quiz data
@@ -195,11 +180,6 @@ describe("Quiz Service", () => {
 
   // Test suite for updateQuiz function
   describe("updateQuiz function", () => {
-
-    // After each test, restore the sinon stubs
-    afterEach(() => {
-      sinon.restore();
-    });
 
     // Test case for update quiz with valid metadata and questions and answers and return success message with the updated quiz data
     it("update a quiz with valid metadata and questions and answers and return success message with the updated quiz data", async () => {
@@ -268,11 +248,6 @@ describe("Quiz Service", () => {
   // Test suite for correctQuiz function
   describe("correctQuiz function", () => {
 
-    // After each test, restore the sinon stubs
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case for correct a quiz with valid answers and return the score of the learner
     it("correct a quiz with valid answers and return the score of the learner", async () => {
       // Mock the correctQuiz function to return the score
@@ -305,11 +280,6 @@ describe("Quiz Service", () => {
 
   // Test suite for removeQuiz function
   describe("removeQuiz function", () => {
-
-    // After each test, restore the sinon stubs
-    afterEach(() => {
-      sinon.restore();
-    });
 
     // Test case for remove a quiz with valid quizId from database and from lesson and return success message
     it("remove a quiz with valid quizId from database and from lesson and return success message", async () => {

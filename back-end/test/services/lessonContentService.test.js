@@ -28,6 +28,11 @@ describe("lessonContentService", () => {
     let courseId;
     let fileName;
     let file;
+    let createObjStub;
+    let createUrlStub;
+    let createLessonContentStub;
+    let addContentToLessonStub;
+    let deleteObjStub;
 
     // beforeEach hook to create a lesson content data object
     beforeEach(() => {
@@ -41,22 +46,16 @@ describe("lessonContentService", () => {
       courseId = 'courseId';
       fileName = `${lessonContentData.lessonId}_${lessonContentData.value}`;
       file = 'file';
-    });
-
-    // afterEach hook to restore the default sandbox
-    afterEach(() => {
-      sinon.restore();
+      // Mock up all method using inside createNewContent function
+      createObjStub = sinon.stub(oracleStorage, "createObj").returns('file');
+      createUrlStub = sinon.stub(oracleStorage, "createUrl").returns('url');
+      createLessonContentStub = sinon.stub(lessonContentModel, "createLessonContent").returns(lessonContentData);
+      addContentToLessonStub = sinon.stub(lessonModel, "addContentToLesson").returns('content added');
+      deleteObjStub = sinon.stub(oracleStorage, "deleteObj").returns('deleted');
     });
 
     // Test case to create new content with type other than text with success of all steps and return success message
     it('create new content with type other than text with success of all steps and return success message', async () => {
-      // Mock createObj, createLessonContent, and addContentToLesson functions
-      sinon.stub(oracleStorage, "createObj").returns('file');
-      sinon.stub(oracleStorage, "createUrl").returns('url');
-      sinon.stub(lessonContentModel, "createLessonContent").returns(lessonContentData);
-      sinon.stub(lessonModel, "addContentToLesson").returns('content added');
-      // spies on createUrl and deleteOb functions
-      sinon.spy(oracleStorage, "deleteObj");
       // call createNewContent function
       const result = await lessonContentService.createNewContent(courseId, lessonContentData, file);
       // verify are called with the correct arguments
@@ -75,12 +74,6 @@ describe("lessonContentService", () => {
 
     // Test case to create new content with type other than text without file and throw an error
     it('create new content with type other than text without file and throw an error', async () => {
-      // spy on all functions to check if they are called
-      sinon.spy(oracleStorage, "createObj");
-      sinon.spy(oracleStorage, "createUrl");
-      sinon.spy(lessonContentModel, "createLessonContent");
-      sinon.spy(lessonModel, "addContentToLesson");
-      sinon.spy(oracleStorage, "deleteObj");
       try {
         await lessonContentService.createNewContent(courseId, lessonContentData);
       } catch (error) {
@@ -101,12 +94,7 @@ describe("lessonContentService", () => {
     // Test case to create new content with type other than text with error in createObj and throw an error
     it('create new content with type other than text with error in createObj and throw an error', async () => {
       // Mock createObj function to throw an error
-      sinon.stub(oracleStorage, "createObj").throws(new Error('Failed to create file'));
-      // spy on all functions to check if they are called
-      sinon.spy(oracleStorage, "createUrl");
-      sinon.spy(lessonContentModel, "createLessonContent");
-      sinon.spy(lessonModel, "addContentToLesson");
-      sinon.spy(oracleStorage, "deleteObj");
+      createObjStub.throws(new Error('Failed to create file'));
       try {
         await lessonContentService.createNewContent(courseId, lessonContentData, file);
       } catch (error) {
@@ -126,14 +114,8 @@ describe("lessonContentService", () => {
 
     // Test case to create new content with type other than text with error in createLessonContent and throw an error
     it('create new content with type other than text with error in createLessonContent and throw an error', async () => {
-      // Mock createObj and createUrl and deleteObj functions
-      sinon.stub(oracleStorage, "createObj").returns('file');
-      sinon.stub(oracleStorage, "createUrl").returns('url');
-      sinon.stub(oracleStorage, "deleteObj").returns('deleted');
       // Mock createLessonContent function to throw an error
-      sinon.stub(lessonContentModel, "createLessonContent").throws(new Error('Failed to create lesson content'));
-      // spy on all functions to check if they are called
-      sinon.spy(lessonModel, "addContentToLesson");
+      createLessonContentStub.throws(new Error('Failed to create lesson content'));
       try {
         await lessonContentService.createNewContent(courseId, lessonContentData, file);
       } catch (error) {
@@ -153,13 +135,8 @@ describe("lessonContentService", () => {
 
     // Test case to create new content with type other than text with error in addContentToLesson and throw an error
     it('create new content with type other than text with error in addContentToLesson and throw an error', async () => {
-      // Mock createObj, createUrl, and createLessonContent functions
-      sinon.stub(oracleStorage, "createObj").returns('file');
-      sinon.stub(oracleStorage, "createUrl").returns('url');
-      sinon.stub(lessonContentModel, "createLessonContent").returns(lessonContentData);
-      sinon.stub(oracleStorage, "deleteObj").returns('deleted');
       // Mock addContentToLesson function to throw an error
-      sinon.stub(lessonModel, "addContentToLesson").throws(new Error('Failed to add content to lesson'));
+      addContentToLessonStub.throws(new Error('Failed to add content to lesson'));
       try {
         await lessonContentService.createNewContent(courseId, lessonContentData, file);
       } catch (error) {
@@ -181,13 +158,7 @@ describe("lessonContentService", () => {
     it('create new content with type text with success of all steps and return success message', async () => {
       // change type to text
       lessonContentData.type = 'text';
-      // Mock createLessonContent and addContentToLesson functions
-      sinon.stub(lessonContentModel, "createLessonContent").returns(lessonContentData);
-      sinon.stub(lessonModel, "addContentToLesson").returns('content added');
-      // spies on createObj, createUrl, and deleteObj functions
-      sinon.spy(oracleStorage, "createObj");
-      sinon.spy(oracleStorage, "createUrl");
-      sinon.spy(oracleStorage, "deleteObj");
+      createLessonContentStub.returns(lessonContentData);
       // call createNewContent function
       const result = await lessonContentService.createNewContent(courseId, lessonContentData);
       // verify are called with the correct arguments
@@ -209,12 +180,7 @@ describe("lessonContentService", () => {
       // change type to text
       lessonContentData.type = 'text';
       // Mock createLessonContent function to throw an error
-      sinon.stub(lessonContentModel, "createLessonContent").throws(new Error('Failed to create lesson content'));
-      // spy on all functions to check if they are called
-      sinon.spy(lessonModel, "addContentToLesson");
-      sinon.spy(oracleStorage, "deleteObj");
-      sinon.spy(oracleStorage, "createObj");
-      sinon.spy(oracleStorage, "createUrl");
+      createLessonContentStub.throws(new Error('Failed to create lesson content'));
       try {
         await lessonContentService.createNewContent(courseId, lessonContentData);
       } catch (error) {
@@ -236,14 +202,9 @@ describe("lessonContentService", () => {
     it('create new content with type text with error in addContentToLesson and throw an error', async () => {
       // change type to text
       lessonContentData.type = 'text';
-      // Mock createLessonContent function
-      sinon.stub(lessonContentModel, "createLessonContent").returns(lessonContentData);
+      createLessonContentStub.returns(lessonContentData);
       // Mock addContentToLesson function to throw an error
-      sinon.stub(lessonModel, "addContentToLesson").throws(new Error('Failed to add content to lesson'));
-      // spies on createObj, createUrl, and deleteObj functions
-      sinon.spy(oracleStorage, "createObj");
-      sinon.spy(oracleStorage, "createUrl");
-      sinon.spy(oracleStorage, "deleteObj");
+      addContentToLessonStub.throws(new Error('Failed to add content to lesson'));
       try {
         await lessonContentService.createNewContent(courseId, lessonContentData);
       } catch (error) {
@@ -278,11 +239,6 @@ describe("lessonContentService", () => {
         type: 'text',
         value: 'content value'
       };
-    });
-
-    // afterEach hook to restore the default sandbox
-    afterEach(() => {
-      sinon.restore();
     });
 
     // Test case to get one content with success and return the content object
@@ -339,11 +295,6 @@ describe("lessonContentService", () => {
       ];
     });
 
-    // afterEach hook to restore the default sandbox
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case to get all contents for a lesson with success and return the contents array
     it('get all contents for a lesson with success and return the contents array', async () => {
       // Mock getLessonContentByLessonId function
@@ -385,11 +336,6 @@ describe("lessonContentService", () => {
         type: 'text',
         value: 'content value'
       };
-    });
-
-    // afterEach hook to restore the default sandbox
-    afterEach(() => {
-      sinon.restore();
     });
 
     // Test case to update metadata of non-text content with success and return success message
@@ -444,22 +390,16 @@ describe("lessonContentService", () => {
   describe("removeOneContent", () => {
     let contentId;
     let courseId;
+    let content;
+    let deleteLessonContentStub;
+    let removeContentFromLessonStub;
+    let deleteObjStub;
 
     // beforeEach hook to create a contentId
     beforeEach(() => {
       contentId = 'contentId';
       courseId = 'courseId';
-    });
-
-    // afterEach hook to restore the default sandbox
-    afterEach(() => {
-      sinon.restore();
-    });
-
-    // Test case to remove content that has type not text with success and return success message
-    it('remove content that has type not text with success and return success message', async () => {
-      // obejct of content
-      const content = {
+      content = {
         _id: contentId,
         lessonId: 'lessonId',
         title: 'content title',
@@ -467,9 +407,13 @@ describe("lessonContentService", () => {
         value: 'content value'
       };
       // Mock deleteLessonContent, deleteObj, and removeContentFromLesson functions
-      sinon.stub(lessonContentModel, "deleteLessonContent").returns(content);
-      sinon.stub(lessonModel, "removeContentFromLesson").returns('content removed');
-      sinon.stub(oracleStorage, "deleteObj").returns('deleted');
+      deleteLessonContentStub = sinon.stub(lessonContentModel, "deleteLessonContent").returns(content);
+      removeContentFromLessonStub = sinon.stub(lessonModel, "removeContentFromLesson").returns('content removed');
+      deleteObjStub = sinon.stub(oracleStorage, "deleteObj").returns('deleted');
+    });
+
+    // Test case to remove content that has type not text with success and return success message
+    it('remove content that has type not text with success and return success message', async () => {
       // call removeOneContent function
       const result = await lessonContentService.removeOneContent(courseId, contentId);
       // verify are called with the correct arguments
@@ -485,19 +429,9 @@ describe("lessonContentService", () => {
 
     // Test case to remove content that has type text with success and return success message
     it('remove content that has type text with success and return success message', async () => {
-      // obejct of content
-      const content = {
-        _id: contentId,
-        lessonId: 'lessonId',
-        title: 'content title',
-        type: 'text',
-        value: 'content value'
-      };
-      // Mock deleteLessonContent and removeContentFromLesson functions
-      sinon.stub(lessonContentModel, "deleteLessonContent").returns(content);
-      sinon.stub(lessonModel, "removeContentFromLesson").returns('content removed');
-      // spies on deleteObj function
-      sinon.spy(oracleStorage, "deleteObj");
+      // change type to text
+      content.type = 'text';
+      deleteLessonContentStub.returns(content);
       // call removeOneContent function
       const result = await lessonContentService.removeOneContent(courseId, contentId);
       // verify are called with the correct arguments
@@ -514,10 +448,7 @@ describe("lessonContentService", () => {
     // Test case to remove content with error in deleteLessonContent and throw an error
     it('remove content with error in deleteLessonContent and throw an error', async () => {
       // Mock deleteLessonContent function to throw an error
-      sinon.stub(lessonContentModel, "deleteLessonContent").throws(new Error('Failed to delete lesson content'));
-      // spy on all functions to check if they are called
-      sinon.spy(oracleStorage, "deleteObj");
-      sinon.spy(lessonModel, "removeContentFromLesson");
+      deleteLessonContentStub.throws(new Error('Failed to delete lesson content'));
       try {
         await lessonContentService.removeOneContent(courseId, contentId);
       } catch (error) {
@@ -535,20 +466,8 @@ describe("lessonContentService", () => {
 
     // Test case to remove content with non-text type with error in deleteObj and throw an error
     it('remove content with non-text type with error in deleteObj and throw an error', async () => {
-      // obejct of content
-      const content = {
-        _id: contentId,
-        lessonId: 'lessonId',
-        title: 'content title',
-        type: 'video',
-        value: 'content value'
-      };
-      // Mock deleteLessonContent function
-      sinon.stub(lessonContentModel, "deleteLessonContent").returns(content);
       // Mock deleteObj function to throw an error
-      sinon.stub(oracleStorage, "deleteObj").throws(new Error('Failed to delete file'));
-      // spy on all functions to check if they are called
-      sinon.spy(lessonModel, "removeContentFromLesson");
+      deleteObjStub.throws(new Error('Failed to delete file'));
       try {
         await lessonContentService.removeOneContent(courseId, contentId);
       } catch (error) {
@@ -566,20 +485,11 @@ describe("lessonContentService", () => {
 
     // Test case to remove content with error in removeContentFromLesson and throw an error
     it('remove content with error in removeContentFromLesson and throw an error', async () => {
-      // obejct of content
-      const content = {
-        _id: contentId,
-        lessonId: 'lessonId',
-        title: 'content title',
-        type: 'text',
-        value: 'content value'
-      };
-      // Mock deleteLessonContent function
-      sinon.stub(lessonContentModel, "deleteLessonContent").returns(content);
+      // change type to text
+      content.type = 'text';
+      deleteLessonContentStub.returns(content);
       // Mock removeContentFromLesson function to throw an error
-      sinon.stub(lessonModel, "removeContentFromLesson").throws(new Error('Failed to remove content from lesson'));
-      // spies on deleteObj function
-      sinon.spy(oracleStorage, "deleteObj");
+      removeContentFromLessonStub.throws(new Error('Failed to remove content from lesson'));
       try {
         await lessonContentService.removeOneContent(courseId, contentId);
       } catch (error) {

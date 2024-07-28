@@ -30,11 +30,6 @@ describe("Review Service", () => {
       reviewData = { courseId: 'courseId', rating: 5, _id: '60f6e1b9b58fe3208a9b8b55' };
     });
 
-    // afterEach function to restore the sandbox
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case for create Review function with both createReview and addReviewToCourse functions success calls and return message
     it("create Review function with both createReview and addReviewToCourse functions success calls and return message", async () => {
       // Mock the createReview and addReviewToCourse functions
@@ -123,11 +118,6 @@ describe("Review Service", () => {
       reviewId = '60f6e1b9b58fe3208a9b8b55';
     });
 
-    // afterEach function to restore the sandbox
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case for get Review function with getReview function success call and return review object data
     it("get Review function with getReview function success call and return review object data", async () => {
       // Mock the getReview function
@@ -164,11 +154,6 @@ describe("Review Service", () => {
     // beforeEach function to create the userId string
     beforeEach(() => {
       userId = '60f6e1b9b58fe3208a9b8b55';
-    });
-
-    // afterEach function to restore the sandbox
-    afterEach(() => {
-      sinon.restore();
     });
 
     // Test case for get All Reviews Of User function with getAllReviewsByUserId function success call and return array of reviews
@@ -210,11 +195,6 @@ describe("Review Service", () => {
       courseId = '60f6e1b9b58fe3208a9b8b55';
     });
 
-    // afterEach function to restore the sandbox
-    afterEach(() => {
-      sinon.restore();
-    });
-
     // Test case for get All Reviews Of Course function with getAllReviewsByCourseId function success call and return array of reviews
     it("get All Reviews Of Course function with getAllReviewsByCourseId function success call and return array of reviews", async () => {
       // Mock the getAllReviewsByCourseId function
@@ -254,11 +234,6 @@ describe("Review Service", () => {
     beforeEach(() => {
       reviewId = '60f6e1b9b58fe3208a9b8b55';
       reviewData = { _id: reviewId, courseId: 'courseId', rating: 5 };
-    });
-
-    // afterEach function to restore the sandbox
-    afterEach(() => {
-      sinon.restore();
     });
 
     // Test case for remove Review function with removeReview and removeReviewFromCourse functions success calls and return message

@@ -16,11 +16,6 @@ describe("paymentService", () => {
   // Test suite for getPaymentDetails function
   describe("getPaymentDetails", () => {
 
-    // afterEach test, restore the default sandbox
-    afterEach(() => {
-      Sinon.restore();
-    });
-
     // Test case for get payment details with success getPayment method call and return the payment document
     it("get payment details with success getPayment method call and return the payment document", async () => {
       // Mock the getPayment function to return a payment document
@@ -52,11 +47,6 @@ describe("paymentService", () => {
 
   // Test suite for getPaymentHistoryForUser function
   describe("getPaymentHistoryForUser", () => {
-
-    // afterEach test, restore the default sandbox
-    afterEach(() => {
-      Sinon.restore();
-    });
 
     // Test case for get payment history for user with success getAllPaymentsByUser method call and return the payment history
     it("get payment history for user with success getAllPaymentsByUser method call and return the payment history", async () => {
@@ -92,11 +82,6 @@ describe("paymentService", () => {
   // Test suite for getCourseTotalRevenue function
   describe("getCourseTotalRevenue", () => {
 
-    // afterEach test, restore the default sandbox
-    afterEach(() => {
-      Sinon.restore();
-    });
-
     // Test case for get course total revenue with success courseTotalPayment method call and return the total revenue
     it("get course total revenue with success courseTotalPayment method call and return the total revenue", async () => {
       // Mock the courseTotalPayment function to return the total revenue
@@ -129,11 +114,6 @@ describe("paymentService", () => {
   // Test suite for getInstructorTotalRevenue function
   describe("getInstructorTotalRevenue", () => {
 
-    // afterEach test, restore the default sandbox
-    afterEach(() => {
-      Sinon.restore();
-    });
-
     // Test case for get instructor total revenue with success getTotalPaymentForInstuctor method call and return the total revenue
     it("get instructor total revenue with success getTotalPaymentForInstuctor method call and return the total revenue", async () => {
       // Mock the getTotalPaymentForInstuctor function to return the total revenue
@@ -165,11 +145,6 @@ describe("paymentService", () => {
 
   // Test suite for getTotalRevenue function
   describe("getTotalRevenue", () => {
-
-    // afterEach test, restore the default sandbox
-    afterEach(() => {
-      Sinon.restore();
-    });
 
     // Test case for get total revenue with success totalPayment method call and return the total revenue
     it("get total revenue with success totalPayment method call and return the total revenue", async () => {

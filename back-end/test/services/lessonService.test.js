@@ -32,12 +32,18 @@ describe("lessonService", () => {
 
   // Test suite for createNewLesson function
   describe('createNewLesson function', () => {
+    // variables for create lesson stub and add lesson to section stub
+    let createLessonStub;
+    let addLessonToSectionStub;
+
+    // beforeEach hook to stub methods inside function
+    beforeEach(() => {
+      createLessonStub = sinon.stub(lessonModel, 'createLesson').returns(lessonData);
+      addLessonToSectionStub = sinon.stub(courseModel, 'addLessonToSection').returns('Lesson added to section');
+    });
 
     // Test case for create lesson with success call all methods and return success message
     it('create lesson with success call all methods and return success message', async () => {
-      // Mock up createLesson and addLessonToSection functions
-      sinon.stub(lessonModel, 'createLesson').returns(lessonData);
-      sinon.stub(courseModel, 'addLessonToSection').returns('Lesson added to section');
       // Call the createNewLesson function
       const message = await lessonService.createNewLesson(lessonData);
       // Verify that functions called with correct arguments
@@ -53,10 +59,7 @@ describe("lessonService", () => {
     // Test case for create lesson with error in createLesson function and success call addLessonToSection and return error message
     it('create lesson with error in createLesson function and success call addLessonToSection and return error message', async () => {
       // Mock up createLesson function to throw an error
-      sinon.stub(lessonModel, 'createLesson').throws(new Error('Error creating lesson'));
-      // spy on addLessonToSection function
-      sinon.spy(courseModel, 'addLessonToSection');
-      // Call the createNewLesson function
+      createLessonStub.throws(new Error('Error creating lesson'));
       try {
         await lessonService.createNewLesson(lessonData);
       } catch (error) {
@@ -73,10 +76,8 @@ describe("lessonService", () => {
 
     // Test case for create lesson with error in addLessonToSection function and success call createLesson and return error message
     it('create lesson with error in addLessonToSection function and success call createLesson and return error message', async () => {
-      // Mock up createLesson and addLessonToSection functions
-      sinon.stub(lessonModel, 'createLesson').returns(lessonData);
-      sinon.stub(courseModel, 'addLessonToSection').throws(new Error('Error adding lesson to section'));
-      // Call the createNewLesson function
+      // Mock up addLessonToSection function to throw an error
+      addLessonToSectionStub.throws(new Error('Error adding lesson to section'));
       try {
         await lessonService.createNewLesson(lessonData);
       } catch (error) {
@@ -94,8 +95,8 @@ describe("lessonService", () => {
     // Test case for create lesson with error both createLesson and addLessonToSection functions and return error message
     it('create lesson with error both createLesson and addLessonToSection functions and return error message', async () => {
       // Mock up createLesson function to throw an error
-      sinon.stub(lessonModel, 'createLesson').throws(new Error('Error creating lesson'));
-      sinon.stub(courseModel, 'addLessonToSection').throws(new Error('Error adding lesson to section'));
+      createLessonStub.throws(new Error('Error creating lesson'));
+      addLessonToSectionStub.throws(new Error('Error adding lesson to section'));
       // Call the createNewLesson function
       try {
         await lessonService.createNewLesson(lessonData);
@@ -230,21 +231,32 @@ describe("lessonService", () => {
 
   // Test suite for removeLesson function
   describe('removeLesson function', () => {
+    // variables for stubs, lesson content, and files
+    let deletelessonStub;
+    let deleteQuizStub;
+    let removeLessonFromSectionStub;
+    let deleteLessonContentByLessonIdStub;
+    let getAllObjStub;
+    let deleteObjStub;
+    let files;
 
-    // Test case for remove lesson has content and quiz with success all methods and return success message
-    it('remove lesson has content and quiz with success all methods and return success message', async () => {
+    // before hook to stub methods inside function and create list of files
+    beforeEach(() => {
+      // list of names of files start with lesson id
+      files = [`${lessonData._id}_file1`, `${lessonData._id}_file2`];
       // Add content and quiz data to lesson data
       lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
       lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
-      // list of names of files start with lesson id
-      const files = [`${lessonData._id}_file1`, `${lessonData._id}_file2`];
       // Mock up All methods with apprpriate return values
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(quizModel, 'deleteQuiz').returns('Quiz deleted successfully');
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson content deleted successfully');
-      sinon.stub(oracleStorage, 'getAllObj').returns(files);
-      sinon.stub(oracleStorage, 'deleteObj').returns('File deleted successfully');
+      deletelessonStub = sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
+      deleteQuizStub = sinon.stub(quizModel, 'deleteQuiz').returns('Quiz deleted successfully');
+      removeLessonFromSectionStub = sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
+      deleteLessonContentByLessonIdStub = sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson');
+      getAllObjStub = sinon.stub(oracleStorage, 'getAllObj').returns(files);
+      deleteObjStub = sinon.stub(oracleStorage, 'deleteObj').returns('File deleted successfully');
+    });
+    // Test case for remove lesson has content and quiz with success all methods and return success message
+    it('remove lesson has content and quiz with success all methods and return success message', async () => {
       // Call the removeLesson function
       const message = await lessonService.removeLesson(lessonData._id);
       // Verify that functions called with correct arguments
@@ -267,18 +279,9 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content only with success all methods and return success message
     it('remove lesson has content only with success all methods and return success message', async () => {
-      // Add content data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      // list of names of files start with lesson id
-      const files = [`${lessonData._id}_file1`, `${lessonData._id}_file2`];
-      // Mock up All methods with apprpriate return values
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson content deleted successfully');
-      sinon.stub(oracleStorage, 'getAllObj').returns(files);
-      sinon.stub(oracleStorage, 'deleteObj').returns('File deleted successfully');
-      // spy on deleteQuiz function
-      sinon.spy(quizModel, 'deleteQuiz');
+      // remove quiz data from lesson data
+      lessonData.quiz = null;
+      deletelessonStub.returns(lessonData);
       // Call the removeLesson function
       const message = await lessonService.removeLesson(lessonData._id);
       // Verify that functions called with correct arguments
@@ -301,17 +304,9 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has quiz only with success all methods and return success message
     it('remove lesson has quiz only with success all methods and return success message', async () => {
-      // Add quiz data to lesson data
+      // remove content data from lesson data
       lessonData.content = [];
-      lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
-      // Mock up All methods with apprpriate return values
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(quizModel, 'deleteQuiz').returns('Quiz deleted successfully');
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      // spy on deleteLessonContentByLessonId, getAllObj, and deleteObj functions
-      sinon.spy(lessonContentModel, 'deleteLessonContentByLessonId');
-      sinon.spy(oracleStorage, 'getAllObj');
-      sinon.spy(oracleStorage, 'deleteObj');
+      deletelessonStub.returns(lessonData);
       // Call the removeLesson function
       const message = await lessonService.removeLesson(lessonData._id);
       // Verify that functions called with correct arguments
@@ -335,14 +330,7 @@ describe("lessonService", () => {
       // Add quiz data to lesson data
       lessonData.content = [];
       lessonData.quiz = null;
-      // Mock up All methods with apprpriate return values
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      // spy on deleteQuiz, deleteLessonContentByLessonId, getAllObj, and deleteObj functions
-      sinon.spy(quizModel, 'deleteQuiz');
-      sinon.spy(lessonContentModel, 'deleteLessonContentByLessonId');
-      sinon.spy(oracleStorage, 'getAllObj');
-      sinon.spy(oracleStorage, 'deleteObj');
+      deletelessonStub.returns(lessonData);
       // Call the removeLesson function
       const message = await lessonService.removeLesson(lessonData._id);
       // Verify that functions called with correct arguments
@@ -363,17 +351,11 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and file list contain different lesson id and return success message
     it('remove lesson has content and file list contain different lesson id and return success message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = null
-      // list of names of files start with lesson id
-      const files = [`${lessonData._id}_file1`, '60f6e1b9b58fe3208a9b8b60_file2'];
-      // Mock up All methods with apprpriate return values
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson content deleted successfully');
-      sinon.stub(oracleStorage, 'getAllObj').returns(files);
-      sinon.stub(oracleStorage, 'deleteObj').returns('File deleted successfully');
+      // remove quiz and add diffrent lesson id to files
+      lessonData.quiz = null;
+      files[1] = '60f6e1b9b58fe3208a9b8b60_file1';
+      deletelessonStub.returns(lessonData);
+      getAllObjStub.returns(files);
       // Call the removeLesson function
       const message = await lessonService.removeLesson(lessonData._id);
       // Verify that functions called with correct arguments
@@ -393,18 +375,11 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and file list not contain lesson id and return success message
     it('remove lesson has content and file list not contain lesson id and return success message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = null
-      // list of names of files start with lesson id
-      const files = ['60f6e1b9b58fe3208a9b8b88_file1', '60f6e1b9b58fe3208a9b8b80_file2'];
-      // Mock up All methods with apprpriate return values
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson content deleted successfully');
-      sinon.stub(oracleStorage, 'getAllObj').returns(files);
-      // spy on deleteObj function
-      sinon.spy(oracleStorage, 'deleteObj');
+      // remove quiz and add diffrent lesson id to files
+      lessonData.quiz = null;
+      files = ['60f6e1b9b58fe3208a9b8b88_file1', '60f6e1b9b58fe3208a9b8b80_file2'];
+      deletelessonStub.returns(lessonData);
+      getAllObjStub.returns(files);
       // Call the removeLesson function
       const message = await lessonService.removeLesson(lessonData._id);
       // Verify that functions called with correct arguments
@@ -424,18 +399,11 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and file list is empty and return success message
     it('remove lesson has content and file list is empty and return success message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
+      // remove quiz and add diffrent lesson id to files
       lessonData.quiz = null
-      // list of names of files start with lesson id
-      const files = [];
-      // Mock up All methods with apprpriate return values
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson content deleted successfully');
-      sinon.stub(oracleStorage, 'getAllObj').returns(files);
-      // spy on deleteObj function
-      sinon.spy(oracleStorage, 'deleteObj');
+      files = [];
+      deletelessonStub.returns(lessonData);
+      getAllObjStub.returns(files);
       // Call the removeLesson function
       const message = await lessonService.removeLesson(lessonData._id);
       // Verify that functions called with correct arguments
@@ -455,17 +423,8 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and quiz with error in deleteLesson function and return error message
     it('remove lesson has content and quiz with error in deleteLesson function and return error message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
       // Mock up deleteLesson function to throw an error
-      sinon.stub(lessonModel, 'deleteLesson').throws(new Error('Error deleting lesson'));
-      // spy on deleteQuiz, removeLessonFromSection, deleteLessonContentByLessonId, getAllObj, and deleteObj functions
-      sinon.spy(quizModel, 'deleteQuiz');
-      sinon.spy(courseModel, 'removeLessonFromSection');
-      sinon.spy(lessonContentModel, 'deleteLessonContentByLessonId');
-      sinon.spy(oracleStorage, 'getAllObj');
-      sinon.spy(oracleStorage, 'deleteObj');
+      deletelessonStub.throws(new Error('Error deleting lesson'));
       // Call the removeLesson function
       try {
         await lessonService.removeLesson(lessonData._id);
@@ -487,17 +446,8 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and quiz with error in deleteQuiz function and return error message
     it('remove lesson has content and quiz with error in deleteQuiz function and return error message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
       // Mock up deleteQuiz function to throw an error
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(quizModel, 'deleteQuiz').throws(new Error('Error deleting quiz'));
-      // spy on removeLessonFromSection, deleteLessonContentByLessonId, getAllObj, and deleteObj functions
-      sinon.spy(courseModel, 'removeLessonFromSection');
-      sinon.spy(lessonContentModel, 'deleteLessonContentByLessonId');
-      sinon.spy(oracleStorage, 'getAllObj');
-      sinon.spy(oracleStorage, 'deleteObj');
+      deleteQuizStub.throws(new Error('Error deleting quiz'));
       // Call the removeLesson function
       try {
         await lessonService.removeLesson(lessonData._id);
@@ -519,17 +469,8 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and quiz with error in removeLessonFromSection function and return error message
     it('remove lesson has content and quiz with error in removeLessonFromSection function and return error message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
       // Mock up removeLessonFromSection function to throw an error
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(quizModel, 'deleteQuiz').returns('Quiz deleted successfully');
-      sinon.stub(courseModel, 'removeLessonFromSection').throws(new Error('Error removing lesson from section'));
-      // spy on deleteLessonContentByLessonId, getAllObj, and deleteObj functions
-      sinon.spy(lessonContentModel, 'deleteLessonContentByLessonId');
-      sinon.spy(oracleStorage, 'getAllObj');
-      sinon.spy(oracleStorage, 'deleteObj');
+      removeLessonFromSectionStub.throws(new Error('Error removing lesson from section'));
       // Call the removeLesson function
       try {
         await lessonService.removeLesson(lessonData._id);
@@ -553,17 +494,8 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and quiz with error in deleteLessonContentByLessonId function and return error message
     it('remove lesson has content and quiz with error in deleteLessonContentByLessonId function and return error message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
       // Mock up deleteLessonContentByLessonId function to throw an error
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(quizModel, 'deleteQuiz').returns('Quiz deleted successfully');
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').throws(new Error('Error deleting lesson content'));
-      // spy on getAllObj and deleteObj functions
-      sinon.spy(oracleStorage, 'getAllObj');
-      sinon.spy(oracleStorage, 'deleteObj');
+      deleteLessonContentByLessonIdStub.throws(new Error('Error deleting lesson content'));
       // Call the removeLesson function
       try {
         await lessonService.removeLesson(lessonData._id);
@@ -587,18 +519,8 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and quiz with error in getAllObj function and return error message
     it('remove lesson has content and quiz with error in getAllObj function and return error message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
       // Mock up getAllObj function to throw an error
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(quizModel, 'deleteQuiz').returns('Quiz deleted successfully');
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson content deleted successfully');
-      sinon.stub(oracleStorage, 'getAllObj').throws(new Error('Error getting files in bucket'));
-      // spy on deleteObj function
-      sinon.spy(oracleStorage, 'deleteObj');
-      // Call the removeLesson function
+      getAllObjStub.throws(new Error('Error getting files in bucket'));
       try {
         await lessonService.removeLesson(lessonData._id);
       } catch (error) {
@@ -621,18 +543,8 @@ describe("lessonService", () => {
 
     // Test case for remove lesson has content and quiz with error in deleteObj function and return error message
     it('remove lesson has content and quiz with error in deleteObj function and return error message', async () => {
-      // Add content and quiz data to lesson data
-      lessonData.content = ['60f6e1b9b58fe3208a9b8b58'];
-      lessonData.quiz = '60f6e1b9b58fe3208a9b8b59';
-      // list of names of files start with lesson id
-      const files = [`${lessonData._id}_file1`, `${lessonData._id}_file2`];
       // Mock up deleteObj function to throw an error
-      sinon.stub(lessonModel, 'deleteLesson').returns(lessonData);
-      sinon.stub(quizModel, 'deleteQuiz').returns('Quiz deleted successfully');
-      sinon.stub(courseModel, 'removeLessonFromSection').returns('Lesson removed from section');
-      sinon.stub(lessonContentModel, 'deleteLessonContentByLessonId').returns('Lesson content deleted successfully');
-      sinon.stub(oracleStorage, 'getAllObj').returns(files);
-      sinon.stub(oracleStorage, 'deleteObj').throws(new Error('Error deleting file'));
+      deleteObjStub.throws(new Error('Error deleting file'));
       // Call the removeLesson function
       try {
         await lessonService.removeLesson(lessonData._id);

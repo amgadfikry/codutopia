@@ -121,6 +121,28 @@ class LessonModel extends LessonSchema {
     }
   }
 
+  /* getAllLessonsIdsByCourseId method to get all lessons from the database by course ID
+    Parameters:
+      - courseId: ID of the course to get the lessons
+      - session: optional session for the transaction
+    Returns:
+      - all lessons objects
+    Errors:
+      - Failed to get lessons
+  */
+  async getAllLessonsIdsByCourseId(courseId, session = null) {
+    try {
+      // Get all lessons from the database
+      const result = await this.lesson.find({ courseId }, {}, { session });
+      // filter the result to get only the lessons ids
+      const lessonsIds = result.map(lesson => lesson._id);
+      // return the lessons ids
+      return lessonsIds;
+    } catch (error) {
+      throw new Error('Failed to get lessons');
+    }
+  }
+
   /* UpdateLesson method to update a lesson in the database
     Parameters:
       - lessonId: ID of the lesson to update
@@ -245,10 +267,7 @@ class LessonModel extends LessonSchema {
     try {
       // Delete all lessons from the database
       const result = await this.lesson.deleteMany({ sectionId }, { session });
-      // if the lessons are not found, throw an error
-      if (result.deletedCount === 0) {
-        throw new Error(`Lessons not found or could not be deleted`);
-      }
+      // return message that the lessons are deleted
       return "Lessons deleted successfully";
     }
     catch (error) {
@@ -269,10 +288,7 @@ class LessonModel extends LessonSchema {
     try {
       // Delete all lessons from the database
       const result = await this.lesson.deleteMany({ courseId }, { session });
-      // if the lessons are not found, throw an error
-      if (result.deletedCount === 0) {
-        throw new Error(`Lessons not found or could not be deleted`);
-      }
+      // return message that the lessons are deleted
       return "Lessons deleted successfully";
     } catch (error) {
       throw new Error('Lessons not found or could not be deleted');

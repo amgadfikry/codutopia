@@ -19,7 +19,7 @@ export async function createNewCourse(courseData) {
     // Create the course in the database
     const course = await courseModel.createCourse(courseData, session);
     // Add the course to the author courses list
-    await userModel.addCourseToWishlistorCreatedList(courseData.authorId, course._id, session);
+    await userModel.addCourseToWishlistorCreatedList(courseData.authorId, 'createdList', course._id, session);
     // Create a bucket in oracle storage for the course
     await oracleStorage.createBucket(course._id);
     // Commit the transaction
@@ -213,3 +213,51 @@ export async function removeSection(courseId, sectionId) {
     throw new Error(error.message);
   }
 }
+
+
+/* removeCourse function removes the course from the database, all sections, lessons, quizzes, files, contents, reviews
+    Parameters:
+      - courseId: string of the course id
+    Returns:
+      - message of 'Course removed successfully'
+    Errors:
+      - Throw error according to the error that occurred
+*/
+export async function removeCourse(courseId) {
+  // start a session for the transaction
+  const session = await mongoDB.startSession();
+  try {
+    // remove the course from the database
+    const course = await courseModel.deleteCourse(courseId, session);
+    // remove course from list of author courses
+    await userModel.removeCourseFromList(course.authorId, 'createdList', courseId, session);
+    // if course hava reviews, delete all reviews of the course by course id
+    if (course.reviews.length > 0) {
+      await reviewModel.removeAllReviewsByCourseId(courseId, session);
+    }
+    // get list of all lessons in course
+    const lessons = await lessonModel.getAllLessonsIdsByCourseId(courseId, session);
+    if (lessons.length > 0) {
+      // delete all lessons of the course by course id
+      await lessonModel.deleteAllLessonsByCourseId(courseId, session);
+      // delete all lesson contents of lessons of the course with lessons ids
+      await lessonContentModel.deleteLessonContentByLessonsIdsList(lessons, session);
+      // remove all quizzez of lessons of the course with lessons ids
+      await quizModel.deleteAllQuizzezByLessonIdList(lessons, session);
+    }
+    // get list of all files on oracle storage in course bucket
+    const files = await oracleStorage.getAllObj(courseId);
+    // delete all files in the course from oracle storage
+    for (const file of files) {
+      await oracleStorage.deleteObj(courseId, file);
+    };
+    // Commit the transaction
+    await mongoDB.commitTransaction(session);
+    return 'Course removed successfully';
+  } catch (error) {
+    // abort the transaction if an error occurred
+    await mongoDB.abortTransaction(session);
+    throw new Error(error.message);
+  }
+}
+

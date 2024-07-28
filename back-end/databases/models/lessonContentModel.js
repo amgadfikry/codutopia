@@ -193,10 +193,6 @@ class LessonContentModel extends LessonContentSchema {
     try {
       // Delete the lesson content from the database
       const result = await this.lessonContent.deleteMany({ lessonId }, { session });
-      // if the lesson content could not be deleted, throw an error
-      if (result.deletedCount === 0) {
-        throw new Error(`Failed to delete or not found lesson content`);
-      }
       return 'Lesson contents deleted successfully';
     }
     catch (error) {
@@ -217,10 +213,6 @@ class LessonContentModel extends LessonContentSchema {
     try {
       // Delete the lesson content from the database
       const result = await this.lessonContent.deleteMany({ lessonId: { $in: lessonsIds } }, { session });
-      // if the lesson content could not be deleted, throw an error
-      if (result.deletedCount === 0) {
-        throw new Error(`Failed to delete or not found lesson content`);
-      }
       return 'Lesson contents deleted successfully';
     }
     catch (error) {

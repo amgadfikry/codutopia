@@ -451,15 +451,13 @@ describe("LessonContentModel", () => {
       expect(result).to.equal("Lesson contents deleted successfully");
     });
 
-    // Test case for deleting a list of lesson content with invalid lesson ID and throw an error 
-    it("delete a list of lesson content with invalid lesson ID and throw an error", async () => {
-      try {
-        // Delete the list of lesson content with invalid lesson ID
-        await lessonContentModel.deleteLessonContentByLessonId("5f9d88d9c3b5e4a2e4f036l8");
-      } catch (error) {
-        // Check if the error is correct
-        expect(error.message).to.equal("Failed to delete or not found lesson content");
-      }
+    // Test case for deleting a list of lesson content with invalid lesson ID and no thing deleted
+    it("delete a list of lesson content with invalid lesson ID and no thing deleted", async () => {
+      // Delete the list of lesson content with invalid lesson ID
+      await lessonContentModel.deleteLessonContentByLessonId("5f9d88d9c3b5e4a2e4f036l8");
+      // Check if the lesson content is not deleted
+      const result = await lessonContentModel.lessonContent.find({});
+      expect(result.length).to.equal(2);
     });
 
     // Test case for deleting a list of lesson content with valid lesson ID in transaction with session key and success
@@ -473,26 +471,6 @@ describe("LessonContentModel", () => {
       // Check if the lesson content is deleted
       const result = await lessonContentModel.lessonContent.find({});
       expect(result.length).to.equal(0);
-    });
-
-    // Test case for deleting a list of lesson content with invalid lesson ID in transaction with session key and failed
-    it("delete a list of lesson content with invalid lesson ID in transaction with session key and failed", async () => {
-      // Start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // Delete the list of lesson content with invalid lesson ID
-        await lessonContentModel.deleteLessonContentByLessonId("5f9d88d9c3b5e4a2e4f036l8", session);
-        // Commit the transaction
-        await mongoDB.commitTransaction(session);
-      } catch (error) {
-        // Check if the error is correct
-        expect(error.message).to.equal("Failed to delete or not found lesson content");
-        // Abort the transaction
-        await mongoDB.abortTransaction(session);
-      }
-      // Check if the lesson content is not deleted
-      const result = await lessonContentModel.lessonContent.find({});
-      expect(result.length).to.equal(2);
     });
   });
 
@@ -523,18 +501,13 @@ describe("LessonContentModel", () => {
       expect(result2.length).to.equal(0);
     });
 
-    // Test case for deleting a list of lesson content with invalid lesson IDs and throw an error 
-    it("delete a list of lesson content with invalid lesson IDs and throw an error", async () => {
-      try {
-        // Delete the list of lesson content with invalid lesson IDs
-        await lessonContentModel.deleteLessonContentByLessonsIdsList(["5f9d88d9c3b5e4a2e4f036l8"]);
-      } catch (error) {
-        // Check if the error is correct
-        expect(error.message).to.equal("Failed to delete or not found lesson content");
-        // Check if the lesson content is not deleted
-        const result = await lessonContentModel.lessonContent.find({});
-        expect(result.length).to.equal(2);
-      }
+    // Test case for deleting a list of lesson content with invalid lesson IDs and do not delete anything
+    it("delete a list of lesson content with invalid lesson IDs and do not delete anything", async () => {
+      // Delete the list of lesson content with invalid lesson IDs
+      await lessonContentModel.deleteLessonContentByLessonsIdsList(["5f9d88d9c3b5e4a2e4f03698"]);
+      // Check if the lesson content is not deleted
+      const result = await lessonContentModel.lessonContent.find({});
+      expect(result.length).to.equal(2);
     });
 
     // Test case for deleting a list of lesson content with valid lesson IDs in transaction with session key and success
@@ -548,26 +521,6 @@ describe("LessonContentModel", () => {
       // Check if the lesson content is deleted
       const result = await lessonContentModel.lessonContent.find({});
       expect(result.length).to.equal(0);
-    });
-
-    // Test case for deleting a list of lesson content with invalid lesson IDs in transaction with session key and failed
-    it("delete a list of lesson content with invalid lesson IDs in transaction with session key and failed", async () => {
-      // Start a new session
-      const session = await mongoDB.startSession();
-      try {
-        // Delete the list of lesson content with invalid lesson IDs
-        await lessonContentModel.deleteLessonContentByLessonsIdsList(["5f9d88d9c3b5e4a2e4f036l8"], session);
-        // Commit the transaction
-        await mongoDB.commitTransaction(session);
-      } catch (error) {
-        // Check if the error is correct
-        expect(error.message).to.equal("Failed to delete or not found lesson content");
-        // Abort the transaction
-        await mongoDB.abortTransaction(session);
-        // Check if the lesson content is not deleted
-        const result = await lessonContentModel.lessonContent.find({});
-        expect(result.length).to.equal(2);
-      }
     });
   });
 

@@ -202,59 +202,6 @@ class CourseModel extends CourseSchema {
     }
   }
 
-  /* getSectionWithLessonsData method to get a section with lessons data details
-    Parameters:
-      - courseId: string or object id with course id
-      - sectionId: string or object id with section id
-    Returns:
-      - section data object with lessons data
-    Errors:
-      - Course or section not found
-      - Other errors
-  */
-  async getSectionWithLessonsData(courseId, sectionId, session = null) {
-    try {
-      // find the course by id and section field and get the section data with lessons data
-      const course = await this.course.findOne(
-        { _id: courseId, 'sections._id': sectionId },
-        { 'sections.$': 1 },
-        { session }
-      ).populate('sections.lessons');
-      // check if the course is not found and throw an error
-      if (!course) {
-        throw new Error(`Course or section not found`);
-      }
-      return course.sections[0];
-    }
-    catch (error) {
-      throw new Error('Course or section not found');
-    }
-  }
-
-  /* getAllSectionsWithLessonsData method to get all sections with lessons data details
-    Parameters:
-      - courseId: string or object id with course id
-    Returns:
-      - array of section data objects with lessons data
-    Errors:
-      - Course not found
-      - Other errors
-  */
-  async getAllSectionsWithLessonsData(courseId, session = null) {
-    try {
-      // find the course by id and get all sections data with lessons data
-      const course = await this.course.findById(courseId, {}, { session }).populate('sections.lessons');
-      // check if the course is not found and throw an error
-      if (!course) {
-        throw new Error(`Course not found`);
-      }
-      return course.sections;
-    }
-    catch (error) {
-      throw new Error('Course not found');
-    }
-  }
-
   /* updateSection method to update a section data in a course
     Parameters:
       - courseId: string or object id with course id
@@ -420,15 +367,10 @@ class CourseModel extends CourseSchema {
     try {
       // find the course by authorId and remove it
       const deletedCourses = await this.course.deleteMany({ authorId }, { session });
-      if (deletedCourses.deletedCount === 0) {
-        throw new Error(`User has no courses`);
-      }
+      // return message with success if the courses are deleted successfully
       return 'All courses deleted successfully';
     }
     catch (error) {
-      if (error.message === 'User has no courses') {
-        throw new Error(error.message);
-      }
       throw new Error(`Failed to delete courses`);
     }
   }

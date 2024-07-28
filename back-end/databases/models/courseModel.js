@@ -43,7 +43,7 @@ class CourseModel extends CourseSchema {
     }
   }
 
-  /* GetCourse method to get a course by id
+  /* getCourseWithLessons method to get a course by id with details of sections and lessons
     Parameters:
       - courseId: string with course id
       - session: optional session for the transaction
@@ -53,10 +53,14 @@ class CourseModel extends CourseSchema {
       - Course not found
       - Other errors
   */
-  async getCourse(courseId, session = null) {
+  async getCourseWithLessons(courseId, session = null) {
     try {
       // find the course by id
-      const course = await this.course.findById(courseId, {}, { session });
+      const course = await this.course.findById(
+        courseId,
+        {},
+        { session }
+      ).populate('sections.lessons');
       // check if the course is not found and throw an error
       if (!course) {
         throw new Error(`Course not found`);
@@ -65,26 +69,6 @@ class CourseModel extends CourseSchema {
     }
     catch (error) {
       throw new Error('Course not found');
-    }
-  }
-
-  /* getAllCoursesPagination method to get all courses with pagination and offset
-    Parameters:
-      - page: number with the page number and default to 1
-      - limit: number with the number of courses per page and default to 10
-    Returns:
-      - array of course data objects
-    Errors:
-      - Failed to get courses
-  */
-  async getAllCoursesPagination(page = 1, limit = 10, session = null) {
-    try {
-      // find all courses with pagination and offset
-      const courses = await this.course.find({}, {}, { skip: (page - 1) * limit, limit: limit, session });
-      return courses;
-    }
-    catch (error) {
-      throw new Error(`Failed to get courses`);
     }
   }
 
@@ -109,46 +93,38 @@ class CourseModel extends CourseSchema {
 
   /* filterCourses method to filter courses by query filters and pagination
     Parameters:
-      - query: object with query filters
-      - tags: array of strings with tags or default to empty array
-      - sortField: string with sort field or default to 'createdAt'
-      - order: number with sort order or default to -1 [ for descending use -1, for ascending use 1]
-      - page: number with the page number or default to 1
-      - limit: number with the number of courses per page or default to 10
+      - query: object with query filters {title, price, tags, sortField, order, page, limit}
+      - session: optional session for the transaction
     Returns:
       - array of course data objects
     Errors:
       - Failed to filter courses
   */
-  async filterCourses(query, tags = [], sortField = 'createdAt', order = -1, page = 1, limit = 10, session = null) {
+  async filterCourses(query = {}, session = null) {
     try {
       // create a filter object with the query filters
-      const filter = { ...query };
-      // check if query contain title field and add regex search for title
-      if (query.title) {
-        filter.title = { $regex: query.title, $options: 'i' };
-      }
-      // check if query contain price field and add price from 0 to the price value
-      if (query.price) {
-        filter.price = { $lte: query.price };
-      }
-      // add tags filter if tags array is not empty
-      if (tags.length > 0) {
-        filter.tags = { $all: tags };
-      }
-      // claculate skip value for pagination
-      const skip = (page - 1) * limit;
+      const filter = {
+        title: query.title ? { $regex: query.title, $options: 'i' } : undefined,
+        price: query.price ? { $lte: query.price } : undefined,
+        tags: query.tags && query.tags.length > 0 ? { $in: query.tags } : undefined
+      };
+      // remove undefined fields from the filter object
+      Object.keys(filter).forEach(key => filter[key] === undefined && delete filter[key]);
+      // Create options object for all option of filter, sort, pagination, and offset
+      const sortField = query.sortField ? query.sortField : 'createdAt';
+      const limit = query.limit ? query.limit : 10;
+      const options = {
+        sort: { [sortField]: query.order === 'asc' ? 1 : -1 },
+        limit,
+        skip: query.page ? (query.page - 1) * limit : 0,
+        session
+      };
       // find courses with the filter, sort, pagination, and offset
-      const courses = await this.course.find(filter, {},
-        {
-          sort: { [sortField]: order },
-          skip,
-          limit,
-          session
-        });
+      const courses = await this.course.find(filter, {}, options);
       return courses;
     }
     catch (error) {
+      // throw an error if failed to filter courses
       throw new Error(`Failed to filter courses`);
     }
   }
@@ -167,19 +143,10 @@ class CourseModel extends CourseSchema {
   */
   async updateCourse(courseId, courseData, session = null) {
     try {
-      // create object of course metadata to use it in the update operation
-      const courseMetadata = {
-        title: courseData.title,
-        description: courseData.description,
-        tags: courseData.tags,
-        price: courseData.price,
-        discount: courseData.discount,
-        image: courseData.image
-      };
       // find the course by id and update it
       const updatedCourse = await this.course.findByIdAndUpdate(
         courseId,
-        courseMetadata,
+        courseData,
         { new: true, session, runValidators: true }
       );
       // check if the course is not found and throw an error

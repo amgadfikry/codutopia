@@ -44,19 +44,27 @@ describe("courseService", () => {
 
   // Test suite for createNewCourse function
   describe("createNewCourse", () => {
+    // Variables for createCourse, addCourseToWishlistorCreatedList, and createBucket functions
+    let createCourseStub;
+    let addCourseToWishlistorCreatedListStub;
+    let createBucketStub;
+
+    // beforeEach test define stubs for createCourse, addCourseToWishlistorCreatedList, and createBucket functions
+    beforeEach(() => {
+      createCourseStub = sinon.stub(courseModel, "createCourse").returns(returnCourseData);
+      addCourseToWishlistorCreatedListStub = sinon.stub(userModel, "addCourseToWishlistorCreatedList").returns('added');
+      createBucketStub = sinon.stub(oracleStorage, "createBucket").returns('bucket');
+    });
 
     // Test case for create new course with success call all methods and return success message
     it("create new course with success call all methods and return success message", async () => {
-      // Mock the createCourse, addCourseToWishlistorCreatedList functions, and createBucket function
-      sinon.stub(courseModel, "createCourse").returns(returnCourseData);
-      sinon.stub(userModel, "addCourseToWishlistorCreatedList").returns('added');
-      sinon.stub(oracleStorage, "createBucket").returns('bucket');
       // Call the createNewCourse function
       const result = await courseService.createNewCourse(courseData);
       // Verify that the functions were called with the arguments correctly
       expect(mongoDB.startSession.calledOnce).to.be.true;
       expect(courseModel.createCourse.calledOnceWith(courseData, 'session')).to.be.true;
-      expect(userModel.addCourseToWishlistorCreatedList.calledOnceWith(courseData.authorId, courseData._id, 'session')).to.be.true;
+      expect(userModel.addCourseToWishlistorCreatedList.calledOnceWith(
+        courseData.authorId, 'createdList', courseData._id, 'session')).to.be.true;
       expect(oracleStorage.createBucket.calledOnceWith(courseData._id)).to.be.true;
       expect(mongoDB.commitTransaction.calledOnceWith('session')).to.be.true;
       expect(mongoDB.abortTransaction.calledOnce).to.be.false;
@@ -67,10 +75,7 @@ describe("courseService", () => {
     // Test case for create new course with error in createCourse calls and throw error
     it("create new course with error in createCourse calls and throw error", async () => {
       // Mock the createCourse function to throw an error
-      sinon.stub(courseModel, "createCourse").throws(new Error('Error in createCourse'));
-      // Spy on the addCourseToWishlistorCreatedList and createBucket functions
-      sinon.spy(userModel, "addCourseToWishlistorCreatedList");
-      sinon.spy(oracleStorage, "createBucket");
+      createCourseStub.throws(new Error('Error in createCourse'));
       try {
         // Call the createNewCourse function
         await courseService.createNewCourse(courseData);
@@ -90,10 +95,7 @@ describe("courseService", () => {
     // Test case for create new course with error in addCourseToWishlistorCreatedList calls and throw error
     it("create new course with error in addCourseToWishlistorCreatedList calls and throw error", async () => {
       // Mock the createCourse and addCourseToWishlistorCreatedList functions
-      sinon.stub(courseModel, "createCourse").returns(returnCourseData);
-      sinon.stub(userModel, "addCourseToWishlistorCreatedList").throws(new Error('Error in addCourseToWishlistorCreatedList'));
-      // Spy on the createBucket function
-      sinon.spy(oracleStorage, "createBucket");
+      addCourseToWishlistorCreatedListStub.throws(new Error('Error in addCourseToWishlistorCreatedList'));
       try {
         // Call the createNewCourse function
         await courseService.createNewCourse(courseData);
@@ -101,7 +103,8 @@ describe("courseService", () => {
         // Verify that the functions were called with the arguments correctly
         expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(courseModel.createCourse.calledOnceWith(courseData, 'session')).to.be.true;
-        expect(userModel.addCourseToWishlistorCreatedList.calledOnceWith(courseData.authorId, courseData._id, 'session')).to.be.true;
+        expect(userModel.addCourseToWishlistorCreatedList.calledOnceWith(
+          courseData.authorId, 'createdList', courseData._id, 'session')).to.be.true;
         expect(oracleStorage.createBucket.calledOnce).to.be.false;
         expect(mongoDB.commitTransaction.calledOnce).to.be.false;
         expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
@@ -113,9 +116,7 @@ describe("courseService", () => {
     // Test case for create new course with error in createBucket calls and throw error
     it("create new course with error in createBucket calls and throw error", async () => {
       // Mock the createCourse and addCourseToWishlistorCreatedList functions
-      sinon.stub(courseModel, "createCourse").returns(returnCourseData);
-      sinon.stub(userModel, "addCourseToWishlistorCreatedList").returns('added');
-      sinon.stub(oracleStorage, "createBucket").throws(new Error('Error in createBucket'));
+      createBucketStub.throws(new Error('Error in createBucket'));
       try {
         // Call the createNewCourse function
         await courseService.createNewCourse(courseData);
@@ -123,34 +124,13 @@ describe("courseService", () => {
         // Verify that the functions were called with the arguments correctly
         expect(mongoDB.startSession.calledOnce).to.be.true;
         expect(courseModel.createCourse.calledOnceWith(courseData, 'session')).to.be.true;
-        expect(userModel.addCourseToWishlistorCreatedList.calledOnceWith(courseData.authorId, courseData._id, 'session')).to.be.true;
+        expect(userModel.addCourseToWishlistorCreatedList.calledOnceWith(
+          courseData.authorId, 'createdList', courseData._id, 'session')).to.be.true;
         expect(oracleStorage.createBucket.calledOnceWith(courseData._id)).to.be.true;
         expect(mongoDB.commitTransaction.calledOnce).to.be.false;
         expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check if the error message is as expected
         expect(error.message).to.equal('Error in createBucket');
-      }
-    });
-
-    // Test case for create new course with error in calls of all methods and throw error
-    it("create new course with error in calls of all methods and throw error", async () => {
-      // Mock the createCourse function to throw an error
-      sinon.stub(courseModel, "createCourse").throws(new Error('Error in createCourse'));
-      sinon.stub(userModel, "addCourseToWishlistorCreatedList").throws(new Error('Error in addCourseToWishlistorCreatedList'));
-      sinon.stub(oracleStorage, "createBucket").throws(new Error('Error in createBucket'));
-      try {
-        // Call the createNewCourse function
-        await courseService.createNewCourse(courseData);
-      } catch (error) {
-        // Verify that the functions were called with the arguments correctly
-        expect(mongoDB.startSession.calledOnce).to.be.true;
-        expect(courseModel.createCourse.calledOnceWith(courseData, 'session')).to.be.true;
-        expect(userModel.addCourseToWishlistorCreatedList.calledOnce).to.be.false;
-        expect(oracleStorage.createBucket.calledOnce).to.be.false;
-        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
-        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
-        // Check if the error message is as expected
-        expect(error.message).to.equal('Error in createCourse');
       }
     });
   });
@@ -228,6 +208,9 @@ describe("courseService", () => {
   describe("updateCourseMetadata", () => {
     // variable of updated course data
     let updatedCourseData;
+    let updateCourseStub;
+    let createObjStub;
+    let createUrlStub;
 
     // beforeEach test define updatedCourseData object
     beforeEach(() => {
@@ -237,15 +220,14 @@ describe("courseService", () => {
         price: 200,
         discount: 20,
       };
+      // Mock the updateCourseMetadata, uploadImageToBucket, and updateCourseImage functions
+      updateCourseStub = sinon.stub(courseModel, "updateCourse").returns('updated');
+      createObjStub = sinon.stub(oracleStorage, "createObj").returns('uploaded');
+      createUrlStub = sinon.stub(oracleStorage, "createUrl").returns('url');
     });
 
     // Test case for update course metadata without image data with success call all methods and return success message
     it("update course metadata without image data with success call all methods and return success message", async () => {
-      // Mock the updateCourseMetadata, uploadImageToBucket, and updateCourseImage functions
-      sinon.stub(courseModel, "updateCourse").returns('updated');
-      // spy on the other methods
-      sinon.spy(oracleStorage, "createObj");
-      sinon.spy(oracleStorage, "createUrl");
       // Call the updateCourseMetadata function
       const result = await courseService.updateCourseMetadata(courseData._id, updatedCourseData);
       // Verify that the functions were called with the arguments correctly
@@ -261,11 +243,6 @@ describe("courseService", () => {
 
     // Test case for update course metadata without image data and data other than metadata fields with success call all methods
     it("update course metadata without image data and data other than metadata fields with success call all methods", async () => {
-      // Mock the updateCourseMetadata, uploadImageToBucket, and updateCourseImage functions
-      sinon.stub(courseModel, "updateCourse").returns('updated');
-      // spy on the other methods
-      sinon.spy(oracleStorage, "createObj");
-      sinon.spy(oracleStorage, "createUrl");
       // Call the updateCourseMetadata function
       await courseService.updateCourseMetadata(courseData._id, { ...updatedCourseData, students: 10 });
       // Verify that the functions were called with the arguments correctly
@@ -280,10 +257,7 @@ describe("courseService", () => {
     // Test case for update course metadata without image data with error in updateCourse calls and throw error
     it("update course metadata without image data with error in updateCourse calls and throw error", async () => {
       // Mock the updateCourse function to throw an error
-      sinon.stub(courseModel, "updateCourse").throws(new Error('Error in updateCourse'));
-      // spy on the other methods
-      sinon.spy(oracleStorage, "createObj");
-      sinon.spy(oracleStorage, "createUrl");
+      updateCourseStub.throws(new Error('Error in updateCourse'));
       try {
         // Call the updateCourseMetadata function
         await courseService.updateCourseMetadata(courseData._id, updatedCourseData);
@@ -305,10 +279,6 @@ describe("courseService", () => {
       // add image field to updatedCourseData
       updatedCourseData.image = 'image.jpg';
       const image_name = `${courseData._id}_${updatedCourseData.image}`;
-      // Mock the updateCourseMetadata, uploadImageToBucket, and updateCourseImage functions
-      sinon.stub(courseModel, "updateCourse").returns('updated');
-      sinon.stub(oracleStorage, "createObj").returns('uploaded');
-      sinon.stub(oracleStorage, "createUrl").returns('url');
       // Call the updateCourseMetadata function
       const result = await courseService.updateCourseMetadata(courseData._id, updatedCourseData, 'file');
       // Verify that the functions were called with the arguments correctly
@@ -326,10 +296,6 @@ describe("courseService", () => {
     it("update course metadata with image data and file not provided and throw error", async () => {
       // add image field to updatedCourseData
       updatedCourseData.image = 'image.jpg';
-      // Mock the updateCourseMetadata, uploadImageToBucket, and updateCourseImage functions
-      sinon.stub(courseModel, "updateCourse").returns('updated');
-      sinon.stub(oracleStorage, "createObj").returns('uploaded');
-      sinon.stub(oracleStorage, "createUrl").returns('url');
       try {
         // Call the updateCourseMetadata function
         await courseService.updateCourseMetadata(courseData._id, updatedCourseData);
@@ -351,10 +317,8 @@ describe("courseService", () => {
       // add image field to updatedCourseData
       updatedCourseData.image = 'image.jpg';
       const image_name = `${courseData._id}_${updatedCourseData.image}`;
-      // Mock the updateCourseMetadata, uploadImageToBucket, and updateCourseImage functions
-      sinon.stub(courseModel, "updateCourse").returns('updated');
-      sinon.stub(oracleStorage, "createObj").throws(new Error('Error in createObj'));
-      sinon.spy(oracleStorage, "createUrl");
+      // Mock the createObj function to throw an error
+      createObjStub.throws(new Error('Error in createObj'));
       try {
         // Call the updateCourseMetadata function
         await courseService.updateCourseMetadata(courseData._id, updatedCourseData, 'file');
@@ -376,10 +340,8 @@ describe("courseService", () => {
       // add image field to updatedCourseData
       updatedCourseData.image = 'image.jpg';
       const image_name = `${courseData._id}_${updatedCourseData.image}`;
-      // Mock the updateCourseMetadata, uploadImageToBucket, and updateCourseImage functions
-      sinon.stub(courseModel, "updateCourse").returns('updated');
-      sinon.stub(oracleStorage, "createObj").returns('uploaded');
-      sinon.stub(oracleStorage, "createUrl").throws(new Error('Error in createUrl'));
+      // Mock the createUrl function to throw an error
+      createUrlStub.throws(new Error('Error in createUrl'));
       try {
         // Call the updateCourseMetadata function
         await courseService.updateCourseMetadata(courseData._id, updatedCourseData, 'file');
@@ -402,9 +364,7 @@ describe("courseService", () => {
       updatedCourseData.image = 'image.jpg';
       const image_name = `${courseData._id}_${updatedCourseData.image}`;
       // Mock the updateCourse function to throw an error
-      sinon.stub(courseModel, "updateCourse").throws(new Error('Error in updateCourse'));
-      sinon.stub(oracleStorage, "createObj").returns('uploaded');
-      sinon.stub(oracleStorage, "createUrl").returns('url');
+      updateCourseStub.throws(new Error('Error in updateCourse'));
       try {
         // Call the updateCourseMetadata function
         await courseService.updateCourseMetadata(courseData._id, updatedCourseData, 'file');
@@ -524,6 +484,12 @@ describe("courseService", () => {
     // Variables for sectionId
     let fullCourseData;
     let files;
+    let removeSectionFromCourseStub;
+    let deleteAllLessonsBySectionIdStub;
+    let deleteLessonContentByLessonsIdsListStub;
+    let deleteAllQuizzezByLessonIdListStub;
+    let getAllObjStub;
+    let deleteObjStub;
 
     // beforeEach test define sectionId
     beforeEach(() => {
@@ -537,17 +503,17 @@ describe("courseService", () => {
         }],
       };
       files = [`60f6e1b9b58fe3208a9b8b70_file1`, `60f6e1b9b58fe3208a9b8b71_file2`];
+      // Mock all methods with suitable returns value
+      removeSectionFromCourseStub = sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
+      deleteAllLessonsBySectionIdStub = sinon.stub(lessonModel, "deleteAllLessonsBySectionId").returns('deleted');
+      deleteLessonContentByLessonsIdsListStub = sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").returns('deleted');
+      deleteAllQuizzezByLessonIdListStub = sinon.stub(quizModel, "deleteAllQuizzezByLessonIdList").returns('deleted');
+      getAllObjStub = sinon.stub(oracleStorage, "getAllObj").returns(files);
+      deleteObjStub = sinon.stub(oracleStorage, "deleteObj").returns('deleted');
     });
 
     // Test case for remove section with success call methods inside function and return success message
     it("remove section with success call methods inside function and return success message", async () => {
-      // Mock all methods with suitable returns value
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      sinon.stub(lessonModel, "deleteAllLessonsBySectionId").returns('deleted');
-      sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").returns('deleted');
-      sinon.stub(quizModel, "deleteAllQuizzezByLessonIdList").returns('deleted');
-      sinon.stub(oracleStorage, "getAllObj").returns(files);
-      sinon.stub(oracleStorage, "deleteObj").returns('deleted');
       // Call the removeSection function
       const result = await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
       // Verify that the functions were called with the arguments correctly
@@ -574,13 +540,7 @@ describe("courseService", () => {
     it("remove section with success call methods inside function and files not in id format and return success message", async () => {
       // add new file to files with id not in lessons ids
       files.push('50f6e1b9b58fe3208a9b8b72_file3');
-      // Mock all methods with suitable returns value
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      sinon.stub(lessonModel, "deleteAllLessonsBySectionId").returns('deleted');
-      sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").returns('deleted');
-      sinon.stub(quizModel, "deleteAllQuizzezByLessonIdList").returns('deleted');
-      sinon.stub(oracleStorage, "getAllObj").returns(files);
-      sinon.stub(oracleStorage, "deleteObj").returns('deleted');
+      getAllObjStub.returns(files);
       // Call the removeSection function
       const result = await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
       // Verify that the functions were called with the arguments correctly
@@ -607,15 +567,7 @@ describe("courseService", () => {
     it("remove section with success call methods inside function with empty lessons and return success message", async () => {
       // remove lessons from section
       fullCourseData.sections[0].lessons = [];
-      // Mock all methods with suitable returns value
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      // spy on the other methods
-      sinon.spy(lessonModel, "deleteAllLessonsBySectionId");
-      sinon.spy(lessonContentModel, "deleteLessonContentByLessonsIdsList");
-      sinon.spy(quizModel, "deleteAllQuizzezByLessonIdList");
-      sinon.spy(oracleStorage, "getAllObj");
-      sinon.spy(oracleStorage, "deleteObj");
-      // Call the removeSection function
+      removeSectionFromCourseStub.returns(fullCourseData.sections[0]);
       const result = await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
       // Verify that the functions were called with the arguments correctly
       expect(mongoDB.startSession.calledOnce).to.be.true;
@@ -635,13 +587,7 @@ describe("courseService", () => {
     // Test case for remove section with error in removeSectionFromCourse calls and throw error
     it("remove section with error in removeSectionFromCourse calls and throw error", async () => {
       // Mock the removeSectionFromCourse function to throw an error
-      sinon.stub(courseModel, "removeSectionFromCourse").throws(new Error('Error in removeSectionFromCourse'));
-      // spy on the other methods
-      sinon.spy(lessonModel, "deleteAllLessonsBySectionId");
-      sinon.spy(lessonContentModel, "deleteLessonContentByLessonsIdsList");
-      sinon.spy(quizModel, "deleteAllQuizzezByLessonIdList");
-      sinon.spy(oracleStorage, "getAllObj");
-      sinon.spy(oracleStorage, "deleteObj");
+      removeSectionFromCourseStub.throws(new Error('Error in removeSectionFromCourse'));
       try {
         // Call the removeSection function
         await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
@@ -665,13 +611,7 @@ describe("courseService", () => {
     // Test case for remove section with error in deleteAllLessonsBySectionId calls and throw error
     it("remove section with error in deleteAllLessonsBySectionId calls and throw error", async () => {
       // Mock the deleteAllLessonsBySectionId function to throw an error
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      sinon.stub(lessonModel, "deleteAllLessonsBySectionId").throws(new Error('Error in deleteAllLessonsBySectionId'));
-      // spy on the other methods
-      sinon.spy(lessonContentModel, "deleteLessonContentByLessonsIdsList");
-      sinon.spy(quizModel, "deleteAllQuizzezByLessonIdList");
-      sinon.spy(oracleStorage, "getAllObj");
-      sinon.spy(oracleStorage, "deleteObj");
+      deleteAllLessonsBySectionIdStub.throws(new Error('Error in deleteAllLessonsBySectionId'));
       try {
         // Call the removeSection function
         await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
@@ -696,13 +636,7 @@ describe("courseService", () => {
     // Test case for remove section with error in deleteLessonContentByLessonsIdsList calls and throw error
     it("remove section with error in deleteLessonContentByLessonsIdsList calls and throw error", async () => {
       // Mock the deleteLessonContentByLessonsIdsList function to throw an error
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      sinon.stub(lessonModel, "deleteAllLessonsBySectionId").returns('deleted');
-      sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").throws(new Error('Error in deleteLessonContentByLessonsIdsList'));
-      // spy on the other methods
-      sinon.spy(quizModel, "deleteAllQuizzezByLessonIdList");
-      sinon.spy(oracleStorage, "getAllObj");
-      sinon.spy(oracleStorage, "deleteObj");
+      deleteLessonContentByLessonsIdsListStub.throws(new Error('Error in deleteLessonContentByLessonsIdsList'));
       try {
         // Call the removeSection function
         await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
@@ -728,13 +662,7 @@ describe("courseService", () => {
     // Test case for remove section with error in deleteAllQuizzezByLessonIdList calls and throw error
     it("remove section with error in deleteAllQuizzezByLessonIdList calls and throw error", async () => {
       // Mock the deleteAllQuizzezByLessonIdList function to throw an error
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      sinon.stub(lessonModel, "deleteAllLessonsBySectionId").returns('deleted');
-      sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").returns('deleted');
-      sinon.stub(quizModel, "deleteAllQuizzezByLessonIdList").throws(new Error('Error in deleteAllQuizzezByLessonIdList'));
-      // spy on the other methods
-      sinon.spy(oracleStorage, "getAllObj");
-      sinon.spy(oracleStorage, "deleteObj");
+      deleteAllQuizzezByLessonIdListStub.throws(new Error('Error in deleteAllQuizzezByLessonIdList'));
       try {
         // Call the removeSection function
         await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
@@ -761,13 +689,7 @@ describe("courseService", () => {
     // Test case for remove section with error in getAllObj calls and throw error
     it("remove section with error in getAllObj calls and throw error", async () => {
       // Mock the getAllObj function to throw an error
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      sinon.stub(lessonModel, "deleteAllLessonsBySectionId").returns('deleted');
-      sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").returns('deleted');
-      sinon.stub(quizModel, "deleteAllQuizzezByLessonIdList").returns('deleted');
-      sinon.stub(oracleStorage, "getAllObj").throws(new Error('Error in getAllObj'));
-      // spy on the other methods
-      sinon.spy(oracleStorage, "deleteObj");
+      getAllObjStub.throws(new Error('Error in getAllObj'));
       try {
         // Call the removeSection function
         await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
@@ -794,12 +716,7 @@ describe("courseService", () => {
     // Test case for remove section with error in deleteObj calls and throw error
     it("remove section with error in deleteObj calls and throw error", async () => {
       // Mock the deleteObj function to throw an error
-      sinon.stub(courseModel, "removeSectionFromCourse").returns(fullCourseData.sections[0]);
-      sinon.stub(lessonModel, "deleteAllLessonsBySectionId").returns('deleted');
-      sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").returns('deleted');
-      sinon.stub(quizModel, "deleteAllQuizzezByLessonIdList").returns('deleted');
-      sinon.stub(oracleStorage, "getAllObj").returns(files);
-      sinon.stub(oracleStorage, "deleteObj").throws(new Error('Error in deleteObj'));
+      deleteObjStub.throws(new Error('Error in deleteObj'));
       try {
         // Call the removeSection function
         await courseService.removeSection(fullCourseData._id, fullCourseData.sections[0]._id);
@@ -817,6 +734,394 @@ describe("courseService", () => {
         expect(oracleStorage.getAllObj.calledOnceWith(fullCourseData._id)).to.be.true;
         expect(oracleStorage.deleteObj.calledOnce).to.be.true;
         expect(oracleStorage.deleteObj.firstCall.calledWith(fullCourseData._id, files[0])).to.be.true;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in deleteObj');
+      }
+    });
+  });
+
+
+  // Test suite for removeCourse function
+  describe("removeCourse", () => {
+    // variables for fullCourseData, lessonsIds, files
+    let fullCourseData;
+    let lessonsIds;
+    let files;
+    let deleteCourseStub;
+    let removeCourseFromListStub;
+    let removeAllReviewsByCourseIdStub;
+    let getAllLessonsIdsByCourseIdStub;
+    let deleteAllLessonsByCourseIdStub;
+    let deleteLessonContentByLessonsIdsListStub;
+    let deleteAllQuizzezByLessonIdListStub;
+    let getAllObjStub;
+    let deleteObjStub;
+
+    // beforeEach test define fullCourseData, lessonsIds, files objects
+    beforeEach(() => {
+      fullCourseData = {
+        ...returnCourseData,
+        reviews: ['60f6e1b9b58fe3208a9b8b69', '60f6e1b9b58fe3208a9b8b70'],
+      };
+      lessonsIds = ['60f6e1b9b58fe3208a9b8b71', '60f6e1b9b58fe3208a9b8b72'];
+      files = ['file1', 'file2'];
+      // create stub for all methods
+      deleteCourseStub = sinon.stub(courseModel, "deleteCourse").returns(fullCourseData);
+      removeCourseFromListStub = sinon.stub(userModel, "removeCourseFromList").returns('removed');
+      removeAllReviewsByCourseIdStub = sinon.stub(reviewModel, "removeAllReviewsByCourseId").returns('removed');
+      getAllLessonsIdsByCourseIdStub = sinon.stub(lessonModel, "getAllLessonsIdsByCourseId").returns(lessonsIds);
+      deleteAllLessonsByCourseIdStub = sinon.stub(lessonModel, "deleteAllLessonsByCourseId").returns('deleted');
+      deleteLessonContentByLessonsIdsListStub = sinon.stub(lessonContentModel, "deleteLessonContentByLessonsIdsList").returns('deleted');
+      deleteAllQuizzezByLessonIdListStub = sinon.stub(quizModel, "deleteAllQuizzezByLessonIdList").returns('deleted');
+      getAllObjStub = sinon.stub(oracleStorage, "getAllObj").returns(files);
+      deleteObjStub = sinon.stub(oracleStorage, "deleteObj").returns('deleted');
+    });
+
+    // Test case for remove course with there is reviews, lessons, files and success call methods inside function
+    it("remove course with there is reviews, lessons, files and success call methods inside function", async () => {
+      // Call the removeCourse function
+      const result = await courseService.removeCourse(fullCourseData._id);
+      // Verify that the functions were called with the arguments correctly
+      expect(mongoDB.startSession.calledOnce).to.be.true;
+      expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(userModel.removeCourseFromList.calledOnceWith(
+        fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+      expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonModel.deleteAllLessonsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+      expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+      expect(oracleStorage.getAllObj.calledOnceWith(fullCourseData._id)).to.be.true;
+      expect(oracleStorage.deleteObj.calledTwice).to.be.true;
+      expect(oracleStorage.deleteObj.firstCall.calledWith(fullCourseData._id, files[0])).to.be.true;
+      expect(oracleStorage.deleteObj.secondCall.calledWith(fullCourseData._id, files[1])).to.be.true;
+      expect(mongoDB.commitTransaction.calledOnceWith('session')).to.be.true;
+      expect(mongoDB.abortTransaction.calledOnce).to.be.false;
+      // Check if the result is as expected
+      expect(result).to.equal('Course removed successfully');
+    });
+
+    // Test case for remove course with there is reviews, lessons, no files and success call methods inside function
+    it("remove course with there is reviews, lessons, no files and success call methods inside function", async () => {
+      // remove files from files
+      files = [];
+      getAllObjStub.returns(files);
+      // Call the removeCourse function
+      const result = await courseService.removeCourse(fullCourseData._id);
+      // Verify that the functions were called with the arguments correctly
+      expect(mongoDB.startSession.calledOnce).to.be.true;
+      expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(userModel.removeCourseFromList.calledOnceWith(
+        fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+      expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonModel.deleteAllLessonsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+      expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+      expect(oracleStorage.getAllObj.calledOnceWith(fullCourseData._id)).to.be.true;
+      expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+      expect(mongoDB.commitTransaction.calledOnceWith('session')).to.be.true;
+      expect(mongoDB.abortTransaction.calledOnce).to.be.false;
+      // Check if the result is as expected
+      expect(result).to.equal('Course removed successfully');
+    });
+
+    // Test case for remove course with there is reviews, no lessons, no files and success call methods inside function
+    it("remove course with there is reviews, no lessons, no files and success call methods inside function", async () => {
+      // remove lessons from lessonsIds
+      lessonsIds = [];
+      getAllLessonsIdsByCourseIdStub.returns(lessonsIds);
+      // remove files from files
+      files = [];
+      getAllObjStub.returns(files);
+      // Call the removeCourse function
+      const result = await courseService.removeCourse(fullCourseData._id);
+      // Verify that the functions were called with the arguments correctly
+      expect(mongoDB.startSession.calledOnce).to.be.true;
+      expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(userModel.removeCourseFromList.calledOnceWith(
+        fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+      expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonModel.deleteAllLessonsByCourseId.calledOnce).to.be.false;
+      expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnce).to.be.false;
+      expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+      expect(oracleStorage.getAllObj.calledOnceWith(fullCourseData._id)).to.be.true;
+      expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+      expect(mongoDB.commitTransaction.calledOnceWith('session')).to.be.true;
+      expect(mongoDB.abortTransaction.calledOnce).to.be.false;
+      // Check if the result is as expected
+      expect(result).to.equal('Course removed successfully');
+    });
+
+    // Test case for remove course with there is no reviews, no lessons, no files and success call methods inside function
+    it("remove course with there is no reviews, no lessons, no files and success call methods inside function", async () => {
+      // remove reviews from fullCourseData
+      fullCourseData.reviews = [];
+      deleteCourseStub.returns(fullCourseData);
+      // remove lessons from lessonsIds
+      lessonsIds = [];
+      getAllLessonsIdsByCourseIdStub.returns(lessonsIds);
+      // remove files from files
+      files = [];
+      getAllObjStub.returns(files);
+      // Call the removeCourse function
+      const result = await courseService.removeCourse(fullCourseData._id);
+      // Verify that the functions were called with the arguments correctly
+      expect(mongoDB.startSession.calledOnce).to.be.true;
+      expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(userModel.removeCourseFromList.calledOnceWith(
+        fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+      expect(reviewModel.removeAllReviewsByCourseId.calledOnce).to.be.false;
+      expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+      expect(lessonModel.deleteAllLessonsByCourseId.calledOnce).to.be.false;
+      expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnce).to.be.false;
+      expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+      expect(oracleStorage.getAllObj.calledOnceWith(fullCourseData._id)).to.be.true;
+      expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+      expect(mongoDB.commitTransaction.calledOnceWith('session')).to.be.true;
+      expect(mongoDB.abortTransaction.calledOnce).to.be.false;
+      // Check if the result is as expected
+      expect(result).to.equal('Course removed successfully');
+    });
+
+    // Test case for remove course with there is error in deleteCourse calls and throw error
+    it("remove course with there is error in deleteCourse calls and throw error", async () => {
+      // change stub for deleteCourse to throw error
+      deleteCourseStub.throws(new Error('Error in deleteCourse'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnce).to.be.false;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnce).to.be.false;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnce).to.be.false;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnce).to.be.false;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnce).to.be.false;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+        expect(oracleStorage.getAllObj.calledOnce).to.be.false;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in deleteCourse');
+      }
+    });
+
+    // Test case for remove course with there is error in removeCourseFromList calls and throw error
+    it("remove course with there is error in removeCourseFromList calls and throw error", async () => {
+      // change stub for removeCourseFromList to throw error
+      removeCourseFromListStub.throws(new Error('Error in removeCourseFromList'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnce).to.be.false;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnce).to.be.false;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnce).to.be.false;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnce).to.be.false;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+        expect(oracleStorage.getAllObj.calledOnce).to.be.false;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in removeCourseFromList');
+      }
+    });
+
+    // Test case for remove course with there is error in removeAllReviewsByCourseId calls and throw error
+    it("remove course with there is error in removeAllReviewsByCourseId calls and throw error", async () => {
+      // change stub for removeAllReviewsByCourseId to throw error
+      removeAllReviewsByCourseIdStub.throws(new Error('Error in removeAllReviewsByCourseId'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnce).to.be.false;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnce).to.be.false;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnce).to.be.false;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+        expect(oracleStorage.getAllObj.calledOnce).to.be.false;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in removeAllReviewsByCourseId');
+      }
+    });
+
+    // Test case for remove course with there is error in getAllLessonsIdsByCourseId calls and throw error
+    it("remove course with there is error in getAllLessonsIdsByCourseId calls and throw error", async () => {
+      // change stub for getAllLessonsIdsByCourseId to throw error
+      getAllLessonsIdsByCourseIdStub.throws(new Error('Error in getAllLessonsIdsByCourseId'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnce).to.be.false;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnce).to.be.false;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+        expect(oracleStorage.getAllObj.calledOnce).to.be.false;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in getAllLessonsIdsByCourseId');
+      }
+    });
+
+    // Test case for remove course with there is error in deleteAllLessonsByCourseId calls and throw error
+    it("remove course with there is error in deleteAllLessonsByCourseId calls and throw error", async () => {
+      // change stub for deleteAllLessonsByCourseId to throw error
+      deleteAllLessonsByCourseIdStub.throws(new Error('Error in deleteAllLessonsByCourseId'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnce).to.be.false;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+        expect(oracleStorage.getAllObj.calledOnce).to.be.false;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in deleteAllLessonsByCourseId');
+      }
+    });
+
+    // Test case for remove course with there is error in deleteLessonContentByLessonsIdsList calls and throw error
+    it("remove course with there is error in deleteLessonContentByLessonsIdsList calls and throw error", async () => {
+      // change stub for deleteLessonContentByLessonsIdsList to throw error
+      deleteLessonContentByLessonsIdsListStub.throws(new Error('Error in deleteLessonContentByLessonsIdsList'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnce).to.be.false;
+        expect(oracleStorage.getAllObj.calledOnce).to.be.false;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in deleteLessonContentByLessonsIdsList');
+      }
+    });
+
+    // Test case for remove course with there is error in deleteAllQuizzezByLessonIdList calls and throw error
+    it("remove course with there is error in deleteAllQuizzezByLessonIdList calls and throw error", async () => {
+      // change stub for deleteAllQuizzezByLessonIdList to throw error
+      deleteAllQuizzezByLessonIdListStub.throws(new Error('Error in deleteAllQuizzezByLessonIdList'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+        expect(oracleStorage.getAllObj.calledOnce).to.be.false;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in deleteAllQuizzezByLessonIdList');
+      }
+    });
+
+    // Test case for remove course with there is error in getAllObj calls and throw error
+    it("remove course with there is error in getAllObj calls and throw error", async () => {
+      // change stub for getAllObj to throw error
+      getAllObjStub.throws(new Error('Error in getAllObj'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+        expect(oracleStorage.getAllObj.calledOnceWith(fullCourseData._id)).to.be.true;
+        expect(oracleStorage.deleteObj.calledOnce).to.be.false;
+        expect(mongoDB.commitTransaction.calledOnce).to.be.false;
+        expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
+        // Check if the error message is as expected
+        expect(error.message).to.equal('Error in getAllObj');
+      }
+    });
+
+    // Test case for remove course with there is error in deleteObj calls and throw error
+    it("remove course with there is error in deleteObj calls and throw error", async () => {
+      // change stub for deleteObj to throw error
+      deleteObjStub.throws(new Error('Error in deleteObj'));
+      try {
+        // Call the removeCourse function
+        await courseService.removeCourse(fullCourseData._id);
+      } catch (error) {
+        // Verify that the function was called with the argument correctly
+        expect(mongoDB.startSession.calledOnce).to.be.true;
+        expect(courseModel.deleteCourse.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(userModel.removeCourseFromList.calledOnceWith(
+          fullCourseData.authorId, 'createdList', fullCourseData._id, 'session')).to.be.true;
+        expect(reviewModel.removeAllReviewsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.getAllLessonsIdsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonModel.deleteAllLessonsByCourseId.calledOnceWith(fullCourseData._id, 'session')).to.be.true;
+        expect(lessonContentModel.deleteLessonContentByLessonsIdsList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+        expect(quizModel.deleteAllQuizzezByLessonIdList.calledOnceWith(lessonsIds, 'session')).to.be.true;
+        expect(oracleStorage.getAllObj.calledOnceWith(fullCourseData._id)).to.be.true;
+        expect(oracleStorage.deleteObj.calledOnceWith(fullCourseData._id, files[0])).to.be.true;
         expect(mongoDB.commitTransaction.calledOnce).to.be.false;
         expect(mongoDB.abortTransaction.calledOnceWith('session')).to.be.true;
         // Check if the error message is as expected

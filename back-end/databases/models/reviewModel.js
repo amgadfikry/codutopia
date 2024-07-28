@@ -153,10 +153,7 @@ class ReviewModel extends ReviewSchema {
     try {
       // Get all reviews from the database by userId
       const reviews = await this.review.deleteMany({ userId }, { session });
-      // if the reviews are not found, throw an error
-      if (reviews.deletedCount === 0) {
-        throw new Error(`User not found or has no reviews`);
-      }
+      // return a message if the reviews are removed successfully
       return 'Reviews removed successfully';
     } catch (error) {
       throw new Error('User not found or has no reviews');
@@ -178,10 +175,7 @@ class ReviewModel extends ReviewSchema {
     try {
       // Get all reviews from the database by courseId
       const reviews = await this.review.deleteMany({ courseId }, { session });
-      // if the reviews are not found, throw an error
-      if (reviews.deletedCount === 0) {
-        throw new Error(`Course not found or has no reviews`);
-      }
+      // return a message if the reviews are removed successfully
       return 'Reviews removed successfully';
     } catch (error) {
       throw new Error('Course not found or has no reviews');

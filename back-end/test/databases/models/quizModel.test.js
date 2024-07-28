@@ -632,4 +632,51 @@ describe('QuizModel', () => {
     });
   });
 
+
+  // Test suite for the deleteAllQuizzezByLessonIdList method with all scenarios
+  describe('Test suite for deleteAllQuizzezByLessonIdList method', () => {
+    // Declare variables to be used across all the tests
+    let idsList;
+
+    // before hook to create a quiz object before each test start
+    beforeEach(async () => {
+      await quizModel.createQuiz(quiz);
+      await quizModel.createQuiz({ ...quiz, lessonId: '60f6e1b9b58fe3208a9b8b85' });
+      // create a list of lesson IDs
+      idsList = [quiz.lessonId, '60f6e1b9b58fe3208a9b8b85'];
+    });
+
+    // Test case for deleting all quizzes with valid list of lesson IDs and return success message
+    it('delete all quizzes with valid list of lesson IDs and return success message', async () => {
+      const result = await quizModel.deleteAllQuizzezByLessonIdList(idsList);
+      // check if the result is correct
+      expect(result).to.be.an('string');
+      expect(result).to.equal('Quizzes deleted successfully');
+      // check if the quiz number is correct
+      const result2 = await quizModel.quiz.find({});
+      expect(result2.length).to.equal(0);
+    });
+
+    // Test case for deleting all quizzes with invalid list of lessons ids and not do anything
+    it('delete all quizzes with invalid list of lessons ids and throw error', async () => {
+      await quizModel.deleteAllQuizzezByLessonIdList(['60f6e1b9b58fe3208a9b8b95']);
+      // check if the quiz number is correct
+      const result = await quizModel.quiz.find({});
+      expect(result.length).to.equal(2);
+    });
+
+    // Test case for deleting all quizzes with valid list of lesson IDs in a transaction with success transaction
+    it('delete all quizzes with valid list of lesson IDs in a transaction with success transaction', async () => {
+      // start a transaction
+      const session = await mongoDB.startSession();
+      // delete all quizzes with valid lesson ID
+      await quizModel.deleteAllQuizzezByLessonIdList(idsList, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+      // check if the quiz number is correct
+      const result = await quizModel.quiz.find({});
+      expect(result.length).to.equal(0);
+    });
+  });
+
 }).timeout(15000);

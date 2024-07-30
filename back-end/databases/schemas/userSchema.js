@@ -20,6 +20,7 @@ class UserSchema {
       email: { type: String, required: true, unique: true, },
       password: { type: String, required: true, },
       confirmed: { type: Boolean, default: false, },
+      profileCompleted: { type: Number, default: 0, },
       resetPasswordToken: { type: String, default: null, },
       resetPasswordExpires: { type: Date, default: null, },
       roles: { type: [String], default: ['learner'], enum: ['learner', 'instructor'], },
@@ -33,16 +34,26 @@ class UserSchema {
       createdList: { type: [String], ref: 'courses', default: [] },
     }, { timestamps: true, }); // add timestamps to the schema
 
-    // add post hook to the userSchema to calculate the profile completed percentage
-    // after a user is found
-    this.userSchema.post('findOne', (doc) => {
-      UserSchema.postProfileComplete(doc);
-    })
+    // after save or update a user document check percentage of profile completed
+    // and set the profileCompleted field to the percentage
+    this.userSchema.post('save', async function (doc, next) {
+      try {
+        await UserSchema.postProfileComplete(doc);
+        next();
+      } catch (error) {
+        next(error);
+      }
+    });
 
     // after find and update a user
-    this.userSchema.post('findOneAndUpdate', (doc) => {
-      UserSchema.postProfileComplete(doc);
-    })
+    this.userSchema.post('findOneAndUpdate', async function (doc, next) {
+      try {
+        await UserSchema.postProfileComplete(doc);
+        next();
+      } catch (error) {
+        next(error);
+      }
+    });
 
     // create a new model for the users collection with the userSchema
     this.user = mongoose.model("users", this.userSchema);
@@ -53,27 +64,58 @@ class UserSchema {
       - instance: user instance with user data
       - next: function to call the next middleware
   */
-  static postProfileComplete(doc) {
+  static async postProfileComplete(doc) {
     // check if the profileCompleted field exists and is equal to 100 to skip the calculation and call the next middleware
     if (doc) {
       if (doc.profileCompleted && doc.profileCompleted === 100) {
         return;
       }
-      let completed = 0;
       // list of fields to ignore in the calculation
       const ignoreFields = [
-        'enrolled', 'wishList', 'createdAt', 'updatedAt', 'resetPasswordToken', 'resetPasswordExpires', '__v', '_id', 'createdList'
+        'enrolled', 'wishList', 'createdAt', 'updatedAt', 'resetPasswordToken',
+        'resetPasswordExpires', '__v', '_id', 'createdList', 'profileCompleted'
       ];
       // list of fields without the ignored fields
-      const calculatedFields = Object.keys(doc._doc).filter(key => !ignoreFields.includes(key));
-      // loop through the list of fields to check if the field is not null or empty to increment the completed count
-      for (const key of calculatedFields) {
-        if (doc[key]) {
-          completed++;
-        }
-      }
+      const completed = Object.keys(doc._doc).filter(key => !ignoreFields.includes(key) && doc[key]);
+      const total = Object.keys(doc._doc).length - ignoreFields.length;
       // set the profileCompleted field to the percentage of completed fields from the total fields
-      doc.profileCompleted = Math.floor((completed / calculatedFields.length) * 100);
+      doc.profileCompleted = Math.floor((completed.length / total) * 100);
+      // save the user data
+      // Save the updated document
+      if (doc.isModified()) {
+        await doc.save();
+      }
+    }
+  }
+
+  /* filterUserData method to filter user data by remove password, resetPasswordToken, resetPasswordExpires
+    and check if the user role in only instructor remove the wishList and enrolled fields
+    and check if the user role is only learner remove the createdList field
+    Parameters:
+      - userDate: user data to filter
+    return:
+      - filtered user data
+  */
+  filterUserData(userData) {
+    // check if the user data is not null or empty
+    if (userData) {
+      // copy the user data to a new object
+      const user = userData.toObject();
+      // remove the password, resetPasswordToken, and resetPasswordExpires fields
+      delete user.password;
+      delete user.resetPasswordToken;
+      delete user.resetPasswordExpires;
+      // check if the user role is only instructor remove the wishList and enrolled fields
+      if (user.roles.length === 1 && user.roles[0] === 'instructor') {
+        delete user.wishList;
+        delete user.enrolled;
+      }
+      // check if the user role is only learner remove the createdList field
+      if (user.roles.length === 1 && user.roles[0] === 'learner') {
+        delete user.createdList;
+      }
+      // return the filtered user data
+      return user;
     }
   }
 

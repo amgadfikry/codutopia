@@ -15,10 +15,11 @@ class UserModel extends UserSchema {
       - user: object with user data
       - session: optional session for the transaction
     Returns:
-      - created object data
+      - filtered created object data
     Errors:
       - Lesson could not be created
       - Missing required field
+      - User already exists
       - Other errors
   */
   async createUser(user, session = null) {
@@ -31,7 +32,7 @@ class UserModel extends UserSchema {
       if (!result) {
         throw new Error(`User could not be created`);
       }
-      return result[0];
+      return this.filterUserData(result[0]);
     }
     catch (error) {
       // check if the error is a duplicate key error and throw an error if the user already exists
@@ -42,7 +43,7 @@ class UserModel extends UserSchema {
         throw new Error(`Missing ${Object.keys(error.errors)[0]} field`);
       }
       else {
-        throw new Error('User could not be created');
+        throw new Error(error.message);
       }
     }
   }
@@ -52,7 +53,7 @@ class UserModel extends UserSchema {
       - id: string or ObjectId of the user
       - session: optional session for the transaction
     Returns:
-      - user object data
+      - filtered user object data
     Errors:
       - User not found
   */
@@ -64,11 +65,7 @@ class UserModel extends UserSchema {
       if (!user) {
         throw new Error('User not found');
       }
-      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data and return the user
-      user.password = undefined;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
-      return user;
+      return this.filterUserData(user);
     }
     catch (error) {
       // throw an error if the user was not found
@@ -81,7 +78,7 @@ class UserModel extends UserSchema {
       - seachObject: object with field and value to search for
       - session: optional session for the transaction
     Returns:
-      - user object data
+      - filtered user object data
     Errors:
       - User not found
   */
@@ -93,11 +90,7 @@ class UserModel extends UserSchema {
       if (!user) {
         throw new Error('User not found');
       }
-      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data and return the user
-      user.password = undefined;
-      user.resetPasswordToken = null;
-      user.resetPasswordExpires = null;
-      return user;
+      return this.filterUserData(user);
     }
     catch (error) {
       // throw an error if the user was not found
@@ -113,6 +106,7 @@ class UserModel extends UserSchema {
       - number of users with the specific role
     Errors:
       - Invalid role
+      - Failed to count users
   */
   async countRoleUsers(role, session = null) {
     // check if the role is valid in the list of roles ['learner', 'instructor'] throw an error invalid role
@@ -127,42 +121,36 @@ class UserModel extends UserSchema {
     }
     catch (error) {
       // throw an error if the count failed
-      throw new Error('Invalid role');
+      throw new Error('Failed to count users');
     }
   }
 
   /* updateUserById method updates a user by id with new data in the users collection
-    if update includes password, resetPasswordToken and resetPasswordExpires are set to null
-    Parameters:
+    except password, resetPasswordToken and resetPasswordExpires
       - id: string or ObjectId of the user
-      - user: object with new user data
+      - userData: object with new user data
       - session: optional session for the transaction
     Returns:
       - updated user object data
     Errors:
-      - User not found
+      - Failed to update user
   */
-  async updateUserById(id, user, session = null) {
+  async updateUserById(id, userData, session = null) {
     try {
       // update the user by id with the new user data
       const result = await this.user.findByIdAndUpdate(
         id,
-        user,
+        userData,
         { new: true, session }
       );
       // check if the user was not updated
       if (!result) {
         throw new Error('Failed to update user');
       }
-      // remove the password, resetPasswordToken, and resetPasswordExpires fields from the user data and return the user
-      result.password = undefined;
-      result.resetPasswordToken = null;
-      result.resetPasswordExpires = null;
-      return result;
+      return this.filterUserData(result);
     }
     catch (error) {
-      // throw an error if the user was not updated
-      throw new Error('User not found');
+      throw new Error('Failed to update user');
     }
   }
 
@@ -330,7 +318,7 @@ class UserModel extends UserSchema {
       - password: string value of the new password
       - session: optional session for the transaction
     Returns:
-      - string value 'Password updated successfully'
+      - message 'Password updated successfully'
     Errors:
       - User not found
   */
@@ -363,7 +351,7 @@ class UserModel extends UserSchema {
       - paymentId: string or ObjectId of the payment
       - session: optional session for the transaction
     Returns:
-      - course object data
+      - courseId
     Errors:
       - User not found
   */
@@ -383,8 +371,7 @@ class UserModel extends UserSchema {
       if (!result) {
         throw new Error('User not found');
       }
-      const courseData = result.enrolled.find(course => course.courseId === courseId.toString());
-      return courseData;
+      return courseId;
     }
     catch (error) {
       // throw an error if the user was not found
@@ -553,8 +540,9 @@ class UserModel extends UserSchema {
       - id: string or ObjectId of the user
       - session: optional session for the transaction
     Returns:
-      - result: string value 'User deleted successfully' if the user was deleted
-      - error: error message if the user was not found
+      - deleted user object
+    Errors:
+      - User not found
   */
   async deleteUserById(id, session = null) {
     try {
@@ -564,7 +552,7 @@ class UserModel extends UserSchema {
       if (!result) {
         throw new Error('User not found');
       }
-      return 'User deleted successfully';
+      return this.filterUserData(result);
     } catch (error) {
       // throw an error if the user was not found
       throw new Error('User not found');

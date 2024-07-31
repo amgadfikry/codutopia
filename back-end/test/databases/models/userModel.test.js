@@ -420,37 +420,100 @@ describe("UserModel", () => {
   });
 
 
-  // Test suite for the confimUser method with all scenarios
-  describe("Test suite for ConfimUser method", () => {
+  // Test suite for generateConfirmationToken method with all scenarios
+  describe("Test suite for GenerateConfirmationToken method", () => {
 
-    // beforeEach hook create a new user object and get the user id
+    // before each hook create a new user object and get the user id
     beforeEach(async () => {
       const result = await userModel.createUser(userData);
       userId = result._id;
     });
 
-    // Test case for confirm a user by id with valid id and return true
-    it('confirm a user by id with valid id and return true', async () => {
-      const result = await userModel.confimUser(userId);
-      // check if the result is true
-      expect(result).to.equal(true);
+    // Test case for generate a confirmation token for a user by id and return the token
+    it('generate a confirmation token for a user by id and return the token', async () => {
+      const token = await userModel.generateConfirmationToken(userId);
+      // check if the token is correct
+      expect(token).to.be.a('string');
     });
 
-    // Test case for confirm a user by id with invalid id throw an error 'User not found'
-    it('confirm a user by id with invalid id and throw an error "User not found"', async () => {
+    // Test case for generate a confirmation token for a user by invalid id and throw an error 'User not found'
+    it('generate a confirmation token for a user by invalid id and throw an error "User not found"', async () => {
+      try {
+        await userModel.generateConfirmationToken('621f7b9e6f3b7d1d9e9f9d5b');
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+      }
+    });
+
+    // Test case for generate a confirmation token for a user by id through session and in successful transaction
+    it('generate a confirmation token for a user by id through session and in successful transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      // generate a confirmation token for a user by id in a transaction with the session
+      await userModel.generateConfirmationToken(userId, session);
+      // commit the transaction
+      await mongoDB.commitTransaction(session);
+    });
+
+    // Test case for generate a confirmation token for a user by invalid id through session and in failed transaction
+    it('generate a confirmation token for a user by invalid id through session and in failed transaction', async () => {
+      // create a session
+      const session = await mongoDB.startSession();
+      try {
+        // generate a confirmation token for a user by invalid id in a transaction with the session
+        await userModel.generateConfirmationToken('621f7b9e6f3b7d1d9e9f9d5b', session);
+        // commit the transaction
+        await mongoDB.commitTransaction(session);
+      }
+      catch (error) {
+        expect(error.message).to.equal('User not found');
+        // abort the transaction
+        await mongoDB.abortTransaction(session);
+      }
+    });
+  });
+
+
+  // Test suite for the confimUser method with all scenarios
+  describe("Test suite for ConfimUser method", () => {
+    let token;
+
+    // beforeEach hook create a new user object and create a confirmation token
+    beforeEach(async () => {
+      const result = await userModel.createUser(userData);
+      token = await userModel.generateConfirmationToken(result._id);
+      userId = result._id;
+    });
+
+    // Test case for confirm a user by token and return true
+    it('confirm a user by token and return true', async () => {
+      const result = await userModel.confimUser(token);
+      // check if the result is true
+      expect(result).to.equal(true);
+      // check if the user is confirmed
+      const user = await userModel.user.findOne({ _id: userId });
+      expect(user.confirmed).to.equal(true);
+    });
+
+    // Test case for confirm a user by token with invalid token and throw an error 'User not found'
+    it('confirm a user by token with invalid token and throw an error "User not found"', async () => {
       try {
         await userModel.confimUser('621f7b9e6f3b7d1d9e9f9d5b');
       } catch (error) {
         expect(error.message).to.equal('User not found');
       }
+      // check if the user is not confirmed
+      const result = await userModel.user.findOne({ _id: userId });
+      expect(result.confirmed).to.equal(false);
     });
 
-    // Test case for confirm a user by id with valid id through session and in successful transaction
-    it('confirm a user by id with valid id through session and in successful transaction', async () => {
+    // Test case for confirm a user by token through session and in successful transaction
+    it('confirm a user by token through session and in successful transaction', async () => {
       // create a session
       const session = await mongoDB.startSession();
-      // confirm the user by id in a transaction with the session
-      await userModel.confimUser(userId, session);
+      // confirm the user by token in a transaction with the session
+      await userModel.confimUser(token, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
       // check if the user is confirmed
@@ -458,14 +521,14 @@ describe("UserModel", () => {
       expect(result.confirmed).to.equal(true);
     });
 
-    // Test case for confirm a user by id with invalid id through session and in failed transaction
-    it('confirm a user by id with invalid id through session and in failed transaction', async () => {
+    // Test case for confirm a user by token with invalid token through session and in failed transaction
+    it('confirm a user by token with invalid token through session and in failed transaction', async () => {
       // create a session
       const session = await mongoDB.startSession();
       try {
-        // confirm the user by invalid id in a transaction with the session
-        await userModel.confimUser(userId, session);
+        // confirm the user by invalid token in a transaction with the session
         await userModel.confimUser('621f7b9e6f3b7d1d9e9f9d5b', session);
+        await userModel.confimUser(token, session);
         // commit the transaction
         await mongoDB.commitTransaction(session);
       }

@@ -154,20 +154,51 @@ class UserModel extends UserSchema {
     }
   }
 
-  /* confimUser method updates the confirmed field to true for a user by id in the users collection
+  /* generateConfirmationToken method generates a confirmation token for a user by id in the users collection
     Parameters:
       - id: string or ObjectId of the user
+      - session: optional session for the transaction
+    Returns:
+      - confirmation token
+    Errors:
+      - User not found
+  */
+  async generateConfirmationToken(id, session = null) {
+    try {
+      // generate a random token and convert it to a string
+      const token = crypto.randomBytes(20).toString('hex');
+      // update the user by id with the new confirmation token
+      const result = await this.user.findByIdAndUpdate(
+        id,
+        { confirmationToken: token },
+        { new: true, session }
+      );
+      // check if the user was not updated
+      if (!result) {
+        throw new Error('User not found');
+      }
+      return result.confirmationToken;
+    }
+    catch (error) {
+      // throw an error if the user was not updated
+      throw new Error('User not found');
+    }
+  }
+
+  /* confimUser method updates the confirmed field to true for a user by id in the users collection
+    Parameters:
+      - token: string value of the confirmation token
       - session: optional session for the transaction
     Returns:
       - true if the user was confirmed successfully
     Errors:
       - User not found
   */
-  async confimUser(id, session = null) {
+  async confimUser(token, session = null) {
     try {
-      // update the user by id with the confirmed field set to true
-      const result = await this.user.findByIdAndUpdate(
-        id,
+      // update the user by token with the confirmed field to true
+      const result = await this.user.findOneAndUpdate(
+        { confirmationToken: token },
         { confirmed: true },
         { new: true, session }
       );

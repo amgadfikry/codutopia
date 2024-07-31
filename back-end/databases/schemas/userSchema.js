@@ -20,6 +20,7 @@ class UserSchema {
       email: { type: String, required: true, unique: true, },
       password: { type: String, required: true, },
       confirmed: { type: Boolean, default: false, },
+      confirmationToken: { type: String, default: null, },
       profileCompleted: { type: Number, default: 0, },
       resetPasswordToken: { type: String, default: null, },
       resetPasswordExpires: { type: Date, default: null, },
@@ -72,7 +73,7 @@ class UserSchema {
       }
       // list of fields to ignore in the calculation
       const ignoreFields = [
-        'enrolled', 'wishList', 'createdAt', 'updatedAt', 'resetPasswordToken',
+        'enrolled', 'wishList', 'createdAt', 'updatedAt', 'resetPasswordToken', 'confirmationToken',
         'resetPasswordExpires', '__v', '_id', 'createdList', 'profileCompleted'
       ];
       // list of fields without the ignored fields
@@ -105,6 +106,7 @@ class UserSchema {
       delete user.password;
       delete user.resetPasswordToken;
       delete user.resetPasswordExpires;
+      delete user.confirmationToken;
       // check if the user role is only instructor remove the wishList and enrolled fields
       if (user.roles.length === 1 && user.roles[0] === 'instructor') {
         delete user.wishList;

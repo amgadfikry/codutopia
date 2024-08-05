@@ -10,7 +10,7 @@ describe.skip('Unittest of EmailUtils', () => {
     // Test case for sending a confirmation email with valid data and return a queued message
     it('Send a confirmation email with valid data and return a queued message', async () => {
       // call the sendConfirmationEmail method
-      const result = await emailUtils.sendConfirmationEmail('Amgad Fikry', 'dr.amgad_sh92@yahoo.com');
+      const result = await emailUtils.sendConfirmationEmail('Amgad Fikry', 657896 ,'dr.amgad_sh92@yahoo.com');
       // assert the result
       expect(result).have.property('id');
       expect(result).have.property('message');

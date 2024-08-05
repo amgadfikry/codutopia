@@ -1,9 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import userRouter from './routes/usersRoutes.js';
-import coursesRouter from './routes/coursesRoutes.js';
-import filesRouter from './routes/filesRoutes.js';
 
 // Create a new express application instance
 const app = express();
@@ -19,12 +16,6 @@ app.use((req, res, next) => {
 });
 // use morgan for logging the requests to the console
 app.use(morgan('dev'));
-// use the userRouter for any request that starts with /users
-app.use('/users', userRouter);
-// use the coursesRouter for any request that starts with /courses
-app.use('/courses', coursesRouter);
-// use the filesRouter for any request that starts with /files
-app.use('/files', filesRouter);
 
 // start the server on port 3000
 app.listen(3000, () => {

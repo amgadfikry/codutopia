@@ -17,17 +17,13 @@ class EmailUtils {
       Errors:
         - Failed to send confirmation email
   */
-  async sendConfirmationEmail(name, email) {
+  async sendConfirmationEmail(name, code, email) {
     const data = {
       from: this.sender,
       to: email,
       subject: "Codutopia Account Confirmation",
-      html: `<h1>Welcome to Codutopia ${name}!</h1>
-      <p>Thank you for joining Codutopia! We are excited to have you as a part of our community.</p>
-      <p>Let's start learning together and have fun!</p>
-      <a href="http://amgadfikry.me">Codutopia</a>
-      <p>Best regards,</p>
-      <p>Codutopia Team</p>`,
+      template: "codutpoia_confirmation",
+      'h:X-Mailgun-Variables': JSON.stringify({ userName: name, code: code })
     };
     try {
       const response = await this.mg.messages().send(data);

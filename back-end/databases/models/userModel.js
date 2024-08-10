@@ -1,7 +1,6 @@
 // import userSchema from schemas/userSchema
 import UserSchema from '../schemas/userSchema.js';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
 
 // UserModel class to interact with the users collection in the database
 class UserModel extends UserSchema {
@@ -165,12 +164,13 @@ class UserModel extends UserSchema {
   */
   async generateConfirmationToken(id, session = null) {
     try {
-      // generate a random token and convert it to a string
-      const token = crypto.randomBytes(20).toString('hex');
+      // generate a random token form of 6 numbers
+      const token = Math.floor(100000 + Math.random() * 900000);
+      const time = Date.now() + 900000;
       // update the user by id with the new confirmation token
       const result = await this.user.findByIdAndUpdate(
         id,
-        { confirmationToken: token },
+        { confirmationToken: token, confirmationTokenExpires: time },
         { new: true, session }
       );
       // check if the user was not updated
@@ -187,30 +187,31 @@ class UserModel extends UserSchema {
 
   /* confimUser method updates the confirmed field to true for a user by id in the users collection
     Parameters:
+      - userId: string or ObjectId of the user
       - token: string value of the confirmation token
       - session: optional session for the transaction
     Returns:
       - true if the user was confirmed successfully
     Errors:
-      - User not found
+      - Failed to confirm user
   */
-  async confimUser(token, session = null) {
+  async confimUser(userId, token, session = null) {
     try {
       // update the user by token with the confirmed field to true
       const result = await this.user.findOneAndUpdate(
-        { confirmationToken: token },
-        { confirmed: true },
+        { _id: userId, confirmationToken: token, confirmationTokenExpires: { $gt: Date.now() } },
+        { confirmed: true, confirmationToken: null, confirmationTokenExpires: null },
         { new: true, session }
       );
       // check if the user was not updated
       if (!result) {
-        throw new Error('User not found');
+        throw new Error('Failed to confirm user');
       }
       return result.confirmed;
     }
     catch (error) {
       // throw an error if the user was not updated
-      throw new Error('User not found');
+      throw new Error('Failed to confirm user');
     }
   }
 
@@ -292,8 +293,8 @@ class UserModel extends UserSchema {
   */
   async resetPasswordToken(email, session = null) {
     try {
-      // generate a random token and convert it to a string
-      const token = crypto.randomBytes(20).toString('hex');
+      // generate a random token form of 6 numbers
+      const token = Math.floor(100000 + Math.random() * 900000);
       // set the token expiration time 15 minutes
       const time = Date.now() + 900000;
       // update the user by email with the new token and expiration time

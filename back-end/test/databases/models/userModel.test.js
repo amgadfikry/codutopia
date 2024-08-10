@@ -433,7 +433,7 @@ describe("UserModel", () => {
     it('generate a confirmation token for a user by id and return the token', async () => {
       const token = await userModel.generateConfirmationToken(userId);
       // check if the token is correct
-      expect(token).to.be.a('string');
+      expect(token).to.be.a('number');
     });
 
     // Test case for generate a confirmation token for a user by invalid id and throw an error 'User not found'
@@ -488,20 +488,22 @@ describe("UserModel", () => {
 
     // Test case for confirm a user by token and return true
     it('confirm a user by token and return true', async () => {
-      const result = await userModel.confimUser(token);
+      const result = await userModel.confimUser(userId, token);
       // check if the result is true
       expect(result).to.equal(true);
       // check if the user is confirmed
       const user = await userModel.user.findOne({ _id: userId });
       expect(user.confirmed).to.equal(true);
+      expect(user.confirmationToken).to.equal(null);
+      expect(user.confirmationTokenExpires).to.equal(null);
     });
 
-    // Test case for confirm a user by token with invalid token and throw an error 'User not found'
+    // Test case for confirm a user by token with invalid token and throw an error 'Failed to confirm user'
     it('confirm a user by token with invalid token and throw an error "User not found"', async () => {
       try {
-        await userModel.confimUser('621f7b9e6f3b7d1d9e9f9d5b');
+        await userModel.confimUser(userId, 555555);
       } catch (error) {
-        expect(error.message).to.equal('User not found');
+        expect(error.message).to.equal('Failed to confirm user');
       }
       // check if the user is not confirmed
       const result = await userModel.user.findOne({ _id: userId });
@@ -513,7 +515,7 @@ describe("UserModel", () => {
       // create a session
       const session = await mongoDB.startSession();
       // confirm the user by token in a transaction with the session
-      await userModel.confimUser(token, session);
+      await userModel.confimUser(userId, token, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
       // check if the user is confirmed
@@ -527,13 +529,12 @@ describe("UserModel", () => {
       const session = await mongoDB.startSession();
       try {
         // confirm the user by invalid token in a transaction with the session
-        await userModel.confimUser('621f7b9e6f3b7d1d9e9f9d5b', session);
-        await userModel.confimUser(token, session);
+        await userModel.confimUser(userId, 555555, session);
         // commit the transaction
         await mongoDB.commitTransaction(session);
       }
       catch (error) {
-        expect(error.message).to.equal('User not found');
+        expect(error.message).to.equal('Failed to confirm user');
         // abort the transaction
         await mongoDB.abortTransaction(session);
       }
@@ -706,7 +707,7 @@ describe("UserModel", () => {
     // Test case for reset the user password token with the user email and return the token
     it('reset the user password token with the user email and return the token', async () => {
       const result = await userModel.resetPasswordToken(userData.email);
-      expect(result).to.be.a('string');
+      expect(result).to.be.a('number');
     });
 
     // Test case for reset the user password token with invalid email and throw an error 'User not found'

@@ -475,8 +475,8 @@ describe("UserModel", () => {
   });
 
 
-  // Test suite for the confimUser method with all scenarios
-  describe("Test suite for ConfimUser method", () => {
+  // Test suite for the confirmUser method with all scenarios
+  describe("Test suite for confirmUser method", () => {
     let token;
 
     // beforeEach hook create a new user object and create a confirmation token
@@ -488,7 +488,7 @@ describe("UserModel", () => {
 
     // Test case for confirm a user by token and return true
     it('confirm a user by token and return true', async () => {
-      const result = await userModel.confimUser(userId, token);
+      const result = await userModel.confirmUser(userId, token);
       // check if the result is true
       expect(result).to.equal(true);
       // check if the user is confirmed
@@ -501,7 +501,7 @@ describe("UserModel", () => {
     // Test case for confirm a user by token with invalid token and throw an error 'Failed to confirm user'
     it('confirm a user by token with invalid token and throw an error "User not found"', async () => {
       try {
-        await userModel.confimUser(userId, 555555);
+        await userModel.confirmUser(userId, 555555);
       } catch (error) {
         expect(error.message).to.equal('Failed to confirm user');
       }
@@ -515,7 +515,7 @@ describe("UserModel", () => {
       // create a session
       const session = await mongoDB.startSession();
       // confirm the user by token in a transaction with the session
-      await userModel.confimUser(userId, token, session);
+      await userModel.confirmUser(userId, token, session);
       // commit the transaction
       await mongoDB.commitTransaction(session);
       // check if the user is confirmed
@@ -529,7 +529,7 @@ describe("UserModel", () => {
       const session = await mongoDB.startSession();
       try {
         // confirm the user by invalid token in a transaction with the session
-        await userModel.confimUser(userId, 555555, session);
+        await userModel.confirmUser(userId, 555555, session);
         // commit the transaction
         await mongoDB.commitTransaction(session);
       }
@@ -639,11 +639,13 @@ describe("UserModel", () => {
       userId = result._id;
     });
 
-    // Test case for check the user password in case the user password is correct and return the user id
+    // Test case for check the user password in case the user password is correct and return the user data
     it('check the user password in case the user password is correct and return the user id', async () => {
       const result = await userModel.checkUserPassword(userData.email, userData.password);
       // check if the result is correct
-      expect(result.toString()).to.equal(userId.toString());
+      expect(result).to.be.an('object');
+      expect(result).to.have.property('_id');
+      expect(result).to.have.property('userName');
     });
 
     // Test case for check the user password in case the user password is incorrect and throw an error 'Password is incorrect'

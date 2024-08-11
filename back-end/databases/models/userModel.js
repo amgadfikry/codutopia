@@ -185,7 +185,7 @@ class UserModel extends UserSchema {
     }
   }
 
-  /* confimUser method updates the confirmed field to true for a user by id in the users collection
+  /* confirmUser method updates the confirmed field to true for a user by id in the users collection
     Parameters:
       - userId: string or ObjectId of the user
       - token: string value of the confirmation token
@@ -195,7 +195,7 @@ class UserModel extends UserSchema {
     Errors:
       - Failed to confirm user
   */
-  async confimUser(userId, token, session = null) {
+  async confirmUser(userId, token, session = null) {
     try {
       // update the user by token with the confirmed field to true
       const result = await this.user.findOneAndUpdate(
@@ -257,7 +257,7 @@ class UserModel extends UserSchema {
       - password: string value of the user password
       - session: optional session for the transaction
     Returns:
-      - user id if the password is correct
+      - user data
     Errors:
       - User not found
       - Password is incorrect
@@ -274,7 +274,7 @@ class UserModel extends UserSchema {
       if (!result) {
         throw new Error('Password is incorrect');
       }
-      return user._id;
+      return user;
     }
     catch (error) {
       // throw an error if the user was not found or password is incorrect
